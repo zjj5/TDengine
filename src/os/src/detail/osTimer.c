@@ -18,7 +18,7 @@
 #include "ttimer.h"
 #include "tulog.h"
 
-#if !(defined(_TD_WINDOWS_64) || defined(_TD_WINDOWS_32) || defined(_TD_DARWIN_64))
+#if !(defined(_TD_WINDOWS_64) || defined(_ALPINE) || defined(_TD_WINDOWS_32) || defined(_TD_DARWIN_64))
 
 static void taosDeleteTimer(void *tharg) {
   timer_t *pTimer = tharg;
@@ -41,13 +41,12 @@ static void *taosProcessAlarmSignal(void *tharg) {
   setThreadName("tmr");
 
   #ifdef _ALPINE
-    sevent.sigev_notify = SIGEV_THREAD;
     sevent.sigev_value.sival_int = syscall(__NR_gettid);
   #else
-    sevent.sigev_notify = SIGEV_THREAD_ID;
     sevent._sigev_un._tid = syscall(__NR_gettid);
   #endif
   
+  sevent.sigev_notify = SIGEV_THREAD_ID;
   sevent.sigev_signo = SIGALRM;
 
   if (timer_create(CLOCK_REALTIME, &sevent, &timerId) == -1) {
@@ -103,6 +102,43 @@ void taosUninitTimer() {
 
   uDebug("join timer thread:0x%08" PRIx64, taosGetPthreadId(timerThread));
   pthread_join(timerThread, NULL);
+}
+
+#else
+
+static timer_t       timerId;
+
+void sig_alrm_handler(union sigval sv) {
+  void (*callback)(int) = sv.sival_ptr;
+  callback(0);
+}
+int taosInitTimer(void (*callback)(int), int ms) {
+  struct sigevent evp;
+  memset((void *)&evp, 0, sizeof(evp));
+  evp.sigev_notify = SIGEV_THREAD;
+  evp.sigev_notify_function = &sig_alrm_handler;
+  evp.sigev_signo = SIGALRM;
+  evp.sigev_value.sival_ptr = (void *)callback;
+
+  struct itimerspec ts;
+  ts.it_value.tv_sec = 0;
+  ts.it_value.tv_nsec = 1000000 * MSECONDS_PER_TICK;
+  ts.it_interval.tv_sec = 0;
+  ts.it_interval.tv_nsec = 1000000 * MSECONDS_PER_TICK;
+  if (timer_create(CLOCK_REALTIME, &evp, &timerId)) {
+    uError("Failed to create timer");
+    return -1;
+  }
+
+  if (timer_settime(timerId, 0, &ts, NULL)) {
+    uError("Failed to init timer");
+    return -1;
+  }
+  return 0;
+}
+
+void taosUninitTimer() {
+  timer_delete(timerId);
 }
 
 #endif
