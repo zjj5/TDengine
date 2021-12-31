@@ -426,14 +426,10 @@ uint32_t tGetToken(char* z, uint32_t* tokenId) {
           i++;
           continue;
         }
-        
+
         if (z[i] == delim) {
-          if (z[i + 1] == delim) {
-            i++;
-          } else {
-            strEnd = true;
-            break;
-          }
+          strEnd = true;
+          break;
         }
       }
       
@@ -448,6 +444,10 @@ uint32_t tGetToken(char* z, uint32_t* tokenId) {
     }
     case '`': {
       for (i = 1; z[i]; i++) {
+        if (z[i] == '`' && z[i+1] == '`') {
+          i++;
+          continue;
+        }
         if (z[i] == '`') {
           i++;
           *tokenId = TK_ID;

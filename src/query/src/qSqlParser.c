@@ -41,6 +41,8 @@ SSqlInfo qSqlParse(const char *pStr) {
     }
 
     t0.n = tGetToken((char *)&pStr[i], &t0.type);
+
+    if(t0.type)
     t0.z = (char *)(pStr + i);
     i += t0.n;
 
