@@ -966,7 +966,7 @@ int32_t tsdbLoadLastCache(STsdbRepo *pRepo, SArray *pArray) {
     }
 
     for (size_t t = 0; t < arrSize; ++t) {
-      STable *pTable = (STable *)taosArrayGet(pArray, t);
+      STable *pTable = *(STable **)taosArrayGet(pArray, t);
 
       tsdbTrace("tsdbLoadLastCache for vgId:%d, table:%s", REPO_ID(pRepo), pTable->name->data);
 
