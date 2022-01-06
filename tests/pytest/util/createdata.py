@@ -11,6 +11,7 @@
 
 # -*- coding: utf-8 -*-
 
+from distutils.log import error
 import random
 import string
 import os
@@ -43,14 +44,14 @@ class TDCreateData:
         tdDnodes.stop(1)
         tdDnodes.start(1)
 
-    def dropandcreateDB_random(self,n):
+    def dropandcreateDB_random(self,database,n):
         self.ts = 1630000000000
-        self.num_random = 10
+        self.num_random = 100
         fake = Faker('zh_CN')
         for i in range(n):
-            tdSql.execute('''drop database if exists db ;''')
-            tdSql.execute('''create database db keep 36500;''')
-            tdSql.execute('''use db;''')
+            tdSql.execute('''drop database if exists %s ;''' %database)
+            tdSql.execute('''create database %s keep 36500;'''%database)
+            tdSql.execute('''use %s;'''%database)
 
             tdSql.execute('''create stable stable_1 (ts timestamp , q_int int , q_bigint bigint , q_smallint smallint , q_tinyint tinyint , q_float float , q_double double , q_bool bool , q_binary binary(100) , q_nchar nchar(100) , q_ts timestamp , \
                     q_int_null int , q_bigint_null bigint , q_smallint_null smallint , q_tinyint_null tinyint, q_float_null float , q_double_null double , q_bool_null bool , q_binary_null binary(20) , q_nchar_null nchar(20) , q_ts_null timestamp) \
@@ -232,17 +233,17 @@ class TDCreateData:
         for i2 in range(row2):
             for j2 in range(col2):                
                 list2.append(tdSql.getData(i2,j2))
-                print(len(list2))
-                print(list2)
-                
+                #print(len(list2))
+                #print(list2)                
         
         if len(list2) == 0 :
             self.result_0(sql2)
         elif (set(list2) <= set(list1)) :
             tdLog.info(("sql1:'%s' result include sql2:'%s' result") %(sql1,sql2))
         else:
-            tdLog.info(("sql1:'%s' result not include sql2:'%s' result") %(sql1,sql2))
-            return tdSql.checkEqual(list1,list2)
+            tdLog.info(("sql1:'%s' result not include sql2:'%s' row:'%s' col'%s' result '%s'") %(sql1,sql2,i2,j2,tdSql.getData(i2,j2)))
+            return tdSql.checkEqual(list1,tdSql.getData(i2,j2))
+            
 
 
 tdCreateData = TDCreateData()
