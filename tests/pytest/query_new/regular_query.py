@@ -47,53 +47,98 @@ class TDTestCase:
     def run(self):
         tdSql.prepare()
 
-        dcDB = tdCreateData.dropandcreateDB_random(1)
+        db = "regular_db"
+        tdCreateData.dropandcreateDB_random("%s" %db,1) 
 
         conn1 = taos.connect(host="127.0.0.1", user="root", password="taosdata", config="/etc/taos/")
         print(conn1)
         cur1 = conn1.cursor()
         tdSql.init(cur1, True)        
-        cur1.execute('use db ;')
-        sql = 'select * from stable_1 limit 5;'
+        cur1.execute('use "%s";' %db)
+        sql = 'select * from regular_table_1 limit 5;'
         cur1.execute(sql)
         for data in cur1:
             print("ts = %s" %data[0])       
         print(conn1)
 
-        for i in range(3):
+        for i in range(2):
             try:
-                taos_cmd1 = "taos -f query_new/regular_query.py.sql"
+                testcaseFilename = os.path.split(__file__)[-1]
+                taos_cmd1 = "taos -f query_new/%s.sql" % testcaseFilename
                 _ = subprocess.check_output(taos_cmd1, shell=True).decode("utf-8")
                 print(conn1)
 
-                for i in range(3):
-                    cur1.execute('use db ;')                   
+                for i in range(2):
+                    print(db)
+                    cur1.execute('use "%s";' %db)                 
 
-                    print("case1:select data in the table")
+                    print("case1:select * from regular_table where condition")
+
+                    regular_where = tdWhere.regular_where()
+                    sql1 = 'select * from regular_table_1;' 
+                    for i in range(2,len(regular_where[0])+1):
+                        q_where_new = list(combinations(regular_where[0],i))
+                        for q_where_new in q_where_new:
+                            q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                            q_in_where_new = str(regular_where[1]).replace("[","").replace("]","").replace("'","")
+                            sql2 = "select * from regular_table_1 where %s %s " %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+
+                    print("case2:select * from regular_table where condition order by ts")
+
+                    regular_where = tdWhere.regular_where()
+                    sql1 = 'select * from regular_table_1;' 
+                    for i in range(2,len(regular_where[0])+1):
+                        q_where_new = list(combinations(regular_where[0],i))
+                        for q_where_new in q_where_new:
+                            q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                            q_in_where_new = str(regular_where[1]).replace("[","").replace("]","").replace("'","")
+                            sql2 = "select * from regular_table_1 where %s %s order by ts" %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+
+                    print("case3:select * from regular_table where condition order by ts limit ")
+
+                    regular_where = tdWhere.regular_where()
+                    sql1 = 'select * from regular_table_1;' 
+                    for i in range(2,len(regular_where[0])+1):
+                        q_where_new = list(combinations(regular_where[0],i))
+                        for q_where_new in q_where_new:
+                            q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                            q_in_where_new = str(regular_where[1]).replace("[","").replace("]","").replace("'","")
+                            sql2 = "select * from regular_table_1 where %s %s order by ts limit 10" %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+
 
                     #方法2，直接复现一组sql
-                    stable_where = tdWhere.stable_where()
-                    #print(stable_where_all)      
-                    sql1 = 'select * from stable_1;'         
-                    for i in range(2,len(stable_where[0])+1):
-                        qt_where_new = list(combinations(stable_where[0],i))
-                        for qt_where_new in qt_where_new:
-                            qt_where_new = str(qt_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            qt_in_where_new = str(random.sample(stable_where[1],1)).replace("[","").replace("]","").replace("'","")
-                            hanshu_column_new = str(stable_where[2]).replace("[","").replace("]","").replace("'","").replace(",","")
-                            #sql = "select * from stable_1 where %s %s ts < now +1s order by ts limit 2" %(qt_where_add_new,qt_where_sub_new)
-                            #sql = "select * from stable_1 where %s %s %s order by ts limit 2" %(qt_where_add_new,qt_where_sub_new,qt_in_new)
-                            sql = "select * from stable_1 where %s %s order by ts limit 2" %(qt_where_new,qt_in_where_new)
-                            print(sql)
-                            cur1.execute(sql)
-                            for data in cur1:
-                                print("ts = %s" %data[0])
-                            sql = "select %s from stable_1 where %s %s order by ts limit 2" %(hanshu_column_new,qt_where_new,qt_in_where_new)
-                            dcCK = tdCreateData.data2in1('%s' %sql1 ,2000,20,'%s' %sql ,0,20)
-                            print(sql)
-                            cur1.execute(sql)
-                            for data in cur1:
-                                print("ts = %s" %data[0])
+                    # stable_where = tdWhere.stable_where()
+                    # #print(stable_where_all)      
+                    # sql1 = 'select * from stable_1;'         
+                    # for i in range(2,len(stable_where[0])+1):
+                    #     qt_where_new = list(combinations(stable_where[0],i))
+                    #     for qt_where_new in qt_where_new:
+                    #         qt_where_new = str(qt_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                    #         qt_in_where_new = str(random.sample(stable_where[1],1)).replace("[","").replace("]","").replace("'","")
+                    #         hanshu_column_new = str(stable_where[2]).replace("[","").replace("]","").replace("'","").replace(",","")
+                    #         #sql = "select * from stable_1 where %s %s ts < now +1s order by ts limit 2" %(qt_where_add_new,qt_where_sub_new)
+                    #         #sql = "select * from stable_1 where %s %s %s order by ts limit 2" %(qt_where_add_new,qt_where_sub_new,qt_in_new)
+                    #         #sql = "select * from stable_1 where %s %s order by ts limit 2" %(qt_where_new,qt_in_where_new)
+                    #         sql = "select * from stable_1 where ts < now+1d"
+                    #         print(sql)
+                    #         # dcCK = tdCreateData.dataequal('%s' %sql1 ,10,2,'%s' %sql ,10,2)
+                    #         # dcCK = tdCreateData.data2in1('%s' %sql1 ,10,2,'%s' %sql ,10,2)
+                    #         cur1.execute(sql)
+                    #         for data in cur1:
+                    #             print("ts = %s" %data[0])
+
+                    #         sql2 = "select * from stable_1 where %s %s order by ts limit 2" %(qt_where_new,qt_in_where_new)
+                    #         dcCK = tdCreateData.data2in1('%s' %sql1 ,20,3,'%s' %sql2 ,2,4)
+                    #         print(sql2)
+                    #         cur1.execute(sql2)
+                    #         for data in cur1:
+                    #             print("ts = %s" %data[0])
                             
 
                     #方法2，直接复现一组sql
