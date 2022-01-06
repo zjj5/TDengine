@@ -36,23 +36,23 @@ class TDWhere:
 
         os.system("rm -rf util/where.py.sql")
  
-    def regular1_checkall(self,sql):
-        tdLog.info(sql)      
-        tdSql.query(sql)
-        for i in range(1,4):
-            for j in range(0,99):
-	            tdSql.checkData(j,i,j)
-        for i in range(8,9):
-            for j in range(0,99):
-	            tdSql.checkData(j,i,j)        
-        for j in range(0,99):
-            tdSql.checkData(j,6,'binary.'+str(j)) 
+    # def regular1_checkall(self,sql):
+    #     tdLog.info(sql)      
+    #     tdSql.query(sql)
+    #     for i in range(1,4):
+    #         for j in range(0,99):
+	#             tdSql.checkData(j,i,j)
+    #     for i in range(8,9):
+    #         for j in range(0,99):
+	#             tdSql.checkData(j,i,j)        
+    #     for j in range(0,99):
+    #         tdSql.checkData(j,6,'binary.'+str(j)) 
 
-        for j in range(0,99):
-            tdSql.checkData(j,7,'nchar.'+str(j)) 
+    #     for j in range(0,99):
+    #         tdSql.checkData(j,7,'nchar.'+str(j)) 
         
-        for j in range(0,99):
-            tdSql.checkData(j,10,'2021-08-27 01:46:40.0'+str(j)) 
+    #     for j in range(0,99):
+    #         tdSql.checkData(j,10,'2021-08-27 01:46:40.0'+str(j)) 
 
     # column and tag query
     # **int + floot_dou + other
@@ -75,7 +75,9 @@ class TDWhere:
         
         q_where = random.sample(q_int_where,4) + random.sample(q_fl_do_where,2) + random.sample(q_nc_bi_bo_ts_where,2)
 
-        q_in = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or  q_bool = false)' , '(q_bool = 0 or q_bool = 1)',]
+        q_in_where = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or  q_bool = false)' , '(q_bool = 0 or q_bool = 1)',]
+
+        q_in = random.sample(q_in_where,1)
         
         return(q_where,q_in)
 
@@ -95,9 +97,9 @@ class TDWhere:
         
         q_where_null = random.sample(q_int_where,4) + random.sample(q_fl_do_where,2) + random.sample(q_nc_bi_bo_ts_where,2)
 
-        q_in = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or  q_bool = false)' , '(q_bool = 0 or q_bool = 1)',]
+        q_in_null = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or  q_bool = false)' , '(q_bool = 0 or q_bool = 1)',]
         
-        return(q_where_null,q_int_null)
+        return(q_where_null,q_in_null)
 
     def t_where(self):   
         t_int_where = ['t_bigint >= -9223372036854775807 and ' , 't_bigint <= 9223372036854775807 and ','t_smallint >= -32767 and ', 't_smallint <= 32767 and ',
@@ -158,22 +160,22 @@ class TDWhere:
         return hanshu_column_stable
 
     def regular_where(self):       
-        q_where = self.q_where()
+        regular_q_where = self.q_where()
         
-        q_where = random.sample(q_where[0],5) 
-        q_in_where = random.sample(q_where[1],1)
+        q_where = random.sample(regular_q_where[0],5) 
+        q_in_where = regular_q_where[1]
 
         hanshu_column = self.hanshu_int()
 
         return(q_where,q_in_where,hanshu_column)
 
     def stable_where(self):       
-        q_where = self.q_where()
-        t_where = self.t_where()
+        stable_q_where = self.q_where()
+        stable_t_where = self.t_where()
 
-        qt_where = random.sample(q_where[0],3) + random.sample(t_where[0],3)
+        qt_where = random.sample(stable_q_where[0],3) + random.sample(stable_t_where[0],3)
         print(qt_where)
-        qt_in_where = random.sample(q_where[1],1) + random.sample(t_where[1],1)
+        qt_in_where = random.sample((stable_q_where[1] + stable_t_where[1]),1)
         print(qt_in_where)
 
         hanshu_column = self.hanshu_int()
