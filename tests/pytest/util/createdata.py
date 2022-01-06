@@ -211,7 +211,7 @@ class TDCreateData:
                 list2.append(tdSql.getData(i2,j2))
        
         if  (list1 == list2) and len(list2)>0:
-	        tdLog.info(("sql1:'%s' result = sql2:'%s' result") %(sql1,sql2))
+            tdLog.info(("sql1:'%s' result = sql2:'%s' result") %(sql1,sql2))
         else:
             tdLog.info(("sql1:'%s' result != sql2:'%s' result") %(sql1,sql2))
             return tdSql.checkEqual(list1,list2)
@@ -236,10 +236,10 @@ class TDCreateData:
                 print(list2)
                 
         
-        if  len(list2) == 0:
+        if len(list2) == 0 :
             self.result_0(sql2)
         elif (set(list2) <= set(list1)) :
-	        tdLog.info(("sql1:'%s' result include sql2:'%s' result") %(sql1,sql2))
+            tdLog.info(("sql1:'%s' result include sql2:'%s' result") %(sql1,sql2))
         else:
             tdLog.info(("sql1:'%s' result not include sql2:'%s' result") %(sql1,sql2))
             return tdSql.checkEqual(list1,list2)
