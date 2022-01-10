@@ -76,7 +76,6 @@ class TDWhere:
         q_where = random.sample(q_int_where,4) + random.sample(q_fl_do_where,2) + random.sample(q_nc_bi_bo_ts_where,2)
 
         q_in_where = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or  q_bool = false)' , '(q_bool = 0 or q_bool = 1)',]
-
         q_in = random.sample(q_in_where,1)
         
         return(q_where,q_in)
@@ -97,8 +96,9 @@ class TDWhere:
         
         q_where_null = random.sample(q_int_where,4) + random.sample(q_fl_do_where,2) + random.sample(q_nc_bi_bo_ts_where,2)
 
-        q_in_null = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or  q_bool = false)' , '(q_bool = 0 or q_bool = 1)',]
-        
+        q_in_where = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or  q_bool = false)' , '(q_bool = 0 or q_bool = 1)',]
+        q_in_null = random.sample(q_in_where,1)
+
         return(q_where_null,q_in_null)
 
     def t_where(self):   
