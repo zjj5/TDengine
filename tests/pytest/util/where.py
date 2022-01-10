@@ -136,8 +136,9 @@ class TDWhere:
 
         t_where_null = random.sample(t_int_where,4) + random.sample(t_fl_do_where,2) + random.sample(t_nc_bi_bo_ts_where,2)
         
-        t_in_null = ['t_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or  t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
-        
+        t_in_where = ['t_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or  t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
+        t_in_null = random.sample(t_in_where,1)
+
         return(t_where_null,t_in_null)
 
     def hanshu_int(self):       
