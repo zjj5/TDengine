@@ -169,6 +169,16 @@ class TDWhere:
 
         return(q_where,q_in_where,hanshu_column)
 
+    def regular_where_null(self):       
+        regular_q_where_null = self.q_where_null()
+        
+        q_where_null = random.sample(regular_q_where_null[0],5) 
+        q_in_where_null = regular_q_where_null[1]
+
+        hanshu_column = self.hanshu_int()
+
+        return(q_where_null,q_in_where_null,hanshu_column)
+
     def stable_where(self):       
         stable_q_where = self.q_where()
         stable_t_where = self.t_where()
