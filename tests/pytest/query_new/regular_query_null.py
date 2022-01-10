@@ -33,10 +33,10 @@ import subprocess
 class TDTestCase:
     def caseDescription(self):
         '''
-        case1<xyguo>:select * from regular_table where condition && select * from ( select front )
-        case2<xyguo>:select * from regular_table where condition order by ts asc | desc && select * from ( select front )
-        case3<xyguo>:select * from regular_table where condition order by ts limit && select * from ( select front )
-        case4<xyguo>:select * from regular_table where condition order by ts limit offset && select * from ( select front )
+        case1<xyguo>:select * from regular_table where condition [null data] && select * from ( select front )
+        case2<xyguo>:select * from regular_table where condition [null data] order by ts asc | desc && select * from ( select front )
+        case3<xyguo>:select * from regular_table where condition [null data] order by ts limit && select * from ( select front )
+        case4<xyguo>:select * from regular_table where condition [null data] order by ts limit offset && select * from ( select front )
         case5<xyguo>:
         case6<xyguo>:
         case7<xyguo>:
@@ -56,7 +56,7 @@ class TDTestCase:
     def run(self):
         tdSql.prepare()
 
-        db = "regular_db"
+        db = "regular_db_null"
         tdCreateData.dropandcreateDB_random("%s" %db,1) 
 
         conn1 = taos.connect(host="127.0.0.1", user="root", password="taosdata", config="/etc/taos/")
@@ -81,7 +81,7 @@ class TDTestCase:
                     print(db)
                     cur1.execute('use "%s";' %db)                 
 
-                    print("case1:select * from regular_table where condition && select * from ( select front )")
+                    print("case1:select * from regular_table where condition[null data] && select * from ( select front )")
 
                     regular_where_null = tdWhere.regular_where_null()
                     sql1 = 'select * from regular_table_1;' 
@@ -102,7 +102,7 @@ class TDTestCase:
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
-                    print("case2:select * from regular_table where condition order by ts asc | desc && select * from ( select front )")
+                    print("case2:select * from regular_table where condition[null data] order by ts asc | desc && select * from ( select front )")
 
                     regular_where = tdWhere.regular_where_null()
                     sql1 = 'select * from regular_table_1;' 
@@ -142,7 +142,7 @@ class TDTestCase:
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
-                    print("case3:select * from regular_table where condition order by ts limit && select * from ( select front )")
+                    print("case3:select * from regular_table where condition[null data] order by ts limit && select * from ( select front )")
 
                     regular_where = tdWhere.regular_where_null()
                     sql1 = 'select * from regular_table_1;' 
@@ -163,7 +163,7 @@ class TDTestCase:
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
-                    print("case4:select * from regular_table where condition order by ts limit offset && select * from ( select front )")
+                    print("case4:select * from regular_table where condition[null data] order by ts limit offset && select * from ( select front )")
 
                     regular_where = tdWhere.regular_where_null()
                     sql1 = 'select * from regular_table_1 limit 10 offset 5;' 
