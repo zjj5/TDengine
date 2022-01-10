@@ -33,7 +33,16 @@ import subprocess
 class TDTestCase:
     def caseDescription(self):
         '''
-        case1<xyguo>:
+        case1<xyguo>:select * from regular_table where condition && select * from ( select front )
+        case2<xyguo>:select * from regular_table where condition order by ts asc | desc && select * from ( select front )
+        case3<xyguo>:select * from regular_table where condition order by ts limit && select * from ( select front )
+        case4<xyguo>:select * from regular_table where condition order by ts limit offset && select * from ( select front )
+        case5<xyguo>:
+        case6<xyguo>:
+        case7<xyguo>:
+        case8<xyguo>:
+        case9<xyguo>:
+        case10<xyguo>:
         ''' 
         return
 
@@ -72,7 +81,7 @@ class TDTestCase:
                     print(db)
                     cur1.execute('use "%s";' %db)                 
 
-                    print("case1:select * from regular_table where condition")
+                    print("case1:select * from regular_table where condition && select * from ( select front )")
 
                     regular_where = tdWhere.regular_where()
                     sql1 = 'select * from regular_table_1;' 
@@ -85,7 +94,15 @@ class TDTestCase:
                             tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                             cur1.execute(sql2)
 
-                    print("case2:select * from regular_table where condition order by ts")
+                            sql2 = "select * from (select * from regular_table_1 where %s %s )" %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+
+                            sql2 = "select * from (select * from regular_table_1) where %s %s " %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+
+                    print("case2:select * from regular_table where condition order by ts asc | desc && select * from ( select front )")
 
                     regular_where = tdWhere.regular_where()
                     sql1 = 'select * from regular_table_1;' 
@@ -98,7 +115,34 @@ class TDTestCase:
                             tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                             cur1.execute(sql2)
 
-                    print("case3:select * from regular_table where condition order by ts limit ")
+                            sql2 = "select * from (select * from regular_table_1 where %s %s order by ts)" %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+
+                            sql2 = "select * from (select * from regular_table_1) where %s %s order by ts" %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+                    
+                    regular_where = tdWhere.regular_where()
+                    sql1 = 'select * from regular_table_1 order by ts desc;' 
+                    for i in range(2,len(regular_where[0])+1):
+                        q_where_new = list(combinations(regular_where[0],i))
+                        for q_where_new in q_where_new:
+                            q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                            q_in_where_new = str(regular_where[1]).replace("[","").replace("]","").replace("'","")
+                            sql2 = "select * from regular_table_1 where %s %s order by ts desc" %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+
+                            sql2 = "select * from (select * from regular_table_1 where %s %s order by ts desc)" %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+
+                            sql2 = "select * from (select * from regular_table_1) where %s %s order by ts desc" %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+
+                    print("case3:select * from regular_table where condition order by ts limit && select * from ( select front )")
 
                     regular_where = tdWhere.regular_where()
                     sql1 = 'select * from regular_table_1;' 
@@ -108,6 +152,35 @@ class TDTestCase:
                             q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                             q_in_where_new = str(regular_where[1]).replace("[","").replace("]","").replace("'","")
                             sql2 = "select * from regular_table_1 where %s %s order by ts limit 10" %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+
+                            sql2 = "select * from (select * from regular_table_1 where %s %s order by ts limit 10)" %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+
+                            sql2 = "select * from (select * from regular_table_1) where %s %s order by ts limit 10" %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+
+                    print("case4:select * from regular_table where condition order by ts limit offset && select * from ( select front )")
+
+                    regular_where = tdWhere.regular_where()
+                    sql1 = 'select * from regular_table_1 limit 10 offset 5;' 
+                    for i in range(2,len(regular_where[0])+1):
+                        q_where_new = list(combinations(regular_where[0],i))
+                        for q_where_new in q_where_new:
+                            q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                            q_in_where_new = str(regular_where[1]).replace("[","").replace("]","").replace("'","")
+                            sql2 = "select * from regular_table_1 where %s %s order by ts limit 10 offset 5" %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+
+                            sql2 = "select * from (select * from regular_table_1 where %s %s order by ts limit 10 offset 5)" %(q_where_new,q_in_where_new)
+                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                            cur1.execute(sql2)
+
+                            sql2 = "select * from (select * from regular_table_1) where %s %s order by ts limit 10 offset 5" %(q_where_new,q_in_where_new)
                             tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                             cur1.execute(sql2)
 
