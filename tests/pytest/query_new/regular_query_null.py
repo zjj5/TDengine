@@ -59,6 +59,11 @@ class TDTestCase:
         db = "regular_db_null"
         tdCreateData.dropandcreateDB_random("%s" %db,1) 
 
+        table_list = ['regular_table_1','table_1','regular_table_2','table_2']
+        table = str(random.sample(table_list,1)).replace("[","").replace("]","")
+        table_null_list = ['table_null','regular_table_null']
+        table_null = str(random.sample(table_null_list,1)).replace("[","").replace("]","")
+
         conn1 = taos.connect(host="127.0.0.1", user="root", password="taosdata", config="/etc/taos/")
         print(conn1)
         cur1 = conn1.cursor()
@@ -82,105 +87,109 @@ class TDTestCase:
                     cur1.execute('use "%s";' %db)                 
 
                     print("case1:select * from regular_table where condition[null data] && select * from ( select front )")
+                    print("=========================================case1=========================================")
 
                     regular_where_null = tdWhere.regular_where_null()
-                    sql1 = 'select * from regular_table_1;' 
+                    sql1 = 'select * from %s;'  % table
                     for i in range(2,len(regular_where_null[0])+1):
                         q_where_new = list(combinations(regular_where_null[0],i))
                         for q_where_new in q_where_new:
                             q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                             q_in_where_new = str(regular_where_null[1]).replace("[","").replace("]","").replace("'","")
-                            sql2 = "select * from regular_table_1 where %s %s " %(q_where_new,q_in_where_new)
+                            sql2 = "select * from %s where %s %s " %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from regular_table_1 where %s %s )" %(q_where_new,q_in_where_new)
+                            sql2 = "select * from (select * from %s where %s %s )" %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from regular_table_1) where %s %s " %(q_where_new,q_in_where_new)
+                            sql2 = "select * from (select * from %s) where %s %s " %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
                     print("case2:select * from regular_table where condition[null data] order by ts asc | desc && select * from ( select front )")
+                    print("=========================================case2=========================================")
 
                     regular_where = tdWhere.regular_where_null()
-                    sql1 = 'select * from regular_table_1;' 
+                    sql1 = 'select * from %s ;' % table
                     for i in range(2,len(regular_where[0])+1):
                         q_where_new = list(combinations(regular_where[0],i))
                         for q_where_new in q_where_new:
                             q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                             q_in_where_new = str(regular_where[1]).replace("[","").replace("]","").replace("'","")
-                            sql2 = "select * from regular_table_1 where %s %s order by ts" %(q_where_new,q_in_where_new)
+                            sql2 = "select * from %s where %s %s order by ts" %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from regular_table_1 where %s %s order by ts)" %(q_where_new,q_in_where_new)
+                            sql2 = "select * from (select * from %s where %s %s order by ts)" %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from regular_table_1) where %s %s order by ts" %(q_where_new,q_in_where_new)
+                            sql2 = "select * from (select * from %s) where %s %s order by ts" %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
                     
                     regular_where = tdWhere.regular_where_null()
-                    sql1 = 'select * from regular_table_1 order by ts desc;' 
+                    sql1 = 'select * from %s order by ts desc;' % table
                     for i in range(2,len(regular_where[0])+1):
                         q_where_new = list(combinations(regular_where[0],i))
                         for q_where_new in q_where_new:
                             q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                             q_in_where_new = str(regular_where[1]).replace("[","").replace("]","").replace("'","")
-                            sql2 = "select * from regular_table_1 where %s %s order by ts desc" %(q_where_new,q_in_where_new)
+                            sql2 = "select * from %s where %s %s order by ts desc" %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from regular_table_1 where %s %s order by ts desc)" %(q_where_new,q_in_where_new)
+                            sql2 = "select * from (select * from %s where %s %s order by ts desc)" %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from regular_table_1) where %s %s order by ts desc" %(q_where_new,q_in_where_new)
+                            sql2 = "select * from (select * from %s) where %s %s order by ts desc" %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
                     print("case3:select * from regular_table where condition[null data] order by ts limit && select * from ( select front )")
+                    print("=========================================case3=========================================")
 
                     regular_where = tdWhere.regular_where_null()
-                    sql1 = 'select * from regular_table_1;' 
+                    sql1 = 'select * from %s;' % table
                     for i in range(2,len(regular_where[0])+1):
                         q_where_new = list(combinations(regular_where[0],i))
                         for q_where_new in q_where_new:
                             q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                             q_in_where_new = str(regular_where[1]).replace("[","").replace("]","").replace("'","")
-                            sql2 = "select * from regular_table_1 where %s %s order by ts limit 10" %(q_where_new,q_in_where_new)
+                            sql2 = "select * from %s where %s %s order by ts limit 10" %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from regular_table_1 where %s %s order by ts limit 10)" %(q_where_new,q_in_where_new)
+                            sql2 = "select * from (select * from %s where %s %s order by ts limit 10)" %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from regular_table_1) where %s %s order by ts limit 10" %(q_where_new,q_in_where_new)
+                            sql2 = "select * from (select * from %s) where %s %s order by ts limit 10" %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
                     print("case4:select * from regular_table where condition[null data] order by ts limit offset && select * from ( select front )")
+                    print("=========================================case4=========================================")
 
                     regular_where = tdWhere.regular_where_null()
-                    sql1 = 'select * from regular_table_1 limit 10 offset 5;' 
+                    sql1 = 'select * from %s limit 10 offset 5;' % table
                     for i in range(2,len(regular_where[0])+1):
                         q_where_new = list(combinations(regular_where[0],i))
                         for q_where_new in q_where_new:
                             q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                             q_in_where_new = str(regular_where[1]).replace("[","").replace("]","").replace("'","")
-                            sql2 = "select * from regular_table_1 where %s %s order by ts limit 10 offset 5" %(q_where_new,q_in_where_new)
+                            sql2 = "select * from %s where %s %s order by ts limit 10 offset 5" %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from regular_table_1 where %s %s order by ts limit 10 offset 5)" %(q_where_new,q_in_where_new)
+                            sql2 = "select * from (select * from %s where %s %s order by ts limit 10 offset 5)" %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from regular_table_1) where %s %s order by ts limit 10 offset 5" %(q_where_new,q_in_where_new)
+                            sql2 = "select * from (select * from %s) where %s %s order by ts limit 10 offset 5" %(table,q_where_new,q_in_where_new)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
                           
