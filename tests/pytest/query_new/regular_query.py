@@ -82,6 +82,7 @@ class TDTestCase:
                     cur1.execute('use "%s";' %db)                 
 
                     print("case1:select * from regular_table where condition && select * from ( select front )")
+                    print("=========================================case1=========================================")
 
                     regular_where = tdWhere.regular_where()
                     sql1 = 'select * from regular_table_1;' 
@@ -103,6 +104,7 @@ class TDTestCase:
                             cur1.execute(sql2)
 
                     print("case2:select * from regular_table where condition order by ts asc | desc && select * from ( select front )")
+                    print("=========================================case2=========================================")
 
                     regular_where = tdWhere.regular_where()
                     sql1 = 'select * from regular_table_1;' 
@@ -143,6 +145,7 @@ class TDTestCase:
                             cur1.execute(sql2)
 
                     print("case3:select * from regular_table where condition order by ts limit && select * from ( select front )")
+                    print("=========================================case3=========================================")
 
                     regular_where = tdWhere.regular_where()
                     sql1 = 'select * from regular_table_1;' 
@@ -164,6 +167,7 @@ class TDTestCase:
                             cur1.execute(sql2)
 
                     print("case4:select * from regular_table where condition order by ts limit offset && select * from ( select front )")
+                    print("=========================================case4=========================================")
 
                     regular_where = tdWhere.regular_where()
                     sql1 = 'select * from regular_table_1 limit 10 offset 5;' 
