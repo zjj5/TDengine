@@ -32,15 +32,12 @@ class TDTestCase:
         for i in range(3):           
             try:
                 testcmd1 = os.system("sudo python3 ./test.py -f query_new/regular_query_null.py  >>/root/log/testcmd1.txt")
+                testcmd2 = os.system("sudo python3 ./test.py -f query_new/regular_query_union.py  >>/root/log/testcmd2.txt")
                 print ("The query.py num:%d result is %d " % (i ,  testcmd1))
+                print ("The query.py num:%d result is %d " % (i ,  testcmd2))
                 if testcmd1==0:
                     continue
-                else:
-                    break
-
-                testcmd2 = os.system("sudo python3 ./test.py -f query_new/regular_query_union.py  >>/root/log/testcmd2.txt")
-                print ("The query.py num:%d result is %d " % (i ,  testcmd2))
-                if testcmd2==0:
+                elif testcmd2==0:
                     continue
                 else:
                     break
