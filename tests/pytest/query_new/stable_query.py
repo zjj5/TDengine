@@ -73,6 +73,7 @@ class TDTestCase:
                     cur1.execute('use "%s";' %db)                 
 
                     print("case1:select * from stable where condition")
+                    print("=========================================case1=========================================")
 
                     stable_where = tdWhere.stable_where()
                     sql1 = 'select * from stable_1;' 
@@ -86,6 +87,7 @@ class TDTestCase:
                             cur1.execute(sql2)
 
                     print("case2:select * from stable where condition order by ts")
+                    print("=========================================case2=========================================")
 
                     stable_where = tdWhere.stable_where()
                     sql1 = 'select * from stable_1;' 
@@ -99,6 +101,7 @@ class TDTestCase:
                             cur1.execute(sql2)
 
                     print("case3:select * from stable where condition order by ts limit ")
+                    print("=========================================case3=========================================")
 
                     stable_where = tdWhere.stable_where()
                     sql1 = 'select * from stable_1;' 
