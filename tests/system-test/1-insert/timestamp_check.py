@@ -37,17 +37,21 @@ class TDTestCase:
         tdSql.init(conn.cursor(), logSql)
         tdSql.execute('reset query cache')
 
-    def dbname_length_check(self):
+    def ms_us_ns_db_check(self):
         '''
-            max length: 32
+            precision = ["ms", "us", "ns"]
         '''
-        dbname = tdCom.get_long_name(len=32, mode="letters")
-        tdSql.execute(f'create database if not exists {dbname}')
-        res = tdSql.query('show databases', True)
-        tdSql.check_equal(res[0][0], dbname)
-        dbname_exceed = tdCom.get_long_name(len=33, mode="letters")
-        tdSql.error(f'create database if not exists {dbname_exceed}')
-        tdSql.execute(f'drop database if exists {dbname}')
+        for ts in ["ms", "us", "ns"]:
+            dbname = tdCom.get_long_name(len=5, mode="letters")
+            tdSql.execute(f'create database if not exists {dbname} precision "{ts}"')
+            res = tdSql.query('show databases', True)
+            tdSql.check_equal(res[0][16], ts)
+            tdSql.execute(f'create table {dbname}.{dbname} (ts timestamp, c1 int)')
+            timestamp, dt = tdCom.genTs(ts)
+            tdSql.execute(f'insert into {dbname}.{dbname} values ({timestamp}, 1)')
+            res = tdSql.query(f'select ts from {dbname}.{dbname}', True)
+            tdSql.check_equal(str(res[0][0]), str(dt))
+            tdSql.execute(f'drop database if exists {dbname}')
 
     def dbname_backquote_unsupport_check(self):
         '''
@@ -63,7 +67,7 @@ class TDTestCase:
         for dbname in [tdCom.get_long_name(len=5, mode="letters_mixed"), tdCom.get_long_name(len=5, mode="letters_mixed").upper()]:
             tdSql.execute(f'create database if not exists {dbname}')
             res = tdSql.query('show databases', True)
-            tdSql.check_equal(res[0][0], dbname.lower())
+            tdSql.check_equal(res[0][16], dbname.lower())
             tdSql.execute(f'drop database if exists {dbname}')
 
     def illegal_dbname_check(self):
@@ -84,10 +88,10 @@ class TDTestCase:
                 tdSql.error(f'create database if not exists `{dbname_new}`')
 
     def run(self):
-        self.dbname_length_check()
-        self.dbname_backquote_unsupport_check()
-        self.upper_lower_dbname_check()
-        self.illegal_dbname_check()
+        self.ms_us_ns_db_check()
+        # self.dbname_backquote_unsupport_check()
+        # self.upper_lower_dbname_check()
+        # self.illegal_dbname_check()
 
         if self.err_case > 0:
             tdLog.exit(f"{self.err_case} failed")

@@ -61,8 +61,9 @@ class TDCom:
                 ts = time.time_ns()
             else:
                 ts = ts
-            dt = datetime.fromtimestamp(ts // 1000000000)
-            dt = dt.strftime('%Y-%m-%d %H:%M:%S') + '.' + str(int(ts % 1000000000)).zfill(9)
+            # dt = datetime.fromtimestamp(ts // 1000000000)
+            # dt = dt.strftime('%Y-%m-%d %H:%M:%S') + '.' + str(int(ts % 1000000000)).zfill(9)
+            dt = ts
         else:
             if ts == "" or ts is None:
                 ts = time.time()
@@ -71,7 +72,8 @@ class TDCom:
             if precision == "ms" or precision == None:
                 ts = int(round(ts * 1000))
                 dt = datetime.fromtimestamp(ts // 1000)
-                dt = dt.strftime('%Y-%m-%d %H:%M:%S') + '.' + str(int(ts % 1000)).zfill(3)
+                dt = dt.strftime('%Y-%m-%d %H:%M:%S') + '.' + str(int(ts % 1000)).zfill(3) + '000'
+                print("dt---", dt)
             elif precision == "us":
                 ts = int(round(ts * 1000000))
                 dt = datetime.fromtimestamp(ts // 1000000)
@@ -225,6 +227,11 @@ class TDCom:
             url = self.preDefine()[1]
         return url
 
+    def gen_symbol_list(self):
+        return [' ', '~', '`', '!', '@', '#', '$', '¥', '%', '^', '&', '*', '(', ')', 
+                '-', '+', '=', '{', '「', '[', ']', '}', '」', '、', '|', '\\', ':', 
+                ';', '\'', '\"', ',', '<', '《', '.', '>', '》', '/', '?']
+
     def schemalessApiPost(self, sql, url_type="influxdb", dbname="test", precision=None):
         if url_type == "influxdb":
             url = self.genUrl(url_type, dbname, precision)
@@ -238,14 +245,16 @@ class TDCom:
         '''
             type is taosc or restful
         '''
-        query_sql = "show stables"
-        res_row_list = tdSql.query(query_sql, True)
-        stb_list = map(lambda x: x[0], res_row_list)
-        for stb in stb_list:
-            if type == "taosc":
-                tdSql.execute(f'drop table if exists {stb}')
-            elif type == "restful":
-                self.restApiPost(f"drop table if exists {stb}")
+        for query_sql in ['show stables', 'show tables']:
+            res_row_list = tdSql.query(query_sql, True)
+            stb_list = map(lambda x: x[0], res_row_list)
+            for stb in stb_list:
+                if type == "taosc":
+                    tdSql.execute(f'drop table if exists {stb}')
+                    tdSql.execute(f'drop table if exists `{stb}`')
+                elif type == "restful":
+                    self.restApiPost(f"drop table if exists {stb}")
+                    self.restApiPost(f"drop table if exists `{stb}`")
 
     def dateToTs(self, datetime_input):
         return int(time.mktime(time.strptime(datetime_input, "%Y-%m-%d %H:%M:%S.%f")))
