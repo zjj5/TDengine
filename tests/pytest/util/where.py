@@ -29,12 +29,14 @@ from util.createdata import tdCreateData
 
 class TDWhere:
     updatecfgDict={'maxSQLLength':1048576}
+    NUM = random.randint(1, 30)
+    print(NUM)
 
     def init(self, conn, logSql):
         tdLog.debug("start to execute %s" % __file__)
         tdSql.init(conn.cursor(), logSql)
 
-        os.system("rm -rf util/where.py.sql")
+        os.system("rm -rf util/where.py.sql")        
  
     # def regular1_checkall(self,sql):
     #     tdLog.info(sql)      
@@ -160,6 +162,33 @@ class TDWhere:
         hanshu_column_stable = random.sample(hanshu,1)+random.sample(column,1)
         return hanshu_column_stable
 
+    def td_error(self):       
+        time = ['1','2','3','4','5','6','7','8','9','10']
+        unit = ['a','s','m','h','d','w','n','y']
+        
+        td_interval = str(random.sample(time,1)+random.sample(unit,1)).replace("[","").replace("]","").replace("'","").replace(", ","")
+        td_interval = 'interval'+'(' +td_interval + ')'
+
+        td_sliding = str(random.sample(time,1)+random.sample(unit,1)).replace("[","").replace("]","").replace("'","").replace(", ","")
+        td_sliding = 'sliding'+'(' +td_sliding + ')'
+
+        fill = ['NONE','VALUE,100','PREV','NULL','LINEAR','NEXT']
+        td_fill = str(random.sample(fill,1)).replace("[","").replace("]","").replace("'","").replace(", ","")
+        td_fill = 'Fill' +'(' +td_fill + ')'
+
+        if self.NUM == 1:
+            td_error = td_interval
+        elif self.NUM == 2:
+            td_error = td_interval + ' ' + td_sliding
+        elif self.NUM == 3:
+            td_error = td_fill 
+        elif self.NUM == 4:
+            td_error = td_interval + ' ' + td_fill 
+        else :
+            td_error = td_interval + ' ' + td_sliding + ' ' + td_fill 
+        
+        return td_error
+
     def regular_where(self):       
         regular_q_where = self.q_where()
         
@@ -167,8 +196,10 @@ class TDWhere:
         q_in_where = regular_q_where[1]
 
         hanshu_column = self.hanshu_int()
+        td_error = self.td_error()
 
-        return(q_where,q_in_where,hanshu_column)
+        return(q_where,q_in_where,hanshu_column,td_error)
+        #return(q_where,q_in_where,hanshu_column)
 
     def regular_where_null(self):       
         regular_q_where_null = self.q_where_null()
