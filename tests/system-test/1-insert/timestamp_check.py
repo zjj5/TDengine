@@ -64,10 +64,14 @@ class TDTestCase:
             tdSql.execute(f'create stable if not exists {dbname}.stb (col_ts timestamp, c1 int) tags (tag_ts timestamp, t1 int)')
             tdSql.execute(f'create table if not exists {dbname}.tb using {dbname}.stb tags (now, 1)')
             for ts_unit in tdCom.gen_ts_support_unit_list():
+                if ts_unit == "b" or ts_unit == "u" or ts_unit == "a":
+                    step = 10000000
+                else:
+                    step = 1
                 tdSql.error(f'create table if not exists {dbname}.tb_error using {dbname}.stb tags (now+1{ts_unit}, 1)')
                 tdSql.error(f'create table if not exists {dbname}.tb_error using {dbname}.stb tags (now-1{ts_unit}, 1)')
-                tdSql.execute(f'insert into {dbname}.tb values (now+1{ts_unit}, 1)')
-                tdSql.execute(f'insert into {dbname}.tb values (now-1{ts_unit}, 1)')
+                tdSql.execute(f'insert into {dbname}.tb values (now+{step}{ts_unit}, 1)')
+                tdSql.execute(f'insert into {dbname}.tb values (now-{step}{ts_unit}, 1)')
             res = tdSql.query(f'select count(*) from {dbname}.tb', True)
             tdSql.check_equal(res[0][0], 16)
             tdSql.execute(f'drop database if exists {dbname}')
@@ -79,7 +83,7 @@ class TDTestCase:
         for ts in ["ms", "us", "ns"]:
             dbname = tdCom.get_long_name(len=5, mode="letters")
             dbname = dbname + '_' + ts
-            timestamp, dt = tdCom.genTs(ts)
+            timestamp = tdCom.genTs(ts)[0]
             tdSql.execute(f'create database if not exists {dbname} precision "{ts}"')
             tdSql.execute(f'create stable if not exists {dbname}.stb (col_ts timestamp, c1 int) tags (tag_ts timestamp, t1 int)')
             tdSql.execute(f'create table if not exists {dbname}.tb using {dbname}.stb tags ({timestamp}, 1)')
@@ -96,51 +100,54 @@ class TDTestCase:
             tdSql.check_equal(res[0][0], 16)
             tdSql.execute(f'drop database if exists {dbname}')
 
-            
-        
+    def error_check(self):
+        '''
+            ts error check
+        '''
+        # inconsistent precision
+        pricision_list = ["ms", "us", "ns"]
+        for ts in pricision_list:
+            dbname = tdCom.get_long_name(len=5, mode="letters")
+            dbname = dbname + '_' + ts
+            timestamp = tdCom.genTs(ts)[0]
+            tdSql.execute(f'create database if not exists {dbname} precision "{ts}"')
+            tdSql.execute(f'create stable if not exists {dbname}.stb (col_ts timestamp, c1 int) tags (tag_ts timestamp, t1 int)')
+            tdSql.execute(f'create table if not exists {dbname}.tb using {dbname}.stb tags ({timestamp}, 1)')
+            pricision_list_tmp = copy.deepcopy(pricision_list)
+            pricision_list_tmp.remove(ts)
+            for illegal_ts in pricision_list_tmp:
+                # TODO confirm
+                # tdSql.error(f'create table if not exists {dbname}.tb1 using {dbname}.stb tags ({tdCom.genTs(illegal_ts)[0]}, 1)')
+                tdSql.error(f'insert into {dbname}.tb values ({tdCom.genTs(illegal_ts)[0]}, 1)')
 
-
-    def dbname_backquote_unsupport_check(self):
-        '''
-            backquote unsupported
-        '''
-        dbname = tdCom.get_long_name(len=5, mode="letters")
-        tdSql.error(f'create database if not exists `{dbname}`')
-
-    def upper_lower_dbname_check(self):
-        '''
-            case insensitive
-        '''
-        for dbname in [tdCom.get_long_name(len=5, mode="letters_mixed"), tdCom.get_long_name(len=5, mode="letters_mixed").upper()]:
-            tdSql.execute(f'create database if not exists {dbname}')
-            res = tdSql.query('show databases', True)
-            tdSql.check_equal(res[0][16], dbname.lower())
-            tdSql.execute(f'drop database if exists {dbname}')
-
-    def illegal_dbname_check(self):
-        '''
-            starts with number
-            mixed invalid symbol
-            mixed space
-        '''
-        dbname = '1' + tdCom.get_long_name(len=5, mode="letters")
-        tdSql.error(f'create database if not exists {dbname}')
-        dbname = tdCom.get_long_name(len=3, mode="letters")
-        for insert_str in tdCom.gen_symbol_list():
-            d_list = list(dbname)
-            for i in range(len(d_list)+1):
-                d_list_new = copy.deepcopy(d_list)
-                d_list_new.insert(i, insert_str)
-                dbname_new = ''.join(d_list_new)
-                tdSql.error(f'create database if not exists `{dbname_new}`')
+            # * The second level can exceed 60
+            for error_sql in [
+                f'insert into {dbname}.tb values ("2022-01-143 00:05:55", 1)',
+                f'insert into {dbname}.tb values ("2022-01-14# 00:05:55", 1)',
+                f'insert into {dbname}.tb values ("2022-01-14 00:05:55.*_*", 1)',
+                f'insert into {dbname}.tb values ("2022-01-14 0 0:05:55", 1)',
+                f'insert into {dbname}.tb values ("2022-01-1 4 00:05:55", 1)',
+                f'insert into {dbname}.tb values ("9999-01-14 00:05:55", 1)',
+                f'insert into {dbname}.tb values ("2022-00-14 00:05:55", 1)',
+                f'insert into {dbname}.tb values ("2022-13-14 00:05:55", 1)',
+                f'insert into {dbname}.tb values ("2022-01-00 00:05:55", 1)',
+                f'insert into {dbname}.tb values ("2022-01-32 00:05:55", 1)',
+                f'insert into {dbname}.tb values ("2022-02-31 00:05:55", 1)',
+                f'insert into {dbname}.tb values ("2022-04-31 00:05:55", 1)',
+                f'insert into {dbname}.tb values ("2022-01-14 25:05:55", 1)',
+                f'insert into {dbname}.tb values ("2022-01-14 00:61:55", 1)',
+                f'insert into {dbname}.tb values (now + 1n, 1)',
+                f'insert into {dbname}.tb values (now - 1n, 1)',
+                f'insert into {dbname}.tb values (now + 1y, 1)',
+                f'insert into {dbname}.tb values (now - 1y, 1)'
+                ]:
+                tdSql.error(error_sql)
 
     def run(self):
         self.ms_us_ns_db_check()
         self.now_check()
         self.epoch_check()
-        # self.dbname_backquote_unsupport_check()
-        # self.upper_lower_dbname_check()
-        # self.illegal_dbname_check()
+        self.error_check()
 
         if self.err_case > 0:
             tdLog.exit(f"{self.err_case} failed")
