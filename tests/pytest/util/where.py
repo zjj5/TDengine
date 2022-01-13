@@ -223,16 +223,17 @@ class TDWhere:
         regular_q_where = self.q_where()
         
         q_where = random.sample(regular_q_where[0],5) 
-        q_in_where = regular_q_where[1]
+        q_in_where = str(regular_q_where[1]).replace("[","").replace("]","").replace("'","")
 
         regular_q_where_null = self.q_where_null()
         
         q_where_null = random.sample(regular_q_where_null[0],5) 
-        q_in_where_null = regular_q_where_null[1]
+        q_in_where_null = str(regular_q_where_null[1]).replace("[","").replace("]","").replace("'","")
 
         hanshu_column = self.hanshu_int()
+        time_window = self.time_window()
 
-        return(q_where,q_in_where,q_where_null,q_in_where_null,hanshu_column)
+        return(q_where,q_in_where,q_where_null,q_in_where_null,hanshu_column,time_window)
 
     def stable_where(self):       
         stable_q_where = self.q_where()
@@ -244,8 +245,9 @@ class TDWhere:
         print(qt_in_where)
 
         hanshu_column = self.hanshu_int()
+        time_window = self.time_window()
 
-        return(qt_where,qt_in_where,hanshu_column)
+        return(qt_where,qt_in_where,hanshu_column,time_window)
 
     # test >=0 <=0
     def regular_where_all_null(self):   
