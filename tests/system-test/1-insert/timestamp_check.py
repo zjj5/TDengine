@@ -53,6 +53,53 @@ class TDTestCase:
             tdSql.check_equal(str(res[0][0]), str(dt))
             tdSql.execute(f'drop database if exists {dbname}')
 
+    def now_check(self):
+        '''
+            now check
+        '''
+        for ts in ["ms", "us", "ns"]:
+            dbname = tdCom.get_long_name(len=5, mode="letters")
+            dbname = dbname + '_' + ts
+            tdSql.execute(f'create database if not exists {dbname} precision "{ts}"')
+            tdSql.execute(f'create stable if not exists {dbname}.stb (col_ts timestamp, c1 int) tags (tag_ts timestamp, t1 int)')
+            tdSql.execute(f'create table if not exists {dbname}.tb using {dbname}.stb tags (now, 1)')
+            for ts_unit in tdCom.gen_ts_support_unit_list():
+                tdSql.error(f'create table if not exists {dbname}.tb_error using {dbname}.stb tags (now+1{ts_unit}, 1)')
+                tdSql.error(f'create table if not exists {dbname}.tb_error using {dbname}.stb tags (now-1{ts_unit}, 1)')
+                tdSql.execute(f'insert into {dbname}.tb values (now+1{ts_unit}, 1)')
+                tdSql.execute(f'insert into {dbname}.tb values (now-1{ts_unit}, 1)')
+            res = tdSql.query(f'select count(*) from {dbname}.tb', True)
+            tdSql.check_equal(res[0][0], 16)
+            tdSql.execute(f'drop database if exists {dbname}')
+
+    def epoch_check(self):
+        '''
+            epoch check
+        '''
+        for ts in ["ms", "us", "ns"]:
+            dbname = tdCom.get_long_name(len=5, mode="letters")
+            dbname = dbname + '_' + ts
+            timestamp, dt = tdCom.genTs(ts)
+            tdSql.execute(f'create database if not exists {dbname} precision "{ts}"')
+            tdSql.execute(f'create stable if not exists {dbname}.stb (col_ts timestamp, c1 int) tags (tag_ts timestamp, t1 int)')
+            tdSql.execute(f'create table if not exists {dbname}.tb using {dbname}.stb tags ({timestamp}, 1)')
+            for ts_unit in tdCom.gen_ts_support_unit_list():
+                if ts_unit == "b" or ts_unit == "u" or ts_unit == "a":
+                    step = 10000000
+                else:
+                    step = 1
+                tdSql.error(f'create table if not exists {dbname}.tb_error using {dbname}.stb tags ({timestamp}+1{ts_unit}, 1)')
+                tdSql.error(f'create table if not exists {dbname}.tb_error using {dbname}.stb tags ({timestamp}-1{ts_unit}, 1)')
+                tdSql.execute(f'insert into {dbname}.tb values ({timestamp}+{step}{ts_unit}, 1)')
+                tdSql.execute(f'insert into {dbname}.tb values ({timestamp}-{step}{ts_unit}, 1)')
+            res = tdSql.query(f'select count(*) from {dbname}.tb', True)
+            tdSql.check_equal(res[0][0], 16)
+            tdSql.execute(f'drop database if exists {dbname}')
+
+            
+        
+
+
     def dbname_backquote_unsupport_check(self):
         '''
             backquote unsupported
@@ -89,6 +136,8 @@ class TDTestCase:
 
     def run(self):
         self.ms_us_ns_db_check()
+        self.now_check()
+        self.epoch_check()
         # self.dbname_backquote_unsupport_check()
         # self.upper_lower_dbname_check()
         # self.illegal_dbname_check()

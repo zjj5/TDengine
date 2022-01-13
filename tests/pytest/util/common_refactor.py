@@ -232,6 +232,9 @@ class TDCom:
                 '-', '+', '=', '{', '「', '[', ']', '}', '」', '、', '|', '\\', ':', 
                 ';', '\'', '\"', ',', '<', '《', '.', '>', '》', '/', '?']
 
+    def gen_ts_support_unit_list(self):
+        return ["b", "u", "a", "s", "m", "h", "d", "w"]
+
     def schemalessApiPost(self, sql, url_type="influxdb", dbname="test", precision=None):
         if url_type == "influxdb":
             url = self.genUrl(url_type, dbname, precision)
