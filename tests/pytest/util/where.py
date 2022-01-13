@@ -162,32 +162,38 @@ class TDWhere:
         hanshu_column_stable = random.sample(hanshu,1)+random.sample(column,1)
         return hanshu_column_stable
 
-    def td_error(self):       
+    def time_window(self):       
         time = ['1','2','3','4','5','6','7','8','9','10']
         unit = ['a','s','m','h','d','w','n','y']
+        td_base = str(random.sample(time,1)+random.sample(unit,1)).replace("[","").replace("]","").replace("'","").replace(", ","")
         
-        td_interval = str(random.sample(time,1)+random.sample(unit,1)).replace("[","").replace("]","").replace("'","").replace(", ","")
+        td_interval = td_base
         td_interval = 'interval'+'(' +td_interval + ')'
 
-        td_sliding = str(random.sample(time,1)+random.sample(unit,1)).replace("[","").replace("]","").replace("'","").replace(", ","")
+        td_sliding = td_base
         td_sliding = 'sliding'+'(' +td_sliding + ')'
 
         fill = ['NONE','VALUE,100','PREV','NULL','LINEAR','NEXT']
         td_fill = str(random.sample(fill,1)).replace("[","").replace("]","").replace("'","").replace(", ","")
         td_fill = 'Fill' +'(' +td_fill + ')'
 
+        td_session = td_base
+        td_session = 'SESSION'+'(ts,'+td_session + ')'
+
         if self.NUM == 1:
-            td_error = td_interval
+            time_window = td_interval
         elif self.NUM == 2:
-            td_error = td_interval + ' ' + td_sliding
+            time_window = td_interval + ' ' + td_sliding
         elif self.NUM == 3:
-            td_error = td_fill 
+            time_window = td_fill 
         elif self.NUM == 4:
-            td_error = td_interval + ' ' + td_fill 
-        else :
-            td_error = td_interval + ' ' + td_sliding + ' ' + td_fill 
+            time_window = td_interval + ' ' + td_fill 
+        elif self.NUM == 5 :
+            time_window = td_interval + ' ' + td_sliding + ' ' + td_fill 
+        else:
+            time_window = td_session
         
-        return td_error
+        return time_window
 
     def regular_where(self):       
         regular_q_where = self.q_where()
@@ -196,9 +202,9 @@ class TDWhere:
         q_in_where = regular_q_where[1]
 
         hanshu_column = self.hanshu_int()
-        td_error = self.td_error()
+        time_window = self.time_window()
 
-        return(q_where,q_in_where,hanshu_column,td_error)
+        return(q_where,q_in_where,hanshu_column,time_window)
         #return(q_where,q_in_where,hanshu_column)
 
     def regular_where_null(self):       
