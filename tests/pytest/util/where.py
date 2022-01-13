@@ -147,6 +147,7 @@ class TDWhere:
         hanshu = ['MIN','AVG','MAX','COUNT','SUM','STDDEV','FIRST','LAST','LAST_ROW','','SPREAD','CEIL','FLOOR','ROUND']
         column = ['(q_bigint)','(q_smallint)','(q_tinyint)','(q_int)','(q_float)','(q_double_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_int_null)','(q_float_null)','(q_double_null)']        
         hanshu_column = random.sample(hanshu,1)+random.sample(column,1)
+        hanshu_column = str(hanshu_column).replace("[","").replace("]","").replace("'","").replace(", ","")
         return hanshu_column
 
     def hanshu_all(self):       
@@ -199,23 +200,24 @@ class TDWhere:
         regular_q_where = self.q_where()
         
         q_where = random.sample(regular_q_where[0],5) 
-        q_in_where = regular_q_where[1]
+        #q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","").replace("[","").replace("]","")
+        q_in_where = str(regular_q_where[1]).replace("[","").replace("]","").replace("'","")
 
         hanshu_column = self.hanshu_int()
         time_window = self.time_window()
 
         return(q_where,q_in_where,hanshu_column,time_window)
-        #return(q_where,q_in_where,hanshu_column)
 
     def regular_where_null(self):       
         regular_q_where_null = self.q_where_null()
         
         q_where_null = random.sample(regular_q_where_null[0],5) 
-        q_in_where_null = regular_q_where_null[1]
+        q_in_where_null = str(regular_q_where_null[1]).replace("[","").replace("]","").replace("'","")
 
         hanshu_column = self.hanshu_int()
+        time_window = self.time_window()
 
-        return(q_where_null,q_in_where_null,hanshu_column)
+        return(q_where_null,q_in_where_null,hanshu_column,time_window)
 
     def regular_where_all_and_null(self):   
         regular_q_where = self.q_where()
