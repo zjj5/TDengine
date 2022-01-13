@@ -204,14 +204,14 @@ class TDTestCase:
                         for q_where_new in q_where_new:
                             q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                             q_in_where_new = str(regular_where[1]).replace("[","").replace("]","").replace("'","")
-                            td_error = regular_where[3]
-                            sql2 = "select * from %s where %s %s %s" %(table,q_where_new,q_in_where_new,td_error)
+                            time_window = regular_where[3]
+                            sql2 = "select * from %s where %s %s %s" %(table,q_where_new,q_in_where_new,time_window)
                             tdSql.error(sql2)
 
-                            sql2 = "select * from (select * from %s where %s %s %s)" %(table,q_where_new,q_in_where_new,td_error)
+                            sql2 = "select * from (select * from %s where %s %s %s)" %(table,q_where_new,q_in_where_new,time_window)
                             tdSql.error(sql2)
 
-                            sql2 = "select * from (select * from %s) where %s %s %s" %(table,q_where_new,q_in_where_new,td_error)
+                            sql2 = "select * from (select * from %s) where %s %s %s" %(table,q_where_new,q_in_where_new,time_window)
                             tdSql.error(sql2)
                             
 
