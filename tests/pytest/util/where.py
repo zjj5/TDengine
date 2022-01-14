@@ -19,13 +19,11 @@ import time
 from util.log import tdLog
 from util.cases import tdCases
 from util.sql import tdSql
-from util.dnodes import tdDnodes
 from util.dnodes import *
 import itertools
 from itertools import product
 from itertools import combinations
 from faker import Faker
-from util.createdata import tdCreateData
 
 class TDWhere:
     updatecfgDict={'maxSQLLength':1048576}
@@ -37,24 +35,6 @@ class TDWhere:
         tdSql.init(conn.cursor(), logSql)
 
         os.system("rm -rf util/where.py.sql")        
- 
-    # def regular1_checkall(self,sql):
-    #     tdLog.info(sql)      
-    #     tdSql.query(sql)
-    #     for i in range(1,4):
-    #         for j in range(0,99):
-	#             tdSql.checkData(j,i,j)
-    #     for i in range(8,9):
-    #         for j in range(0,99):
-	#             tdSql.checkData(j,i,j)        
-    #     for j in range(0,99):
-    #         tdSql.checkData(j,6,'binary.'+str(j)) 
-
-    #     for j in range(0,99):
-    #         tdSql.checkData(j,7,'nchar.'+str(j)) 
-        
-    #     for j in range(0,99):
-    #         tdSql.checkData(j,10,'2021-08-27 01:46:40.0'+str(j)) 
 
     # column and tag query
     # **int + floot_dou + other
@@ -384,187 +364,7 @@ class TDWhere:
 
         hanshu_column = self.hanshu_int()
 
-        return(qt_where_add,qt_where_sub,qt_in,hanshu_column)
-
-    def run(self):
-        tdSql.prepare()
-        #创建库，最普通的
-        dcDB = tdCreateData.dropandcreateDB_null()
-        #获取where
-        regular_where = self.regular_where()
-        #combinations遍历where组合
-        for i in range(len(regular_where)+1):
-            q_where_new = list(combinations(regular_where,i))
-            sql1 = 'select  * from regular_table_1;'
-            #print(q_where_new)
-            for q_where_new in q_where_new:
-                #特殊处理
-                q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                #print(q_where_new)
-                #拼接sql
-                sql2 = "select * from regular_table_1 where %s ts < now +1s;" %(q_where_new)
-                dcCK = tdCreateData.dataequal('%s' %sql1 ,100,10,'%s' %sql2 ,100,10) 
-                #可靠性落盘
-                #dcRD = self.restartDnodes()
-
-        dcDB = tdCreateData.dropandcreateDB_null()
-        #获取where,超级表的
-        stable_where = self.stable_where()
-        #combinations遍历where组合
-        for i in range(len(stable_where)+1):
-            qt_where_new = list(combinations(stable_where,i))
-            sql1 = 'select  * from stable_1;'
-            #print(q_where_new)
-            for qt_where_new in qt_where_new:
-                #特殊处理
-                qt_where_new = str(qt_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                #print(q_where_new)
-                #拼接sql
-                sql2 = "select * from stable_1 where %s ts < now +1s;" %(qt_where_new)
-                dcCK = tdCreateData.dataequal('%s' %sql1 ,100,10,'%s' %sql2 ,100,10) 
-                #可靠性落盘
-                #dcRD = self.restartDnodes()
-
-        # 创建库，随机数的
-        dcDB = tdCreateData.dropandcreateDB_random(1)
-        #获取where
-        regular_where = self.regular_where()
-        #combinations遍历where组合
-        for i in range(len(regular_where)+1):
-            q_where_new = list(combinations(regular_where,i))
-            sql1 = 'select  * from regular_table_1;'
-            #print(q_where_new)
-            for q_where_new in q_where_new:
-                #特殊处理
-                q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                #print(q_where_new)
-                #拼接sql
-                sql2 = "select * from regular_table_1 where %s ts < now +1s;" %(q_where_new)
-                dcCK = tdCreateData.dataequal('%s' %sql1 ,100,10,'%s' %sql2 ,100,10) 
-                #可靠性落盘
-                #dcRD = self.restartDnodes()
-
-        #创建库，可以选择多个数据表
-        dcDB = tdCreateData.dropandcreateDB_random(1)
-        #获取where
-        regular_where = self.regular_where()
-        table_select = ['table_1','table_2','table_3']
-        sql1 = 'select  * from stable_1;'
-        #遍历where组合
-        for i in range(len(regular_where)+1):
-            q_where_new = list(combinations(regular_where,i))
-            #print(q_where_new)
-            for q_where_new in q_where_new:
-                #特殊处理
-                q_where_new = str(q_where_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                for j in itertools.product(table_select):
-                    #拼接sql
-                    #sql1 = "select * from stable_1 where %s ts < now +1s;" %(q_where_new)
-                    sql2 = "select * from %s where %s ts < now +1s;" %(j[0],q_where_new)
-                    dcCK = tdCreateData.data2in1('%s' %sql1 ,3000,10,'%s' %sql2 ,1000,10) 
-              
-
-
-        dcDB = tdCreateData.dropandcreateDB_random(1)
-        #获取where,返回2组值不带tag，方便union拼接
-        
-        #table_select = ['table_1','table_2','table_3']
-        sql1 = 'select  * from stable_1;'
-        #遍历where组合
-        regular_where_all = self.regular_where_all()
-        print(regular_where_all)
-        for i in range(len(regular_where_all[0])+1):
-            q_where_add_new = list(combinations(regular_where_all[0],i))
-            for q_where_add_new in q_where_add_new:
-                q_where_add_new = str(q_where_add_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-    
-            for j in range(len(regular_where_all[1])+1):
-                q_where_sub_new = list(combinations(regular_where_all[1],j))
-                for q_where_sub_new in q_where_sub_new:
-                    q_where_sub_new = str(q_where_sub_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                    sql2 = "(select * from stable_1 where %s ts < now +1s) union all " %(q_where_add_new)
-                    sql2 += " (select * from stable_1 where %s ts < now +1s);" %(q_where_sub_new)
-            
-                    dcCK = tdCreateData.data2in1('%s' %sql1 ,3000,10,'%s' %sql2 ,1000,10) 
-
-        dcDB = tdCreateData.dropandcreateDB_random(1)
-        #获取where,返回2组值带tag，方便union拼接
-        
-        #table_select = ['table_1','table_2','table_3']
-        sql1 = 'select  * from stable_1;'
-        #遍历where组合
-        stable_where_all = self.stable_where_all()
-        print(stable_where_all)
-        for i in range(len(stable_where_all[0])+1):
-            qt_where_add_new = list(combinations(stable_where_all[0],i))
-            for qt_where_add_new in qt_where_add_new:
-                qt_where_add_new = str(qt_where_add_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-    
-            for j in range(len(stable_where_all[1])+1):
-                qt_where_sub_new = list(combinations(stable_where_all[1],j))
-                for qt_where_sub_new in qt_where_sub_new:
-                    qt_where_sub_new = str(qt_where_sub_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                    sql2 = "(select * from stable_1 where %s ts < now +1s order by ts) union all " %(qt_where_add_new)
-                    sql2 += " (select * from stable_1 where %s ts < now +1s order by ts asc);" %(qt_where_sub_new)
-            
-                    dcCK = tdCreateData.data2in1('%s' %sql1 ,3000,10,'%s' %sql2 ,2000,10) 
-
-
-        dcDB = tdCreateData.dropandcreateDB_random(1)
-        
-        #遍历where组合,checkrows=0
-        stable_where_all = self.stable_where_all()
-        print(stable_where_all)
-        for i in range(2,len(stable_where_all[0])+1):
-            qt_where_add_new = list(combinations(stable_where_all[0],i))
-            for qt_where_add_new in qt_where_add_new:
-                qt_where_add_new = str(qt_where_add_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","").replace("=","")
-    
-        for j in range(2,len(stable_where_all[1])+1):
-            qt_where_sub_new = list(combinations(stable_where_all[1],j))
-            for qt_where_sub_new in qt_where_sub_new:
-                qt_where_sub_new = str(qt_where_sub_new).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","").replace("=","")
-                sql = "select * from stable_1 where %s %s ts < now +1s order by ts " %(qt_where_add_new,qt_where_sub_new)
-
-                tdSql.query(sql)
-        
-                #dcCK = tdCreateData.result_0(sql) 
-                    
-                    
-        # night
-        dcDB = tdCreateData.dropandcreateDB_null()
-    
-        dcCK = tdCreateData.dataequal('select  * from regular_table_1 where ts < now +1s;',10,1,'select  * from table_1 where ts < now +1s;',10,1)  
-        dcCK = tdCreateData.data2in1('select  * from regular_table_2',100,10,'select  * from table_2',10,10) 
-        dcCK = tdCreateData.dataequal('select  * from regular_table_1',100,10,'select  * from stable_1',100,10) 
-        
-        #dcRD = tdCreateData.restartDnodes()
-        dcCK = tdCreateData.dataequal('select  * from (select  * from stable_1 where ts < now +1h limit 1000) ',100,10,\
-            '(select  * from stable_1 where ts < now +1h and loc in (\'table_1\') limit 1000 ) union all \
-                select  * from stable_1 where ts < now +1h and loc in (\'table_2\') limit 1000',100,10)  
-
-        dcDB = tdCreateData.dropandcreateDB_random(1)
-        dcCK = tdCreateData.dataequal('select  * from regular_table_1',100,10,'select  * from regular_table_1 where ts < now +1h',100,10)  
-
-
-        dcCK = tdCreateData.dataequal('select  * from regular_table_2',100,10,'select  * from regular_table_2 where ts < now +1h',100,10)
-        dcCK = tdCreateData.dataequal('select  * from regular_table_3',100,10,'select  * from regular_table_3 where ts < now +1h',100,10)
-        dcCK = tdCreateData.data2in1('select  * from stable_1',3000,20,'select  * from table_1 where ts < now +1h',300,10)
-        dcCK = tdCreateData.data2in1('select  * from stable_1',3000,20,'select  * from table_2 where ts < now +1h',1000,20)
-        dcCK = tdCreateData.data2in1('select  * from stable_1',3000,20,'select  * from table_3 where ts < now +1h',1000,20) 
-
-        dcDB = tdCreateData.dropandcreateDB_random(1)
-        dcRD = tdCreateData.restartDnodes()
-        dcCK = tdCreateData.data2in1('select  * from (select  * from stable_1 where ts < now +1h) ',3000,10,\
-            '(select  * from stable_1 where ts < now +1h and loc in (\'table_1\')) union all \
-             (select  * from stable_1 where ts < now +1h and loc in (\'table_3\')) union all \
-             (select  * from stable_2 where ts < now +1h and loc in (\'table_21\')) union all \
-             (select  * from stable_1 where ts < now +1h and loc in (\'table_2\')) ',3000,10)  
-        dcCK = tdCreateData.data2in1('select  * from (select  * from stable_1 where ts < now +1h) ',3000,20,\
-            '(select  * from stable_1 where ts < now +1h and loc in (\'table_1\')) union all \
-             (select  * from stable_1 where ts < now +1h and loc in (\'table_3\')) union all \
-             (select  * from stable_2 where ts < now +1h and loc in (\'table_21\')) union all \
-             (select  * from stable_1 where ts < now +1h and loc in (\'table_2\')) ',3000,20)  
+        return(qt_where_add,qt_where_sub,qt_in,hanshu_column)        
 
     def stop(self):
         tdSql.close()
