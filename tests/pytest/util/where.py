@@ -27,7 +27,7 @@ from faker import Faker
 
 class TDWhere:
     updatecfgDict={'maxSQLLength':1048576}
-    NUM = random.randint(1, 30)
+    NUM = random.randint(1, 10)
     print(NUM)
 
     def init(self, conn, logSql):
@@ -143,6 +143,56 @@ class TDWhere:
         hanshu_column_stable = random.sample(hanshu,1)+random.sample(column,1)
         return hanshu_column_stable
 
+    def column(self):
+        int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
+        bia_column = ['(*)','(_c0)','(_C0)','(q_bool)','(q_binary)','(q_nchar)','(q_ts)','(q_bool_null)','(q_binary_null)','(q_nchar_null)','(q_ts_null)']
+        tag_column = ['(tbname)','(loc)','(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
+        columns = int_column + bia_column + tag_column         
+
+        if self.NUM == 1:
+            columns = str(random.sample(int_column,1)+random.sample(bia_column,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+        elif self.NUM == 2:
+            columns = str(random.sample(bia_column,2)+random.sample(tag_column,2)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+        elif self.NUM == 3:
+            columns = str(random.sample(int_column,3)+random.sample(tag_column,3)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+        elif self.NUM == 4:
+            columns = str(random.sample(columns,10)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+        else:
+            columns = str(random.sample(columns,5)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+        
+        return columns
+
+    def column_hanshu(self):
+        int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
+        bia_column = ['(*)','(_c0)','(_C0)','(q_bool)','(q_binary)','(q_nchar)','(q_ts)','(q_bool_null)','(q_binary_null)','(q_nchar_null)','(q_ts_null)']
+        tag_column = ['(tbname)','(loc)','(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
+        columns = int_column + bia_column + tag_column
+
+        hanshu_column = self.hanshu_int()
+
+        hanshu_columns = ''
+        for i in range(3):
+            hanshu_column = self.hanshu_int()
+            hanshu_columns += hanshu_column + ','            
+
+        if self.NUM == 1:
+            columns = str(random.sample(int_column,1)+random.sample(bia_column,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+        elif self.NUM == 2:
+            columns = str(random.sample(bia_column,2)+random.sample(tag_column,2)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+        elif self.NUM == 3:
+            columns = str(random.sample(int_column,3)+random.sample(tag_column,3)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+        elif self.NUM == 4:
+            columns = str(random.sample(columns,10)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+        elif self.NUM == 5 :
+            columns = hanshu_column
+        elif self.NUM == 6 :
+            columns = hanshu_columns + hanshu_column
+        else:
+            columns = str(random.sample(columns,5)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+        
+        return columns
+
+
     def time_window(self):       
         time = ['1','2','3','4','5','6','7','8','9','10']
         unit = ['a','s','m','h','d','w','n','y']
@@ -183,10 +233,11 @@ class TDWhere:
         #q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","").replace("[","").replace("]","")
         q_in_where = str(regular_q_where[1]).replace("[","").replace("]","").replace("'","")
 
+        column = self.column()
         hanshu_column = self.hanshu_int()
         time_window = self.time_window()
-
-        return(q_where,q_in_where,hanshu_column,time_window)
+        
+        return(q_where,q_in_where,hanshu_column,time_window,column)
 
     def regular_where_null(self):       
         regular_q_where_null = self.q_where_null()
