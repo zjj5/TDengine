@@ -32,7 +32,16 @@ class TDWhere_makesql:
 
     def init(self, conn, logSql):
         tdLog.debug("start to execute %s" % __file__)
-        tdSql.init(conn.cursor(), logSql)       
+        tdSql.init(conn.cursor(), logSql)   
+
+    def execution_sql(self, sql):
+        expectErrNotOccured = True
+        try:            
+            self.cursor.execute(sql)
+            tdLog.info("sql:%s, no error occured" % (sql))
+        except BaseException:            
+            expectErrNotOccured = False
+            tdLog.info("sql:%s, error occured" % (sql))    
 
     # column and tag query
     # **int + floot_dou + other
