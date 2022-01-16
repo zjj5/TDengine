@@ -53,6 +53,27 @@ class TDTestCase:
             tdSql.check_equal(str(res[0][0]), str(dt))
             tdSql.execute(f'drop database if exists {dbname}')
 
+    def h_m_s_check(self):
+        '''
+            check hh:mm:ss
+        '''
+        dbname = tdCom.get_long_name(len=5, mode="letters")
+        tdSql.execute(f'create database if not exists {dbname} precision "ms"')
+        tdSql.execute(f'create stable if not exists {dbname}.stb (col_ts timestamp, c1 int) tags (tag_ts timestamp, t1 int)')
+        tdSql.execute(f'create table if not exists {dbname}.tb using {dbname}.stb tags (now, 1)')
+        tdSql.execute(f'insert into {dbname}.tb values ("2022-01-16 21:17:01", 1)')
+        res = tdSql.query(f'select * from {dbname}.tb where c1 = 1', True)
+        tdSql.check_equal(str(res[0][0]), "2022-01-16 21:17:01")
+        tdSql.execute(f'insert into {dbname}.tb values ("2022-01-16 21:17:61", 2)')
+        res = tdSql.query(f'select * from {dbname}.tb where c1 = 2', True)
+        tdSql.check_equal(str(res[0][0]), "2022-01-16 21:18:01")
+        tdSql.execute(f'insert into {dbname}.tb values ("2022-01-16 21:17:121", 3)')
+        res = tdSql.query(f'select * from {dbname}.tb where c1 = 3', True)
+        tdSql.check_equal(str(res[0][0]), "2022-01-16 21:17:12")
+        # TODO confirm 
+        tdSql.error(f'insert into {dbname}.tb values ("2022-01-16 21:17:62", 2)')
+        tdSql.execute(f'drop database if exists {dbname}')
+        
     def now_check(self):
         '''
             now check
@@ -145,14 +166,16 @@ class TDTestCase:
 
     def run(self):
         self.ms_us_ns_db_check()
+        self.h_m_s_check()
         self.now_check()
         self.epoch_check()
         self.error_check()
+        
 
         if self.err_case > 0:
             tdLog.exit(f"{self.err_case} failed")
         else:
-            tdLog.success("4 cases passed")
+            tdLog.success("5 cases passed")
 
     def stop(self):
         tdSql.close()
