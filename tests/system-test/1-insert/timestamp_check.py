@@ -25,10 +25,13 @@ class TDTestCase:
     def caseDescription(self):
 
         '''
-        case1 <jayden>: [TD-11282] : db name length check (max 32);\n
-        case2 <jayden>: [TD-11282] : unsupport backquote;\n
-        case3 <jayden>: [TD-11282] : case insensitive;\n
-        case4 <jayden>: [TD-11282] : illegal dbname check
+        case1 <jayden>: [TD-11282] : check db ms/us/ns precision;\n
+        case2 <jayden>: [TD-11282] : check ts second-level >= 60;\n
+        case3 <jayden>: [TD-11282] : human date check;\n
+        case4 <jayden>: [TD-11282] : now check;\n
+        case5 <jayden>: [TD-11282] : epoch check;\n
+        case6 <jayden>: [TD-11282] : erro check;\n
+
         '''
         return
 
