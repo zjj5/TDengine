@@ -73,6 +73,34 @@ class TDTestCase:
         # TODO confirm 
         tdSql.error(f'insert into {dbname}.tb values ("2022-01-16 21:17:62", 2)')
         tdSql.execute(f'drop database if exists {dbname}')
+
+    # ! bug
+    def human_date_check(self):
+        '''
+            human date check
+        '''
+        for ts in ["ms"]:
+            dbname = tdCom.get_long_name(len=5, mode="letters")
+            dbname = dbname + '_' + ts
+            timestamp = tdCom.genTs(ts)[1]
+            tdSql.execute(f'create database if not exists {dbname} precision "{ts}"')
+            tdSql.execute(f'create stable if not exists {dbname}.stb (col_ts timestamp, c1 int) tags (tag_ts timestamp, t1 int)')
+            tdSql.execute(f'create table if not exists {dbname}.tb using {dbname}.stb tags (now, 1)')
+            for ts_unit in tdCom.gen_ts_support_unit_list():
+                if ts_unit == "b" or ts_unit == "u" or ts_unit == "a":
+                    step = 10000000
+                else:
+                    step = 1
+                # tdSql.execute(f'create table if not exists {dbname}.{ts_unit}{step}_add using {dbname}.stb tags ("{timestamp}+1000{ts_unit}", 1)')
+                # tdSql.execute(f'create table if not exists {dbname}.{ts_unit}{step}_sub using {dbname}.stb tags ("{timestamp}-1{ts_unit}", 1)')
+                tdSql.execute(f'insert into {dbname}.tb values ("{timestamp}+1{ts_unit}", 1)')
+                tdSql.execute(f'insert into {dbname}.tb values ("{timestamp}-1{ts_unit}", 1)')
+            res = tdSql.query(f'select count(*) from {dbname}.tb', True)
+            tdSql.check_equal(res[0][0], 16)
+            res = tdSql.query(f'show {dbname}.stables', True)
+            tdSql.check_equal(res[0][4], 17)
+            tdSql.execute(f'drop database if exists {dbname}')
+        
         
     def now_check(self):
         '''
@@ -89,12 +117,14 @@ class TDTestCase:
                     step = 10000000
                 else:
                     step = 1
-                tdSql.error(f'create table if not exists {dbname}.tb_error using {dbname}.stb tags (now+1{ts_unit}, 1)')
-                tdSql.error(f'create table if not exists {dbname}.tb_error using {dbname}.stb tags (now-1{ts_unit}, 1)')
+                tdSql.execute(f'create table if not exists {dbname}.{ts_unit}{step}_add using {dbname}.stb tags (now+{step}{ts_unit}, 1)')
+                tdSql.execute(f'create table if not exists {dbname}.{ts_unit}{step}_sub using {dbname}.stb tags (now-{step}{ts_unit}, 1)')
                 tdSql.execute(f'insert into {dbname}.tb values (now+{step}{ts_unit}, 1)')
                 tdSql.execute(f'insert into {dbname}.tb values (now-{step}{ts_unit}, 1)')
             res = tdSql.query(f'select count(*) from {dbname}.tb', True)
             tdSql.check_equal(res[0][0], 16)
+            res = tdSql.query(f'show {dbname}.stables', True)
+            tdSql.check_equal(res[0][4], 17)
             tdSql.execute(f'drop database if exists {dbname}')
 
     def epoch_check(self):
@@ -167,6 +197,8 @@ class TDTestCase:
     def run(self):
         self.ms_us_ns_db_check()
         self.h_m_s_check()
+        #! bug
+        # self.human_date_check()
         self.now_check()
         self.epoch_check()
         self.error_check()
