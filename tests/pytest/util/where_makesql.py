@@ -27,7 +27,7 @@ from faker import Faker
 
 class TDWhere_makesql:
     updatecfgDict={'maxSQLLength':1048576}
-    NUM = random.randint(5, 6)
+    NUM = random.randint(0, 10)
     print(NUM)
 
     def init(self, conn, logSql):
@@ -37,11 +37,12 @@ class TDWhere_makesql:
     def execution_sql(self, sql):
         expectErrNotOccured = True
         try:            
-            self.cursor.execute(sql)
+            tdSql.execute(sql)
             tdLog.info("sql:%s, no error occured" % (sql))
         except BaseException:            
             expectErrNotOccured = False
-            tdLog.info("sql:%s, error occured" % (sql))    
+            #tdLog.info("sql:%s, error occured" % (sql))    
+        
 
     # column and tag query
     # **int + floot_dou + other
@@ -52,83 +53,81 @@ class TDWhere_makesql:
         q_int_where = ['q_bigint >= -9223372036854775807 and ' , 'q_bigint <= 9223372036854775807 and ','q_smallint >= -32767 and ', 'q_smallint <= 32767 and ',
         'q_tinyint >= -127 and ' , 'q_tinyint <= 127 and ' , 'q_int <= 2147483647 and ' , 'q_int >= -2147483647 and ',
         'q_tinyint != 128 and ',
+        'q_bigint <= 0 and ' , 'q_smallint <= 0 and ', 'q_tinyint <= 0 and ' ,  'q_int <= 0 and ',
+        'q_bigint between -9223372036854775807 and 0 and ',' q_int between -2147483647 and 0 and ',
+        'q_smallint between -32767 and 0 and ', 'q_tinyint between -127 and 0 and ',
+        'q_smallint is not null and ' , 'q_tinyint is not null and ' ,
         'q_bigint between  -9223372036854775807 and 9223372036854775807 and ',' q_int between -2147483647 and 2147483647 and ',
         'q_smallint between -32767 and 32767 and ', 'q_tinyint between -127 and 127  and ',
-        'q_bigint is not null and ' , 'q_int is not null and ' , 'q_smallint is not null and ' , 'q_tinyint is not null and ' ,]
+        'q_bigint is not null and ' , 'q_int is not null and ' , 'q_smallint is not null and ' , 'q_tinyint is not null and ' ,
+        'q_bigint < -9223372036854775807 and ' , 'q_bigint > 9223372036854775807 and ','q_smallint < -32767 and ', 'q_smallint > 32767 and ',
+        'q_tinyint < -127 and ' , 'q_tinyint > 127 and ' , 'q_int > 2147483647 and ' , 'q_int < -2147483647 and ',
+        'q_bigint between  9223372036854775807 and -9223372036854775807 and ',' q_int between 2147483647 and -2147483647 and ',
+        'q_smallint between 32767 and -32767 and ', 'q_tinyint between 127 and -127  and ',
+        'q_bigint is null and ' , 'q_int is null and ' , 'q_smallint is null and ' , 'q_tinyint is null and ' ,
+        'q_bigint >= 0 and ' , 'q_smallint >= 0 and ', 'q_tinyint >= 0 and ' ,  'q_int >= 0 and ',
+        'q_bigint between  0 and 9223372036854775807 and ',' q_int between 0 and 2147483647 and ',
+        'q_smallint between 0 and 32767 and ', 'q_tinyint between 0 and 127  and ',
+        'q_bigint is not null and ' , 'q_int is not null and ' ,]
 
         q_fl_do_where = ['q_float >= -3.4E38 and ','q_float <= 3.4E38 and ', 'q_double >= -1.7E308 and ','q_double <= 1.7E308 and ', 
         'q_float between -3.4E38 and 3.4E38 and ','q_double between -1.7E308 and 1.7E308 and ' ,
-        'q_float is not null and ' ,'q_double is not null and ' ,]
+        'q_float is not null and ' ,'q_double is not null and ' ,'q_float >= 0 and ', 'q_double >= 0 and ' , 'q_float between 0 and 3.4E38 and ',
+        'q_double between 0 and 1.7E308 and ' ,'q_float is not null and ' ,'q_float <= 0 and ', 'q_double <= 0 and ' , 'q_float between -3.4E38 and 0 and ','q_double between -1.7E308 and 0 and ' ,
+        'q_double is not null and ' ,
+        'q_float < -3.4E38 and ','q_float > 3.4E38 and ', 'q_double < -1.7E308 and ','q_double > 1.7E308 and ', 
+        'q_float between 3.4E38 and -3.4E38 and ','q_double between 1.7E308 and -1.7E308 and ' ,
+        'q_float is null and ' ,'q_double is null and ' ,]
 
-        q_nc_bi_bo_ts_where = [ 'q_bool is not null and ' ,'q_binary is not null and ' ,'q_nchar is not null and ' ,'q_ts is not null and ' ,]
+        q_nc_bi_bo_ts_where = [ 'q_bool is not null and ' ,'q_binary is not null and ' ,'q_nchar is not null and ' ,'q_ts is not null and ' ,
+        'q_nchar is not null and ' ,'q_ts is not null and ' ,'q_bool is not null and ' ,'q_binary is not null and ' ,
+        'q_bool is null and ' ,'q_binary is null and ' ,'q_nchar is null and ' ,'q_ts is null and ' ,]
         
-        q_where = random.sample(q_int_where,4) + random.sample(q_fl_do_where,2) + random.sample(q_nc_bi_bo_ts_where,2)
+        q_where = random.sample(q_int_where,4) + random.sample(q_fl_do_where,3) + random.sample(q_nc_bi_bo_ts_where,2)
 
         q_in_where = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or  q_bool = false)' , '(q_bool = 0 or q_bool = 1)',]
         q_in = random.sample(q_in_where,1)
         
         return(q_where,q_in)
 
-    def q_where_null(self):  
-
-        q_int_where = ['q_bigint < -9223372036854775807 and ' , 'q_bigint > 9223372036854775807 and ','q_smallint < -32767 and ', 'q_smallint > 32767 and ',
-        'q_tinyint < -127 and ' , 'q_tinyint > 127 and ' , 'q_int > 2147483647 and ' , 'q_int < -2147483647 and ',
-        'q_bigint between  9223372036854775807 and -9223372036854775807 and ',' q_int between 2147483647 and -2147483647 and ',
-        'q_smallint between 32767 and -32767 and ', 'q_tinyint between 127 and -127  and ',
-        'q_bigint is null and ' , 'q_int is null and ' , 'q_smallint is null and ' , 'q_tinyint is null and ' ,]
-
-        q_fl_do_where = ['q_float < -3.4E38 and ','q_float > 3.4E38 and ', 'q_double < -1.7E308 and ','q_double > 1.7E308 and ', 
-        'q_float between 3.4E38 and -3.4E38 and ','q_double between 1.7E308 and -1.7E308 and ' ,
-        'q_float is null and ' ,'q_double is null and ' ,]
-
-        q_nc_bi_bo_ts_where = [ 'q_bool is null and ' ,'q_binary is null and ' ,'q_nchar is null and ' ,'q_ts is null and ' ,]
-        
-        q_where_null = random.sample(q_int_where,4) + random.sample(q_fl_do_where,2) + random.sample(q_nc_bi_bo_ts_where,2)
-
-        q_in_where = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or  q_bool = false)' , '(q_bool = 0 or q_bool = 1)',]
-        q_in_null = random.sample(q_in_where,1)
-
-        return(q_where_null,q_in_null)
 
     def t_where(self):   
         t_int_where = ['t_bigint >= -9223372036854775807 and ' , 't_bigint <= 9223372036854775807 and ','t_smallint >= -32767 and ', 't_smallint <= 32767 and ',
         't_tinyint >= -127 and ' , 't_tinyint <= 127 and ' , 't_int <= 2147483647 and ' , 't_int >= -2147483647 and ',
-        't_tinyint != 128 and ',
+        't_tinyint != 128 and ','t_bigint >= 0 and ' , 't_smallint >= 0 and ', 't_tinyint >= 0 and ' ,  't_int >= 0 and ',
+        't_bigint between  0 and 9223372036854775807 and ',' t_int between 0 and 2147483647 and ',
+        't_smallint between 0 and 32767 and ', 't_tinyint between 0 and 127  and ',
+        't_bigint is not null and ' , 't_int is not null and ' ,'t_bigint <= 0 and ' , 't_smallint <= 0 and ', 't_tinyint <= 0 and ' ,  't_int <= 0 and ',
+        't_bigint between -9223372036854775807 and 0 and ',' t_int between -2147483647 and 0 and ',
+        't_smallint between -32767 and 0 and ', 't_tinyint between -127 and 0 and ',
+        't_smallint is not null and ' , 't_tinyint is not null and ' ,
         't_bigint between  -9223372036854775807 and 9223372036854775807 and ',' t_int between -2147483647 and 2147483647 and ',
         't_smallint between -32767 and 32767 and ', 't_tinyint between -127 and 127  and ',
-        't_bigint is not null and ' , 't_int is not null and ' , 't_smallint is not null and ' , 't_tinyint is not null and ' ,]
-
-        t_fl_do_where = ['t_float >= -3.4E38 and ','t_float <= 3.4E38 and ', 't_double >= -1.7E308 and ','t_double <= 1.7E308 and ', 
-        't_float between -3.4E38 and 3.4E38 and ','t_double between -1.7E308 and 1.7E308 and ' ,
-        't_float is not null and ' ,'t_double is not null and ' ,]
-
-        t_nc_bi_bo_ts_where = [ 't_bool is not null and ' ,'t_binary is not null and ' ,'t_nchar is not null and ' ,'t_ts is not null and ' ,]
-
-        t_where = random.sample(t_int_where,4) + random.sample(t_fl_do_where,2) + random.sample(t_nc_bi_bo_ts_where,2)
-        
-        t_in = ['t_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or  t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
-        
-        return(t_where,t_in)
-
-    def t_where_null(self):   
-        t_int_where = ['t_bigint < -9223372036854775807 and ' , 't_bigint > 9223372036854775807 and ','t_smallint < -32767 and ', 't_smallint > 32767 and ',
+        't_bigint is not null and ' , 't_int is not null and ' , 't_smallint is not null and ' , 't_tinyint is not null and ' ,
+        't_bigint < -9223372036854775807 and ' , 't_bigint > 9223372036854775807 and ','t_smallint < -32767 and ', 't_smallint > 32767 and ',
         't_tinyint < -127 and ' , 't_tinyint > 127 and ' , 't_int > 2147483647 and ' , 't_int < -2147483647 and ',
         't_bigint between  9223372036854775807 and -9223372036854775807 and ',' t_int between 2147483647 and -2147483647 and ',
         't_smallint between 32767 and -32767 and ', 't_tinyint between 127 and -127  and ',
         't_bigint is null and ' , 't_int is null and ' , 't_smallint is null and ' , 't_tinyint is null and ' ,]
 
-        t_fl_do_where = ['t_float < -3.4E38 and ','t_float > 3.4E38 and ', 't_double < -1.7E308 and ','t_double > 1.7E308 and ', 
+        t_fl_do_where = ['t_float >= -3.4E38 and ','t_float <= 3.4E38 and ', 't_double >= -1.7E308 and ','t_double <= 1.7E308 and ', 
+        't_float between -3.4E38 and 3.4E38 and ','t_double between -1.7E308 and 1.7E308 and ' ,
+        't_float is not null and ' ,'t_double is not null and ' ,'t_float >= 0 and ', 't_double >= 0 and ' , 't_float between 0 and 3.4E38 and ','t_double between 0 and 1.7E308 and ' ,
+        't_float is not null and ' ,'t_float <= 0 and ', 't_double <= 0 and ' , 't_float between -3.4E38 and -1 and ','t_double between -1.7E308 and -1 and ' ,
+        't_double is not null and ' ,
+        't_float < -3.4E38 and ','t_float > 3.4E38 and ', 't_double < -1.7E308 and ','t_double > 1.7E308 and ', 
         't_float between 3.4E38 and -3.4E38 and ','t_double between 1.7E308 and -1.7E308 and ' ,
         't_float is null and ' ,'t_double is null and ' ,]
 
-        t_nc_bi_bo_ts_where = [ 't_bool is null and ' ,'t_binary is null and ' ,'t_nchar is null and ' ,'t_ts is null and ' ,]
+        t_nc_bi_bo_ts_where = [ 't_bool is not null and ' ,'t_binary is not null and ' ,'t_nchar is not null and ' ,'t_ts is not null and ' ,'t_bool is not null and ' ,'t_binary is not null and ' ,
+        't_bool is null and ' ,'t_binary is null and ' ,'t_nchar is null and ' ,'t_ts is null and ' ,'t_nchar is not null and ' ,'t_ts is not null and ' ,]
 
-        t_where_null = random.sample(t_int_where,4) + random.sample(t_fl_do_where,2) + random.sample(t_nc_bi_bo_ts_where,2)
+        t_where = random.sample(t_int_where,4) + random.sample(t_fl_do_where,3) + random.sample(t_nc_bi_bo_ts_where,2)
         
-        t_in_where = ['t_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or  t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
-        t_in_null = random.sample(t_in_where,1)
-
-        return(t_where_null,t_in_null)
+        q_in_where = ['t_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or  t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
+        t_in = random.sample(q_in_where,1)
+        
+        return(t_where,t_in)
 
     def hanshu_int(self):       
         hanshu = ['MIN','AVG','MAX','COUNT','SUM','STDDEV','FIRST','LAST','LAST_ROW','','SPREAD','CEIL','FLOOR','ROUND']
@@ -233,196 +232,63 @@ class TDWhere_makesql:
         
         return time_window
 
-    def regular_where(self):       
-        regular_q_where = self.q_where()
+    def altertable(self):
+        int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_bool)','(q_bool_null)','(q_ts_null)','(q_ts)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
+        bia_column = ['(q_binary)','(q_nchar)','(q_binary_null)','(q_nchar_null)']
         
-        q_where = random.sample(regular_q_where[0],5) 
-        #q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","").replace("[","").replace("]","")
-        q_in_where = str(regular_q_where[1]).replace("[","").replace("]","").replace("'","")
+        columns = int_column + bia_column     
+        column = str(random.sample(columns,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")  
+
+        tag_column = ['(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
+        tag = str(random.sample(tag_column,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","") 
+        
+        al_column = str(random.sample(bia_column,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","") 
+        al_tag = ['(t_binary)','(t_nchar)']
+        al_tag = str(random.sample(al_tag,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","") 
+
+        table_list = ['regular_table_1','regular_table_2','regular_table_null']
+        r_table = str(random.sample(table_list,1)).replace("[","").replace("]","").replace("'","")   
+
+        stable_list = ['stable_1','stable_2']
+        s_table = str(random.sample(stable_list,1)).replace("[","").replace("]","").replace("'","")  
+
+        if self.NUM == 0:
+            self.execution_sql("ALTER TABLE %s DROP COLUMN %s" %(r_table,column))
+        elif self.NUM == 1: 
+            self.execution_sql("ALTER STABLE %s DROP COLUMN %s" %(s_table,column))
+        elif self.NUM == 2:
+            self.execution_sql("ALTER STABLE %s DROP TAG %s" %(s_table,tag))
+        elif self.NUM == 3:
+            self.execution_sql("ALTER TABLE %s MODIFY COLUMN %s nchar(200)" %(r_table,al_column)) 
+        elif self.NUM == 4:
+            self.execution_sql("ALTER STABLE %s MODIFY COLUMN %s binary(200)" %(s_table,al_column)) 
+        elif self.NUM == 5:
+            self.execution_sql("ALTER STABLE %s MODIFY TAG %s binary(200)" %(s_table,al_tag)) 
+        else:
+            self.execution_sql("ALTER TABLE %s DROP TAG %s" %(s_table,tag))
+
+    def regular_where(self):       
+        query_where = self.q_where()
+        tag_where = self.t_where()
+
+        table_list = ['regular_table_1','table_1','regular_table_2','table_2','table_null','regular_table_null','stable_1','stable_2']
+        stable_list = ['stable_1','stable_2']
+        table = str(random.sample(table_list,1)).replace("[","").replace("]","").replace("'","")
+        if table not in stable_list:
+            q_where = random.sample(query_where[0],6)
+        else:
+            q_where = random.sample(query_where[0],4) + random.sample(tag_where[0],4)
+
+        if self.NUM%2 ==0:
+            q_in_where = str(query_where[1]).replace("[","").replace("]","").replace("'","")
+        else:
+            q_in_where = str(tag_where[1]).replace("[","").replace("]","").replace("'","")
 
         column = self.column()
         hanshu_column = self.hanshu_int()
         time_window = self.time_window()
         
-        return(q_where,q_in_where,hanshu_column,time_window,column)
-
-    def regular_where_null(self):       
-        regular_q_where_null = self.q_where_null()
-        
-        q_where_null = random.sample(regular_q_where_null[0],5) 
-        q_in_where_null = str(regular_q_where_null[1]).replace("[","").replace("]","").replace("'","")
-
-        hanshu_column = self.hanshu_int()
-        time_window = self.time_window()
-
-        return(q_where_null,q_in_where_null,hanshu_column,time_window)
-
-    def regular_where_all_and_null(self):   
-        regular_q_where = self.q_where()
-        
-        q_where = random.sample(regular_q_where[0],5) 
-        q_in_where = str(regular_q_where[1]).replace("[","").replace("]","").replace("'","")
-
-        regular_q_where_null = self.q_where_null()
-        
-        q_where_null = random.sample(regular_q_where_null[0],5) 
-        q_in_where_null = str(regular_q_where_null[1]).replace("[","").replace("]","").replace("'","")
-
-        hanshu_column = self.hanshu_int()
-        time_window = self.time_window()
-
-        return(q_where,q_in_where,q_where_null,q_in_where_null,hanshu_column,time_window)
-
-    def stable_where(self):       
-        stable_q_where = self.q_where()
-        stable_t_where = self.t_where()
-
-        qt_where = random.sample(stable_q_where[0],3) + random.sample(stable_t_where[0],3)
-        print(qt_where)
-        qt_in_where = random.sample((stable_q_where[1] + stable_t_where[1]),1)
-        print(qt_in_where)
-
-        hanshu_column = self.hanshu_int()
-        time_window = self.time_window()
-
-        return(qt_where,qt_in_where,hanshu_column,time_window)
-
-    # test >=0 <=0
-    def regular_where_all_null(self):   
-        q_where = self.q_where()
-        
-        q_where = random.sample(q_where[0],5) 
-        q_in_where = random.sample(q_where[1],1)
-
-        q_where_null = self.q_where()
-        
-        q_where = random.sample(q_where[0],5) 
-        q_in_where = random.sample(q_where[1],1)
-
-        q_int_where_add = ['q_bigint >= 0 and ' , 'q_smallint >= 0 and ', 'q_tinyint >= 0 and ' ,  'q_int >= 0 and ',
-        'q_bigint between  0 and 9223372036854775807 and ',' q_int between 0 and 2147483647 and ',
-        'q_smallint between 0 and 32767 and ', 'q_tinyint between 0 and 127  and ',
-        'q_bigint is not null and ' , 'q_int is not null and ' ,]
-
-        q_fl_do_where_add = ['q_float >= 0 and ', 'q_double >= 0 and ' , 'q_float between 0 and 3.4E38 and ','q_double between 0 and 1.7E308 and ' ,
-        'q_float is not null and ' ,]
-
-        q_nc_bi_bo_ts_where_add = ['q_nchar is not null and ' ,'q_ts is not null and ' ,]
-
-        q_where_add = random.sample(q_int_where_add,2) + random.sample(q_fl_do_where_add,1) + random.sample(q_nc_bi_bo_ts_where_add,1)
-        
-        q_int_where_sub = ['q_bigint <= 0 and ' , 'q_smallint <= 0 and ', 'q_tinyint <= 0 and ' ,  'q_int <= 0 and ',
-        'q_bigint between -9223372036854775807 and 0 and ',' q_int between -2147483647 and 0 and ',
-        'q_smallint between -32767 and 0 and ', 'q_tinyint between -127 and 0 and ',
-        'q_smallint is not null and ' , 'q_tinyint is not null and ' ,]
-
-        q_fl_do_where_sub = ['q_float <= 0 and ', 'q_double <= 0 and ' , 'q_float between -3.4E38 and 0 and ','q_double between -1.7E308 and 0 and ' ,
-        'q_double is not null and ' ,]
-
-        q_nc_bi_bo_ts_where_sub = ['q_bool is not null and ' ,'q_binary is not null and ' ,]
-
-        q_where_sub = random.sample(q_int_where_sub,2) + random.sample(q_fl_do_where_sub,1) + random.sample(q_nc_bi_bo_ts_where_sub,1)
-
-        return(q_where_add,q_where_sub)
-
-    def stable_where_all(self):  
-        regular_where_all = self.regular_where_all()
-
-        t_int_where_add = ['t_bigint >= 0 and ' , 't_smallint >= 0 and ', 't_tinyint >= 0 and ' ,  't_int >= 0 and ',
-        't_bigint between  0 and 9223372036854775807 and ',' t_int between 0 and 2147483647 and ',
-        't_smallint between 0 and 32767 and ', 't_tinyint between 0 and 127  and ',
-        't_bigint is not null and ' , 't_int is not null and ' ,]
-
-        t_fl_do_where_add = ['t_float >= 0 and ', 't_double >= 0 and ' , 't_float between 0 and 3.4E38 and ','t_double between 0 and 1.7E308 and ' ,
-        't_float is not null and ' ,]
-
-        t_nc_bi_bo_ts_where_add = ['t_nchar is not null and ' ,'t_ts is not null and ' ,]
-
-        qt_where_add = random.sample(t_int_where_add,1) + random.sample(t_fl_do_where_add,1) + random.sample(t_nc_bi_bo_ts_where_add,1) + random.sample(regular_where_all[0],2)
-        
-        t_int_where_sub = ['t_bigint <= 0 and ' , 't_smallint <= 0 and ', 't_tinyint <= 0 and ' ,  't_int <= 0 and ',
-        't_bigint between -9223372036854775807 and 0 and ',' t_int between -2147483647 and 0 and ',
-        't_smallint between -32767 and 0 and ', 't_tinyint between -127 and 0 and ',
-        't_smallint is not null and ' , 't_tinyint is not null and ' ,]
-
-        t_fl_do_where_sub = ['t_float <= 0 and ', 't_double <= 0 and ' , 't_float between -3.4E38 and -1 and ','t_double between -1.7E308 and -1 and ' ,
-        't_double is not null and ' ,]
-
-        t_nc_bi_bo_ts_where_sub = ['t_bool is not null and ' ,'t_binary is not null and ' ,]
-
-        qt_where_sub = random.sample(t_int_where_sub,1) + random.sample(t_fl_do_where_sub,1) + random.sample(t_nc_bi_bo_ts_where_sub,1) + random.sample(regular_where_all[1],2)
-
-        qt_in = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or  q_bool = false)' , '(q_bool = 0 or q_bool = 1)', 't_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or  t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
-
-        hanshu_column = self.hanshu_int()
-
-        return(qt_where_add,qt_where_sub,qt_in,hanshu_column)
-
-    # test all and null
-    def regular_where_all(self):     
-        q_where = self.q_where()  
-
-        q_where = random.sample(q_where[0],5) 
-        q_in_where = random.sample(q_where[1],1)
-
-        q_int_where_add = ['q_bigint >= 0 and ' , 'q_smallint >= 0 and ', 'q_tinyint >= 0 and ' ,  'q_int >= 0 and ',
-        'q_bigint between  0 and 9223372036854775807 and ',' q_int between 0 and 2147483647 and ',
-        'q_smallint between 0 and 32767 and ', 'q_tinyint between 0 and 127  and ',
-        'q_bigint is not null and ' , 'q_int is not null and ' ,]
-
-        q_fl_do_where_add = ['q_float >= 0 and ', 'q_double >= 0 and ' , 'q_float between 0 and 3.4E38 and ','q_double between 0 and 1.7E308 and ' ,
-        'q_float is not null and ' ,]
-
-        q_nc_bi_bo_ts_where_add = ['q_nchar is not null and ' ,'q_ts is not null and ' ,]
-
-        q_where_add = random.sample(q_int_where_add,2) + random.sample(q_fl_do_where_add,1) + random.sample(q_nc_bi_bo_ts_where_add,1)
-        
-        q_int_where_sub = ['q_bigint <= 0 and ' , 'q_smallint <= 0 and ', 'q_tinyint <= 0 and ' ,  'q_int <= 0 and ',
-        'q_bigint between -9223372036854775807 and 0 and ',' q_int between -2147483647 and 0 and ',
-        'q_smallint between -32767 and 0 and ', 'q_tinyint between -127 and 0 and ',
-        'q_smallint is not null and ' , 'q_tinyint is not null and ' ,]
-
-        q_fl_do_where_sub = ['q_float <= 0 and ', 'q_double <= 0 and ' , 'q_float between -3.4E38 and 0 and ','q_double between -1.7E308 and 0 and ' ,
-        'q_double is not null and ' ,]
-
-        q_nc_bi_bo_ts_where_sub = ['q_bool is not null and ' ,'q_binary is not null and ' ,]
-
-        q_where_sub = random.sample(q_int_where_sub,2) + random.sample(q_fl_do_where_sub,1) + random.sample(q_nc_bi_bo_ts_where_sub,1)
-
-        return(q_where_add,q_where_sub)
-
-    def stable_where_all(self):  
-        regular_where_all = self.regular_where_all()
-
-        t_int_where_add = ['t_bigint >= 0 and ' , 't_smallint >= 0 and ', 't_tinyint >= 0 and ' ,  't_int >= 0 and ',
-        't_bigint between  0 and 9223372036854775807 and ',' t_int between 0 and 2147483647 and ',
-        't_smallint between 0 and 32767 and ', 't_tinyint between 0 and 127  and ',
-        't_bigint is not null and ' , 't_int is not null and ' ,]
-
-        t_fl_do_where_add = ['t_float >= 0 and ', 't_double >= 0 and ' , 't_float between 0 and 3.4E38 and ','t_double between 0 and 1.7E308 and ' ,
-        't_float is not null and ' ,]
-
-        t_nc_bi_bo_ts_where_add = ['t_nchar is not null and ' ,'t_ts is not null and ' ,]
-
-        qt_where_add = random.sample(t_int_where_add,1) + random.sample(t_fl_do_where_add,1) + random.sample(t_nc_bi_bo_ts_where_add,1) + random.sample(regular_where_all[0],2)
-        
-        t_int_where_sub = ['t_bigint <= 0 and ' , 't_smallint <= 0 and ', 't_tinyint <= 0 and ' ,  't_int <= 0 and ',
-        't_bigint between -9223372036854775807 and 0 and ',' t_int between -2147483647 and 0 and ',
-        't_smallint between -32767 and 0 and ', 't_tinyint between -127 and 0 and ',
-        't_smallint is not null and ' , 't_tinyint is not null and ' ,]
-
-        t_fl_do_where_sub = ['t_float <= 0 and ', 't_double <= 0 and ' , 't_float between -3.4E38 and -1 and ','t_double between -1.7E308 and -1 and ' ,
-        't_double is not null and ' ,]
-
-        t_nc_bi_bo_ts_where_sub = ['t_bool is not null and ' ,'t_binary is not null and ' ,]
-
-        qt_where_sub = random.sample(t_int_where_sub,1) + random.sample(t_fl_do_where_sub,1) + random.sample(t_nc_bi_bo_ts_where_sub,1) + random.sample(regular_where_all[1],2)
-
-        qt_in = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or  q_bool = false)' , '(q_bool = 0 or q_bool = 1)', 't_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or  t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
-
-        hanshu_column = self.hanshu_int()
-
-        return(qt_where_add,qt_where_sub,qt_in,hanshu_column)        
+        return(column,hanshu_column,table,q_where,q_in_where,time_window)
 
     def stop(self):
         tdSql.close()
