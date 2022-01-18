@@ -74,10 +74,11 @@ class TDTestCase:
 
                     print("case1:select column_hanshu from table where condition time_window order\group_by (s)limit_(s)offset")
 
+                    tdCreateData.restartDnodes()
                     regular_where = tdWhere_makesql.regular_where()
                     tdWhere_makesql.altertable()
                     column_hanshu = regular_where[0]
-                    table = regular_where[1]
+                    table = regular_where[1]                    
                     for i in range(1,len(regular_where[2])+1):
                         q_where = list(combinations(regular_where[2],i))
                         for q_where in q_where:
@@ -99,9 +100,7 @@ class TDTestCase:
                             tdWhere_makesql.execution_sql(sql)
 
                             sql = "select %s from %s where %s %s %s %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            tdCreateData.restartDnodes()
+                            tdWhere_makesql.execution_sql(sql)                            
                             
                             sql = "select * from (select %s from %s where %s %s %s %s %s)" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
                             tdWhere_makesql.execution_sql(sql)
