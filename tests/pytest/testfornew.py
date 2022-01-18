@@ -29,19 +29,21 @@ class TDTestCase:
         os.system("sudo rm -rfv *cmd*txt")
         os.system("cd /root/gxy/TDinternal/community/tests/pytest")
 
-        for i in range(3):           
+        for i in range(300):           
             try:
-                testcmd1 = os.system("sudo python3 ./test.py -f query_new/regular_query_null.py  >>/root/log/testcmd1.txt")
+                testcmd1 = os.system("sudo python3 ./test.py -f query_new/auto_makesql.py   >>/root/log/testcmd1.txt")
                 print ("The regular_query_null.py num:%d result is %d " % (i ,  testcmd1))
-                testcmd2 = os.system("sudo python3 ./test.py -f query_new/regular_query_union.py  >>/root/log/testcmd2.txt")                
-                print ("The regular_query_union.py num:%d result is %d " % (i ,  testcmd2))
-                testcmd3 = os.system("sudo python3 ./test.py -f query_new/regular_query.py  >>/root/log/testcmd3.txt")                
-                print ("The regular_query.py num:%d result is %d " % (i ,  testcmd2))
+                # testcmd2 = os.system("sudo python3 ./test.py -f query_new/regular_query_union.py  >>/root/log/testcmd2.txt")                
+                # print ("The regular_query_union.py num:%d result is %d " % (i ,  testcmd2))
+                # testcmd3 = os.system("sudo python3 ./test.py -f query_new/regular_query.py  >>/root/log/testcmd3.txt")                
+                # print ("The regular_query.py num:%d result is %d " % (i ,  testcmd2))
 
-                if testcmd1==0 and testcmd2==0 and testcmd3==0:
-                    continue
+                # if testcmd1==0 and testcmd2==0 and testcmd3==0:
+                #     continue
                 # elif :
                 #     continue
+                if testcmd1==0 :
+                    continue
                 else:
                     break
 

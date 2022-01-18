@@ -96,10 +96,11 @@ class TDTestCase:
                             q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                             q_in_where = regular_where[4]                            
                             time_window = regular_where[5]
-                            sql = "select * from %s where %s %s " %(table,q_where,q_in_where)
+                            og_by = regular_where[6]
+                            limit_offset = regular_where[7]
+                            sql = "select * from %s where %s %s %s %s" %(table,q_where,q_in_where,og_by,limit_offset)
                             tdWhere_makesql.execution_sql(sql)
                             
-
                             sql = "select * from (select * from %s where %s %s )" %(table,q_where,q_in_where)
                             tdWhere_makesql.execution_sql(sql)
 

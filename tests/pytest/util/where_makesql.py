@@ -27,7 +27,7 @@ from faker import Faker
 
 class TDWhere_makesql:
     updatecfgDict={'maxSQLLength':1048576}
-    NUM = random.randint(0, 10)
+    NUM = random.randint(0, 30)
     print(NUM)
 
     def init(self, conn, logSql):
@@ -89,7 +89,6 @@ class TDWhere_makesql:
         q_in = random.sample(q_in_where,1)
         
         return(q_where,q_in)
-
 
     def t_where(self):   
         t_int_where = ['t_bigint >= -9223372036854775807 and ' , 't_bigint <= 9223372036854775807 and ','t_smallint >= -32767 and ', 't_smallint <= 32767 and ',
@@ -155,13 +154,13 @@ class TDWhere_makesql:
         tag_column = ['(tbname)','(loc)','(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
         columns = int_column + bia_column + tag_column         
 
-        if self.NUM == 1:
+        if self.NUM%5 == 1:
             columns = str(random.sample(int_column,1)+random.sample(bia_column,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
-        elif self.NUM == 2:
+        elif self.NUM%5 == 2:
             columns = str(random.sample(bia_column,2)+random.sample(tag_column,2)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
-        elif self.NUM == 3:
+        elif self.NUM%5 == 3:
             columns = str(random.sample(int_column,3)+random.sample(tag_column,3)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
-        elif self.NUM == 4:
+        elif self.NUM%5 == 4:
             columns = str(random.sample(columns,10)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
         else:
             columns = str(random.sample(columns,5)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
@@ -181,23 +180,22 @@ class TDWhere_makesql:
             hanshu_column = self.hanshu_int()
             hanshu_columns += hanshu_column + ','            
 
-        if self.NUM == 1:
+        if self.NUM%7 == 1:
             columns = str(random.sample(int_column,1)+random.sample(bia_column,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
-        elif self.NUM == 2:
+        elif self.NUM%7 == 2:
             columns = str(random.sample(bia_column,2)+random.sample(tag_column,2)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
-        elif self.NUM == 3:
+        elif self.NUM%7 == 3:
             columns = str(random.sample(int_column,3)+random.sample(tag_column,3)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
-        elif self.NUM == 4:
+        elif self.NUM%7 == 4:
             columns = str(random.sample(columns,10)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
-        elif self.NUM == 5 :
+        elif self.NUM%7 == 5 :
             columns = hanshu_column
-        elif self.NUM == 6 :
+        elif self.NUM%7 == 6 :
             columns = hanshu_columns + hanshu_column
         else:
             columns = str(random.sample(columns,5)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
         
         return columns
-
 
     def time_window(self):       
         time = ['1','2','3','4','5','6','7','8','9','10']
@@ -217,55 +215,64 @@ class TDWhere_makesql:
         td_session = td_base
         td_session = 'SESSION'+'(ts,'+td_session + ')'
 
-        if self.NUM == 1:
+        if self.NUM%8 == 1:
             time_window = td_interval
-        elif self.NUM == 2:
+        elif self.NUM%8 == 2:
             time_window = td_interval + ' ' + td_sliding
-        elif self.NUM == 3:
+        elif self.NUM%8 == 3:
             time_window = td_fill 
-        elif self.NUM == 4:
+        elif self.NUM%8 == 4:
             time_window = td_interval + ' ' + td_fill 
-        elif self.NUM == 5 :
+        elif self.NUM%8 == 5 :
             time_window = td_interval + ' ' + td_sliding + ' ' + td_fill 
         else:
             time_window = td_session
         
         return time_window
 
-    def altertable(self):
-        int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_bool)','(q_bool_null)','(q_ts_null)','(q_ts)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
-        bia_column = ['(q_binary)','(q_nchar)','(q_binary_null)','(q_nchar_null)']
-        
-        columns = int_column + bia_column     
-        column = str(random.sample(columns,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")  
+    def orderby_groupby(self):    
+        int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
+        bia_column = ['(*)','(_c0)','(_C0)','(q_bool)','(q_binary)','(q_nchar)','(q_ts)','(q_bool_null)','(q_binary_null)','(q_nchar_null)','(q_ts_null)']
+        tag_column = ['(tbname)','(loc)','(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
+        columns = int_column + bia_column + tag_column
+        column = str(random.sample(columns,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
 
-        tag_column = ['(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
-        tag = str(random.sample(tag_column,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","") 
-        
-        al_column = str(random.sample(bia_column,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","") 
-        al_tag = ['(t_binary)','(t_nchar)']
-        al_tag = str(random.sample(al_tag,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","") 
-
-        table_list = ['regular_table_1','regular_table_2','regular_table_null']
-        r_table = str(random.sample(table_list,1)).replace("[","").replace("]","").replace("'","")   
-
-        stable_list = ['stable_1','stable_2']
-        s_table = str(random.sample(stable_list,1)).replace("[","").replace("]","").replace("'","")  
-
-        if self.NUM == 0:
-            self.execution_sql("ALTER TABLE %s DROP COLUMN %s" %(r_table,column))
-        elif self.NUM == 1: 
-            self.execution_sql("ALTER STABLE %s DROP COLUMN %s" %(s_table,column))
-        elif self.NUM == 2:
-            self.execution_sql("ALTER STABLE %s DROP TAG %s" %(s_table,tag))
-        elif self.NUM == 3:
-            self.execution_sql("ALTER TABLE %s MODIFY COLUMN %s nchar(200)" %(r_table,al_column)) 
-        elif self.NUM == 4:
-            self.execution_sql("ALTER STABLE %s MODIFY COLUMN %s binary(200)" %(s_table,al_column)) 
-        elif self.NUM == 5:
-            self.execution_sql("ALTER STABLE %s MODIFY TAG %s binary(200)" %(s_table,al_tag)) 
+        if self.NUM%10 == 1:
+            og_by = " order by ts "
+        elif self.NUM%10 == 2:
+            og_by = " order by %s " %column
+        elif self.NUM%10 == 3:
+            og_by = " order by %s desc " %column
+        elif self.NUM%10 == 4:
+            og_by = " group by %s " %column
+        elif self.NUM%10 == 5 :
+            og_by = " group by tbname , %s " %column
+        elif self.NUM%10 == 6 :
+            og_by = " group by tbname , %s order by %s " %(column,column)
+        elif self.NUM%10 == 7 :
+            og_by = " group by tbname , %s order by %s desc" %(column,column)
         else:
-            self.execution_sql("ALTER TABLE %s DROP TAG %s" %(s_table,tag))
+            og_by = "  "
+        
+        return og_by
+
+    def limit_offset(self):       
+        if self.NUM%8 == 1:
+            limit_offset = " limit 10 offset 10 slimit 10 offset 10 "
+        elif self.NUM%8 == 2:
+            limit_offset = " limit 10 "
+        elif self.NUM%8 == 3:
+            limit_offset = " limit 10 offset 10 " 
+        elif self.NUM%8 == 4:
+            limit_offset = " slimit 10 "
+        elif self.NUM%8 == 5 :
+            limit_offset = " slimit 10 soffset 10 "
+        elif self.NUM%8 == 6 :
+            limit_offset = " slimit 10 offset 10 "
+        else:
+            limit_offset = " "
+        
+        return limit_offset
 
     def regular_where(self):       
         query_where = self.q_where()
@@ -287,8 +294,45 @@ class TDWhere_makesql:
         column = self.column()
         hanshu_column = self.hanshu_int()
         time_window = self.time_window()
+        og_by = self.orderby_groupby()
+        limit_offset = self.limit_offset()
         
-        return(column,hanshu_column,table,q_where,q_in_where,time_window)
+        return(column,hanshu_column,table,q_where,q_in_where,time_window,og_by,limit_offset)
+
+    def altertable(self):
+        int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_bool)','(q_bool_null)','(q_ts_null)','(q_ts)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
+        bia_column = ['(q_binary)','(q_nchar)','(q_binary_null)','(q_nchar_null)']
+        
+        columns = int_column + bia_column     
+        column = str(random.sample(columns,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")  
+
+        tag_column = ['(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
+        tag = str(random.sample(tag_column,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","") 
+        
+        al_column = str(random.sample(bia_column,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","") 
+        al_tag = ['(t_binary)','(t_nchar)']
+        al_tag = str(random.sample(al_tag,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","") 
+
+        table_list = ['regular_table_1','regular_table_2','regular_table_null']
+        r_table = str(random.sample(table_list,1)).replace("[","").replace("]","").replace("'","")   
+
+        stable_list = ['stable_1','stable_2']
+        s_table = str(random.sample(stable_list,1)).replace("[","").replace("]","").replace("'","")  
+
+        if self.NUM%15 == 0:
+            self.execution_sql("ALTER TABLE %s DROP COLUMN %s" %(r_table,column))
+        elif self.NUM%15 == 1: 
+            self.execution_sql("ALTER STABLE %s DROP COLUMN %s" %(s_table,column))
+        elif self.NUM%15 == 2:
+            self.execution_sql("ALTER STABLE %s DROP TAG %s" %(s_table,tag))
+        elif self.NUM%15 == 3:
+            self.execution_sql("ALTER TABLE %s MODIFY COLUMN %s nchar(200)" %(r_table,al_column)) 
+        elif self.NUM%15 == 4:
+            self.execution_sql("ALTER STABLE %s MODIFY COLUMN %s binary(200)" %(s_table,al_column)) 
+        elif self.NUM%15 == 5:
+            self.execution_sql("ALTER STABLE %s MODIFY TAG %s binary(200)" %(s_table,al_tag)) 
+        else:
+            self.execution_sql("ALTER TABLE %s DROP TAG %s" %(s_table,tag))
 
     def stop(self):
         tdSql.close()
