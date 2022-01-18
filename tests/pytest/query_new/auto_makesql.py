@@ -34,16 +34,9 @@ import subprocess
 class TDTestCase:
     def caseDescription(self):
         '''
-        case1<xyguo>:select * from regular_table where condition && select * from ( select front )
+        case1<xyguo>:select column_hanshu from table where condition time_window order\group_by (s)limit_(s)offset
         case2<xyguo>:select * from regular_table where condition order by ts asc | desc && select * from ( select front )
-        case3<xyguo>:select * from regular_table where condition order by ts limit && select * from ( select front )
-        case4<xyguo>:select * from regular_table where condition order by ts limit offset && select * from ( select front )
-        case5<xyguo>:
-        case6<xyguo>:
-        case7<xyguo>:
-        case8<xyguo>:
-        case9<xyguo>:
-        case10<xyguo>:
+        case3<xyguo>:
         ''' 
         return
 
@@ -58,7 +51,7 @@ class TDTestCase:
         tdSql.prepare()
 
         db = "db1"
-        tdCreateData.dropandcreateDB_random("%s" %db,1) 
+        tdCreateData.dropandcreateDB_random("%s" %db,2) 
 
         conn1 = taos.connect(host="127.0.0.1", user="root", password="taosdata", config="/etc/taos/")
         print(conn1)
@@ -67,9 +60,6 @@ class TDTestCase:
         cur1.execute('use "%s";' %db)
         sql = 'select * from regular_table_1 limit 5;'
         cur1.execute(sql)
-        for data in cur1:
-            print("ts = %s" %data[0])       
-        print(conn1)
 
         for i in range(2):
             try:
@@ -82,377 +72,86 @@ class TDTestCase:
                     print(db)
                     cur1.execute('use "%s";' %db)                 
 
-                    print("case1:select * from regular_table where condition && select * from ( select front )")
-                    print("=========================================case1=========================================")
+                    print("case1:select column_hanshu from table where condition time_window order\group_by (s)limit_(s)offset")
 
                     regular_where = tdWhere_makesql.regular_where()
                     tdWhere_makesql.altertable()
-                    column = regular_where[0]
-                    hanshu_column = regular_where[1]
-                    table = regular_where[2]
-                    for i in range(2,len(regular_where[3])+1):
-                        q_where = list(combinations(regular_where[3],i))
+                    column_hanshu = regular_where[0]
+                    table = regular_where[1]
+                    for i in range(1,len(regular_where[2])+1):
+                        q_where = list(combinations(regular_where[2],i))
                         for q_where in q_where:
                             q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            q_in_where = regular_where[4]                            
+                            q_like_match = regular_where[3]   
+                            q_in_where = regular_where[4]                         
                             time_window = regular_where[5]
                             og_by = regular_where[6]
                             limit_offset = regular_where[7]
-                            sql = "select * from %s where %s %s %s %s" %(table,q_where,q_in_where,og_by,limit_offset)
+
+                            sql = "select %s from %s where %s %s " %(column_hanshu,table,q_like_match,q_in_where)
                             tdWhere_makesql.execution_sql(sql)
+
+                            sql = "select %s from %s where %s %s %s" %(column_hanshu,table,q_where,q_like_match,q_in_where)
+                            tdWhere_makesql.execution_sql(sql)
+
+                            sql = "(select %s from %s where %s %s )" %(column_hanshu,table,q_where,q_in_where)
+                            sql += " union all (select %s from %s where %s %s )" %(column_hanshu,table,q_in_where,limit_offset)
+                            tdWhere_makesql.execution_sql(sql)
+
+                            sql = "select %s from %s where %s %s %s %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
+                            tdWhere_makesql.execution_sql(sql)
+
+                            tdCreateData.restartDnodes()
                             
-                            sql = "select * from (select * from %s where %s %s )" %(table,q_where,q_in_where)
+                            sql = "select * from (select %s from %s where %s %s %s %s %s)" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
                             tdWhere_makesql.execution_sql(sql)
 
-                            sql = "select * from (select * from %s) where %s %s " %(table,q_where,q_in_where)
+                            sql = "select %s from (select * from %s) where %s %s %s %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
                             tdWhere_makesql.execution_sql(sql)
 
-                            sql = "select * from %s where %s %s %s " %(table,q_where,q_in_where,time_window )
+                            sql = "select %s from (select * from %s where %s %s %s ) %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
                             tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s where %s %s %s )" %(table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s) where %s %s %s" %(table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from %s where %s %s " %(column,table,q_where,q_in_where )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from %s where %s %s " %(hanshu_column,table,q_where,q_in_where )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            #sql = "select %s != %s from %s where %s %s " %(hanshu_column,hanshu_column,table,q_where,q_in_where )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s )" %(column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s )" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s" %(column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-                            
-                            sql = "select %s from (select * from %s) where %s %s %s " %(column,table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s " %(hanshu_column,table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s " %(column,table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s " %(hanshu_column,table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                    print("case2:select * from regular_table where condition order by ts asc | desc && select * from ( select front )")
-                    print("=========================================case2=========================================")
-
-                    regular_where = tdWhere_makesql.regular_where()
-                    column = regular_where[0]
-                    hanshu_column = regular_where[1]
-                    table = regular_where[2]
-                    for i in range(2,len(regular_where[3])+1):
-                        q_where = list(combinations(regular_where[3],i))
-                        for q_where in q_where:
-                            q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            q_in_where = regular_where[4]
-                            time_window = regular_where[5]
-                            sql = "select * from %s where %s %s order by ts" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s where %s %s order by ts)" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s) where %s %s order by ts" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from %s where %s %s %s  order by ts" %(table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s where %s %s %s  order by ts)" %(table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s) where %s %s %s  order by ts" %(table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from %s where %s %s  order by ts" %(hanshu_column,table,q_where,q_in_where )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s  order by ts)" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s ) order by ts" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-                            
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts" %(hanshu_column,table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts" %(hanshu_column,table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-                    
-                    regular_where = tdWhere_makesql.regular_where()
-                    column = regular_where[0]
-                    hanshu_column = regular_where[1]
-                    table = regular_where[2]
-                    for i in range(2,len(regular_where[3])+1):
-                        q_where = list(combinations(regular_where[3],i))
-                        for q_where in q_where:
-                            q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            q_in_where = regular_where[4]
-                            time_window = regular_where[5]
-                            sql = "select * from %s where %s %s order by ts desc" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s where %s %s order by ts desc)" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s) where %s %s order by ts desc" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from %s where %s %s %s  order by ts desc" %(table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s where %s %s %s  order by ts desc)" %(table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s) where %s %s %s  order by ts desc" %(table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from %s where %s %s  order by ts desc" %(hanshu_column,table,q_where,q_in_where )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s  order by ts desc)" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s ) order by ts desc" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts desc" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-                            
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts desc" %(hanshu_column,table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts desc" %(hanshu_column,table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                    print("case3:select * from regular_table where condition order by ts limit && select * from ( select front )")
-                    print("=========================================case3=========================================")
-
-                    regular_where = tdWhere_makesql.regular_where()
-                    column = regular_where[0]
-                    hanshu_column = regular_where[1]
-                    table = regular_where[2]
-                    for i in range(2,len(regular_where[3])+1):
-                        q_where = list(combinations(regular_where[3],i))
-                        for q_where in q_where:
-                            q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            q_in_where = regular_where[4]
-                            time_window = regular_where[5]
-                            sql = "select * from %s where %s %s order by ts limit 10" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s where %s %s order by ts limit 10)" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s) where %s %s order by ts limit 10" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from %s where %s %s %s  order by ts limit 10" %(table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s where %s %s %s  order by ts limit 10)" %(table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s) where %s %s %s  order by ts limit 10" %(table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from %s where %s %s  order by ts limit 10" %(hanshu_column,table,q_where,q_in_where )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s  order by ts limit 10)" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s  order by ts ) limit 10" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s ) order by ts limit 10" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts limit 10" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-                            
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts limit 10" %(hanshu_column,table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts limit 10" %(hanshu_column,table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                    print("case4:select * from regular_table where condition order by ts limit offset && select * from ( select front )")
-                    print("=========================================case4=========================================")
-
-                    regular_where = tdWhere_makesql.regular_where()
-                    column = regular_where[0]
-                    hanshu_column = regular_where[1]
-                    table = regular_where[2]
-                    for i in range(2,len(regular_where[3])+1):
-                        q_where = list(combinations(regular_where[3],i))
-                        for q_where in q_where:
-                            q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            q_in_where = regular_where[4]
-                            time_window = regular_where[5]
-                            sql = "select * from %s where %s %s order by ts limit 10 offset 5" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s where %s %s order by ts limit 10 offset 5)" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s) where %s %s order by ts limit 10 offset 5" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from %s where %s %s %s  order by ts limit 10 offset 5" %(table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s where %s %s %s  order by ts limit 10 offset 5)" %(table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s) where %s %s %s  order by ts limit 10 offset 5" %(table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from %s where %s %s  order by ts limit 10 offset 5" %(hanshu_column,table,q_where,q_in_where )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s  order by ts limit 10 offset 5)" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s  order by ts ) limit 10 offset 5" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s ) order by ts limit 10 offset 5" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts limit 10 offset 5" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-                            
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts limit 10 offset 5" %(hanshu_column,table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts limit 10 offset 5" %(hanshu_column,table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                    print("case5:select * from regular_table where condition order by ts limit offset && select * from ( select front )")
-                    print("=========================================case4=========================================")
-
-                    regular_where = tdWhere_makesql.regular_where()
-                    column = regular_where[0]
-                    hanshu_column = regular_where[1]
-                    table = regular_where[2]
-                    for i in range(2,len(regular_where[3])+1):
-                        q_where = list(combinations(regular_where[3],i))
-                        for q_where in q_where:
-                            q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            q_in_where = regular_where[4]
-                            time_window = regular_where[5]
-                            sql = "select * from %s where %s %s order by ts limit 10 offset 5" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s where %s %s order by ts limit 10 offset 5)" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s) where %s %s order by ts limit 10 offset 5" %(table,q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from %s where %s %s %s  order by ts limit 10 offset 5" %(table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s where %s %s %s  order by ts limit 10 offset 5)" %(table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s) where %s %s %s  order by ts limit 10 offset 5" %(table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from %s where %s %s  order by ts limit 10 offset 5" %(hanshu_column,table,q_where,q_in_where )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s  order by ts limit 10 offset 5)" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s  order by ts ) limit 10 offset 5" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s where %s %s %s ) order by ts limit 10 offset 5" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts limit 10 offset 5" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-                            
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts limit 10 offset 5" %(hanshu_column,table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s  order by ts limit 10 offset 5" %(hanshu_column,table,q_where,q_in_where,time_window )
-                            tdWhere_makesql.execution_sql(sql)
-
-                    print("=======================================error case=======================================")
-                    print("case1:select * from regular_table where condition interval | sliding | Fill && select * from ( select front )")
-                    print("=========================================case1=========================================")
-
-                    regular_where = tdWhere_makesql.regular_where()
-                    column = regular_where[0]
-                    hanshu_column = regular_where[1]
-                    table = regular_where[2]
-                    for i in range(2,len(regular_where[3])+1):
-                        q_where = list(combinations(regular_where[3],i))
-                        for q_where in q_where:
-                            q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            q_in_where = regular_where[4]  
-                            time_window = regular_where[5]
+                  
                             #sql2 = "select * from %s where %s %s %s" %(table,q_where,q_in_where,time_window)
-                            sql="select count(*) in (\"a\",\"b\") from stable_1 dd where %s %s group by tbname;" %(q_where,q_in_where)
+                            #sql="select count(*) in (\"a\",\"b\") from stable_1 dd where %s %s group by tbname;" %(q_where,q_in_where)
                             #tdWhere_makesql.execution_sql(sql)
 
-                            sql = "select * from (select * from %s where %s %s %s)" %(table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select * from %s) where %s %s %s" %(table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                    print("case1:select * from regular_table where condition && select * from ( select front )")
-                    print("=========================================case1=========================================")
-
-                    regular_where = tdWhere_makesql.regular_where()
-                    column = regular_where[0]
-                    hanshu_column = regular_where[1]
-                    table = regular_where[2]
-                    for i in range(2,len(regular_where[3])+1):
-                        q_where = list(combinations(regular_where[3],i))
-                        for q_where in q_where:
-                            q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            q_in_where = regular_where[4]
-                            time_window = regular_where[5]
-                            sql = "select %s from %s where %s %s %s" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select %s from %s where %s %s %s)" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select * from (select %s from %s) where %s %s %s" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select * from %s) where %s %s %s" %(hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
-
-                            sql = "select %s from (select %s from %s) where %s %s %s" %(hanshu_column,hanshu_column,table,q_where,q_in_where,time_window)
-                            tdWhere_makesql.execution_sql(sql)
                             
 
+                    # print("case2:select column_hanshu from table where condition time_window order\group_by (s)limit_(s)offset")
+
+                    # regular_where2 = tdWhere_makesql.regular_where2()
+                    # tdWhere_makesql.altertable()
+                    # column_hanshu = regular_where2[0]
+                    # table = regular_where2[1]
+                    # for i in range(2,len(regular_where2[2])+1):
+                    #     q_where = list(combinations(regular_where2[2],i))
+                    #     for q_where in q_where:
+                    #         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                    #         q_in_where = regular_where2[3]                            
+                    #         time_window = regular_where2[4]
+                    #         og_by = regular_where2[5]
+                    #         limit_offset = regular_where2[6]
+
+                    #         sql = "select %s from %s where %s %s " %(column_hanshu,table,q_where,q_in_where)
+                    #         tdWhere_makesql.execution_sql(sql)
+
+                    #         sql = "(select %s from %s where %s %s )" %(column_hanshu,table,q_where,q_in_where)
+                    #         sql += " union all (select %s from %s where %s %s )" %(column_hanshu,table,q_in_where,limit_offset)
+                    #         tdWhere_makesql.execution_sql(sql)
+
+                    #         sql = "select %s from %s where %s %s %s %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
+                    #         tdWhere_makesql.execution_sql(sql)
+                            
+                    #         sql = "select * from (select %s from %s where %s %s %s %s %s)" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
+                    #         tdWhere_makesql.execution_sql(sql)
+
+                    #         sql = "select %s from (select * from %s) where %s %s %s %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
+                    #         tdWhere_makesql.execution_sql(sql)
+
+                    #         sql = "select %s from (select * from %s where %s %s %s) %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
+                    #         tdWhere_makesql.execution_sql(sql)
+                            
             except Exception as e:
                 raise e   
 
