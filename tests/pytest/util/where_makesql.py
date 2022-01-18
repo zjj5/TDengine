@@ -42,112 +42,106 @@ class TDWhere_makesql:
         except BaseException:            
             expectErrNotOccured = False
             #tdLog.info("sql:%s, error occured" % (sql))    
-        
 
-    # column and tag query
-    # **int + floot_dou + other
-    # q_where + t_where | q_where_null + t_where_null [前2组union] | q_where_all + t_where_all[自己union]
+    def column_tag(self):
+        int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
+        bia_column = ['(*)','(_c0)','(_C0)','(q_bool)','(q_binary)','(q_nchar)','(q_ts)','(q_bool_null)','(q_binary_null)','(q_nchar_null)','(q_ts_null)']
+        tag_column = ['(tbname)','(loc)','(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
+        column_tag = int_column + bia_column + tag_column    
+
+        return  column_tag
+    # def column_tag(self):
+    #     int_column = ["(q_int)","(q_bigint)","(q_smallint)","(q_tinyint)","(q_float)","(q_double)","(q_int_null)","(q_bigint_null)","(q_smallint_null)","(q_tinyint_null)","(q_float_null)","(q_double_null)"]
+    #     bia_column = ["(*)","(_c0)","(_C0)","(q_bool)","(q_binary)","(q_nchar)","(q_ts)","(q_bool_null)","(q_binary_null)","(q_nchar_null)","(q_ts_null)"]
+    #     tag_column = ["(tbname)","(loc)","(t_int)","(t_bigint)","(t_smallint)","(t_tinyint)","(t_float)","(t_double)","(t_bool)","(t_binary)","(t_nchar)","(t_ts)"]
+    #     column_tag = int_column + bia_column + tag_column    
+
+    #     return  column_tag
+
     def q_where(self):       
-        # q_where = ['q_binary match \'binary%\'  'q_binary like \'binary%\'  or q_nchar = \'0\' ']
-
         q_int_where = ['q_bigint >= -9223372036854775807 and ' , 'q_bigint <= 9223372036854775807 and ','q_smallint >= -32767 and ', 'q_smallint <= 32767 and ',
-        'q_tinyint >= -127 and ' , 'q_tinyint <= 127 and ' , 'q_int <= 2147483647 and ' , 'q_int >= -2147483647 and ',
-        'q_tinyint != 128 and ',
-        'q_bigint <= 0 and ' , 'q_smallint <= 0 and ', 'q_tinyint <= 0 and ' ,  'q_int <= 0 and ',
-        'q_bigint between -9223372036854775807 and 0 and ',' q_int between -2147483647 and 0 and ',
-        'q_smallint between -32767 and 0 and ', 'q_tinyint between -127 and 0 and ',
-        'q_smallint is not null and ' , 'q_tinyint is not null and ' ,
-        'q_bigint between  -9223372036854775807 and 9223372036854775807 and ',' q_int between -2147483647 and 2147483647 and ',
-        'q_smallint between -32767 and 32767 and ', 'q_tinyint between -127 and 127  and ',
-        'q_bigint is not null and ' , 'q_int is not null and ' , 'q_smallint is not null and ' , 'q_tinyint is not null and ' ,
-        'q_bigint < -9223372036854775807 and ' , 'q_bigint > 9223372036854775807 and ','q_smallint < -32767 and ', 'q_smallint > 32767 and ',
-        'q_tinyint < -127 and ' , 'q_tinyint > 127 and ' , 'q_int > 2147483647 and ' , 'q_int < -2147483647 and ',
-        'q_bigint between  9223372036854775807 and -9223372036854775807 and ',' q_int between 2147483647 and -2147483647 and ',
-        'q_smallint between 32767 and -32767 and ', 'q_tinyint between 127 and -127  and ',
-        'q_bigint is null and ' , 'q_int is null and ' , 'q_smallint is null and ' , 'q_tinyint is null and ' ,
-        'q_bigint >= 0 and ' , 'q_smallint >= 0 and ', 'q_tinyint >= 0 and ' ,  'q_int >= 0 and ',
-        'q_bigint between  0 and 9223372036854775807 and ',' q_int between 0 and 2147483647 and ',
-        'q_smallint between 0 and 32767 and ', 'q_tinyint between 0 and 127  and ',
-        'q_bigint is not null and ' , 'q_int is not null and ' ,]
+        'q_tinyint >= -127 and ' , 'q_tinyint <= 127 and ' , 'q_int <= 2147483647 and ' , 'q_int >= -2147483647 and ','q_tinyint != 128 and ','q_bigint <= 0 and ' , 'q_smallint <= 0 and ', 'q_tinyint <= 0 and ' ,  'q_int <= 0 and ',
+        'q_bigint between -9223372036854775807 and 0 and ',' q_int between -2147483647 and 0 and ','q_smallint between -32767 and 0 and ', 'q_tinyint between -127 and 0 and ','q_smallint is not null and ' , 'q_tinyint is not null and ' ,
+        'q_bigint between  -9223372036854775807 and 9223372036854775807 and ',' q_int between -2147483647 and 2147483647 and ','q_bigint < -9223372036854775807 and ' , 'q_bigint > 9223372036854775807 and ','q_smallint < -32767 and ', 'q_smallint > 32767 and ',
+        'q_smallint between -32767 and 32767 and ', 'q_tinyint between -127 and 127  and ','q_bigint is not null and ' , 'q_int is not null and ' , 'q_smallint is not null and ' , 'q_tinyint is not null and ' ,
+        'q_tinyint < -127 and ' , 'q_tinyint > 127 and ' , 'q_int > 2147483647 and ' , 'q_int < -2147483647 and ','q_bigint between  9223372036854775807 and -9223372036854775807 and ',' q_int between 2147483647 and -2147483647 and ',
+        'q_smallint between 32767 and -32767 and ', 'q_tinyint between 127 and -127  and ','q_bigint is null and ' , 'q_int is null and ' , 'q_smallint is null and ' , 'q_tinyint is null and ' ,
+        'q_bigint >= 0 and ' , 'q_smallint >= 0 and ', 'q_tinyint >= 0 and ' ,  'q_int >= 0 and ','q_bigint between  0 and 9223372036854775807 and ',' q_int between 0 and 2147483647 and ',
+        'q_smallint between 0 and 32767 and ', 'q_tinyint between 0 and 127  and ','q_bigint is not null and ' , 'q_int is not null and ' ,
+        'q_int like 123% ']
 
-        q_fl_do_where = ['q_float >= -3.4E38 and ','q_float <= 3.4E38 and ', 'q_double >= -1.7E308 and ','q_double <= 1.7E308 and ', 
-        'q_float between -3.4E38 and 3.4E38 and ','q_double between -1.7E308 and 1.7E308 and ' ,
+        q_fl_do_where = ['q_float >= -3.4E38 and ','q_float <= 3.4E38 and ', 'q_double >= -1.7E308 and ','q_double <= 1.7E308 and ', 'q_float between -3.4E38 and 3.4E38 and ','q_double between -1.7E308 and 1.7E308 and ' ,
         'q_float is not null and ' ,'q_double is not null and ' ,'q_float >= 0 and ', 'q_double >= 0 and ' , 'q_float between 0 and 3.4E38 and ',
         'q_double between 0 and 1.7E308 and ' ,'q_float is not null and ' ,'q_float <= 0 and ', 'q_double <= 0 and ' , 'q_float between -3.4E38 and 0 and ','q_double between -1.7E308 and 0 and ' ,
-        'q_double is not null and ' ,
-        'q_float < -3.4E38 and ','q_float > 3.4E38 and ', 'q_double < -1.7E308 and ','q_double > 1.7E308 and ', 
-        'q_float between 3.4E38 and -3.4E38 and ','q_double between 1.7E308 and -1.7E308 and ' ,
-        'q_float is null and ' ,'q_double is null and ' ,]
+        'q_double is not null and ' ,'q_float < -3.4E38 and ','q_float > 3.4E38 and ', 'q_double < -1.7E308 and ','q_double > 1.7E308 and ', 
+        'q_float between 3.4E38 and -3.4E38 and ','q_double between 1.7E308 and -1.7E308 and ' ,'q_float is null and ' ,'q_double is null and ' ,]
 
         q_nc_bi_bo_ts_where = [ 'q_bool is not null and ' ,'q_binary is not null and ' ,'q_nchar is not null and ' ,'q_ts is not null and ' ,
-        'q_nchar is not null and ' ,'q_ts is not null and ' ,'q_bool is not null and ' ,'q_binary is not null and ' ,
         'q_bool is null and ' ,'q_binary is null and ' ,'q_nchar is null and ' ,'q_ts is null and ' ,]
         
         q_where = random.sample(q_int_where,4) + random.sample(q_fl_do_where,3) + random.sample(q_nc_bi_bo_ts_where,2)
 
-        q_in_where = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or  q_bool = false)' , '(q_bool = 0 or q_bool = 1)',]
-        q_in = random.sample(q_in_where,1)
+        q_like = ['q_binary like \'123_\' and','q_binary like \'abc_\' and','q_nchar like \'123_\' and','q_nchar like \'abc_\' and','q_binary like \'123%\' and','q_binary like \'abc%\' and','q_nchar like \'123_\' and','q_nchar like \'abc%\' and',]
+        q_match = ['q_binary match \'123_\' and','q_binary match \'abc_\' and','q_nchar match \'123_\' and','q_nchar match \'abc_\' and','q_binary match \'123_\' and','q_binary match \'abc_\' and','q_nchar match \'123_\' and','q_nchar match \'abc_\' and',
+        'q_binary nmatch \'123_\' and','q_binary nmatch \'abc_\' and','q_nchar nmatch \'123_\' and','q_nchar nmatch \'abc_\' and','q_binary nmatch \'123_\' and','q_binary nmatch \'abc_\' and','q_nchar nmatch \'123_\' and','q_nchar nmatch \'abc_\' and',]
+        q_like_match = random.sample(q_like,1) + random.sample(q_match,1)
+
+        q_in_where = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or q_bool = false)' , '(q_bool = 0 or q_bool = 1)',]
+        q_in = random.sample(q_in_where,1)        
         
-        return(q_where,q_in)
+        return(q_where,q_like_match,q_in)
 
     def t_where(self):   
         t_int_where = ['t_bigint >= -9223372036854775807 and ' , 't_bigint <= 9223372036854775807 and ','t_smallint >= -32767 and ', 't_smallint <= 32767 and ',
-        't_tinyint >= -127 and ' , 't_tinyint <= 127 and ' , 't_int <= 2147483647 and ' , 't_int >= -2147483647 and ',
-        't_tinyint != 128 and ','t_bigint >= 0 and ' , 't_smallint >= 0 and ', 't_tinyint >= 0 and ' ,  't_int >= 0 and ',
-        't_bigint between  0 and 9223372036854775807 and ',' t_int between 0 and 2147483647 and ',
-        't_smallint between 0 and 32767 and ', 't_tinyint between 0 and 127  and ',
+        't_tinyint >= -127 and ' , 't_tinyint <= 127 and ' , 't_int <= 2147483647 and ' , 't_int >= -2147483647 and ', 't_tinyint != 128 and ','t_bigint >= 0 and ' , 't_smallint >= 0 and ', 't_tinyint >= 0 and ' ,  't_int >= 0 and ',
+        't_bigint between  0 and 9223372036854775807 and ',' t_int between 0 and 2147483647 and ','t_smallint between 0 and 32767 and ', 't_tinyint between 0 and 127  and ',
         't_bigint is not null and ' , 't_int is not null and ' ,'t_bigint <= 0 and ' , 't_smallint <= 0 and ', 't_tinyint <= 0 and ' ,  't_int <= 0 and ',
-        't_bigint between -9223372036854775807 and 0 and ',' t_int between -2147483647 and 0 and ',
-        't_smallint between -32767 and 0 and ', 't_tinyint between -127 and 0 and ',
-        't_smallint is not null and ' , 't_tinyint is not null and ' ,
-        't_bigint between  -9223372036854775807 and 9223372036854775807 and ',' t_int between -2147483647 and 2147483647 and ',
-        't_smallint between -32767 and 32767 and ', 't_tinyint between -127 and 127  and ',
-        't_bigint is not null and ' , 't_int is not null and ' , 't_smallint is not null and ' , 't_tinyint is not null and ' ,
-        't_bigint < -9223372036854775807 and ' , 't_bigint > 9223372036854775807 and ','t_smallint < -32767 and ', 't_smallint > 32767 and ',
-        't_tinyint < -127 and ' , 't_tinyint > 127 and ' , 't_int > 2147483647 and ' , 't_int < -2147483647 and ',
-        't_bigint between  9223372036854775807 and -9223372036854775807 and ',' t_int between 2147483647 and -2147483647 and ',
-        't_smallint between 32767 and -32767 and ', 't_tinyint between 127 and -127  and ',
-        't_bigint is null and ' , 't_int is null and ' , 't_smallint is null and ' , 't_tinyint is null and ' ,]
+        't_bigint between -9223372036854775807 and 0 and ',' t_int between -2147483647 and 0 and ','t_smallint between -32767 and 0 and ', 't_tinyint between -127 and 0 and ', 't_smallint is not null and ' , 't_tinyint is not null and ' ,
+        't_bigint between  -9223372036854775807 and 9223372036854775807 and ',' t_int between -2147483647 and 2147483647 and ','t_smallint between -32767 and 32767 and ', 't_tinyint between -127 and 127  and ',
+        't_bigint is not null and ' , 't_int is not null and ' , 't_smallint is not null and ' , 't_tinyint is not null and ' ,'t_bigint < -9223372036854775807 and ' , 't_bigint > 9223372036854775807 and ','t_smallint < -32767 and ', 't_smallint > 32767 and ',
+        't_tinyint < -127 and ' , 't_tinyint > 127 and ' , 't_int > 2147483647 and ' , 't_int < -2147483647 and ','t_bigint between  9223372036854775807 and -9223372036854775807 and ',' t_int between 2147483647 and -2147483647 and ',
+        't_smallint between 32767 and -32767 and ', 't_tinyint between 127 and -127  and ','t_bigint is null and ' , 't_int is null and ' , 't_smallint is null and ' , 't_tinyint is null and ' ,]
 
-        t_fl_do_where = ['t_float >= -3.4E38 and ','t_float <= 3.4E38 and ', 't_double >= -1.7E308 and ','t_double <= 1.7E308 and ', 
-        't_float between -3.4E38 and 3.4E38 and ','t_double between -1.7E308 and 1.7E308 and ' ,
+        t_fl_do_where = ['t_float >= -3.4E38 and ','t_float <= 3.4E38 and ', 't_double >= -1.7E308 and ','t_double <= 1.7E308 and ', 't_float between -3.4E38 and 3.4E38 and ','t_double between -1.7E308 and 1.7E308 and ' ,
         't_float is not null and ' ,'t_double is not null and ' ,'t_float >= 0 and ', 't_double >= 0 and ' , 't_float between 0 and 3.4E38 and ','t_double between 0 and 1.7E308 and ' ,
         't_float is not null and ' ,'t_float <= 0 and ', 't_double <= 0 and ' , 't_float between -3.4E38 and -1 and ','t_double between -1.7E308 and -1 and ' ,
-        't_double is not null and ' ,
-        't_float < -3.4E38 and ','t_float > 3.4E38 and ', 't_double < -1.7E308 and ','t_double > 1.7E308 and ', 
-        't_float between 3.4E38 and -3.4E38 and ','t_double between 1.7E308 and -1.7E308 and ' ,
-        't_float is null and ' ,'t_double is null and ' ,]
+        't_double is not null and ' ,'t_float < -3.4E38 and ','t_float > 3.4E38 and ', 't_double < -1.7E308 and ','t_double > 1.7E308 and ', 
+        't_float between 3.4E38 and -3.4E38 and ','t_double between 1.7E308 and -1.7E308 and ' ,'t_float is null and ' ,'t_double is null and ' ,]
 
-        t_nc_bi_bo_ts_where = [ 't_bool is not null and ' ,'t_binary is not null and ' ,'t_nchar is not null and ' ,'t_ts is not null and ' ,'t_bool is not null and ' ,'t_binary is not null and ' ,
-        't_bool is null and ' ,'t_binary is null and ' ,'t_nchar is null and ' ,'t_ts is null and ' ,'t_nchar is not null and ' ,'t_ts is not null and ' ,]
+        t_nc_bi_bo_ts_where = [ 't_bool is null and ' ,'t_binary is null and ' ,'t_nchar is null and ' ,'t_ts is null and ' ,'loc is null and ' ,'tbname is null and ' , 
+        't_bool is not null and ' ,'t_binary is not null and ' ,'t_nchar is not null and ' ,'t_ts is not null and ' ,'loc is not null and ' ,'tbname is not null and ' ,]
 
         t_where = random.sample(t_int_where,4) + random.sample(t_fl_do_where,3) + random.sample(t_nc_bi_bo_ts_where,2)
-        
-        q_in_where = ['t_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or  t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
+
+        column_tag = self.column_tag()
+        column = str(random.sample(column_tag,1)).replace("[","").replace("]","").replace("\"","").replace("(","").replace(")","").replace("'","")
+        likes = [' like ' , ' match ' ,' nmatch ']
+        like = str(random.sample(likes,1)).replace("[","").replace("]","").replace("\"","").replace("'","")
+        conditions = ['\'1234_\' and ' , '\'abc4_\' and' , '\'1234%\' and ' , '\'abc4%\' and', '\'12aada@#!!34%\' and ' , '\'ab#%&%^&^*^(c4%\' and']
+        condition = str(random.sample(conditions,1)).replace("[","").replace("]","").replace("\"","")
+        t_like_match = column + like  + condition
+
+        q_in_where = ['t_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
         t_in = random.sample(q_in_where,1)
         
-        return(t_where,t_in)
+        return(t_where,t_like_match,t_in)
 
-    def hanshu_int(self):       
-        hanshu = ['MIN','AVG','MAX','COUNT','SUM','STDDEV','FIRST','LAST','LAST_ROW','','SPREAD','CEIL','FLOOR','ROUND']
-        column = ['(q_bigint)','(q_smallint)','(q_tinyint)','(q_int)','(q_float)','(q_double_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_int_null)','(q_float_null)','(q_double_null)']        
-        hanshu_column = random.sample(hanshu,1)+random.sample(column,1)
+
+    def hanshu(self):      
+        column_tag = self.column_tag()
+        hanshus = ['','MIN','AVG','MAX','COUNT','SUM','STDDEV','FIRST','LAST','LAST_ROW','SPREAD','CEIL','FLOOR','ROUND','TWA','IRATE','STDDEV','INTERP','DIFF']
+        column = column_tag
+        hanshu_column = random.sample(hanshus,1)+random.sample(column,1)
         hanshu_column = str(hanshu_column).replace("[","").replace("]","").replace("'","").replace(", ","")
         return hanshu_column
 
-    def hanshu_all(self):       
-        hanshu = ['COUNT','SUM','STDDEV','FIRST','LAST','LAST_ROW','','SPREAD','CEIL','FLOOR','ROUND']
-        column = ['(*)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_int)','(q_float)','(q_double_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_int_null)','(q_float_null)','(q_double_null)']        
-        hanshu_column_all = random.sample(hanshu,1)+random.sample(column,1)
-        return hanshu_column_all
-
-    # stable_group by.  table_ok
-    def hanshu_stable(self):       
-        hanshu = ['TWA','IRATE','STDDEV','INTERP','DIFF']
-        column = ['(q_bigint)','(q_smallint)','(q_tinyint)','(q_int)','(q_float)','(q_double_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_int_null)','(q_float_null)','(q_double_null)']        
-        hanshu_column_stable = random.sample(hanshu,1)+random.sample(column,1)
-        return hanshu_column_stable
-
+    def hanshu_two(self):
+        hanshu1=self.hanshu()
+        hanshu2=self.hanshu()
+        char =[' + ' , ' - ' ,'  * ' ,' / ' ,' % ' ,' ! ' ,' = ' ,' == ' ,' != ' ,' > ' ,' >= ' ,' < ' ,' <=' ,'<> ' ,]
+        hanshu_two = hanshu1 + str(random.sample(char,1)).replace("[","").replace("]","").replace("'","") + hanshu2
+        return hanshu_two
+        
     def column(self):
         int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
         bia_column = ['(*)','(_c0)','(_C0)','(q_bool)','(q_binary)','(q_nchar)','(q_ts)','(q_bool_null)','(q_binary_null)','(q_nchar_null)','(q_ts_null)']
@@ -163,7 +157,7 @@ class TDWhere_makesql:
         elif self.NUM%5 == 4:
             columns = str(random.sample(columns,10)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
         else:
-            columns = str(random.sample(columns,5)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+            columns = " * "
         
         return columns
 
@@ -173,12 +167,12 @@ class TDWhere_makesql:
         tag_column = ['(tbname)','(loc)','(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
         columns = int_column + bia_column + tag_column
 
-        hanshu_column = self.hanshu_int()
+        hanshu_1 = self.hanshu()
 
-        hanshu_columns = ''
+        hanshu_s = ''
         for i in range(3):
-            hanshu_column = self.hanshu_int()
-            hanshu_columns += hanshu_column + ','            
+            hanshu_1 = self.hanshu()
+            hanshu_s += hanshu_1 + ','            
 
         if self.NUM%7 == 1:
             columns = str(random.sample(int_column,1)+random.sample(bia_column,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
@@ -189,11 +183,11 @@ class TDWhere_makesql:
         elif self.NUM%7 == 4:
             columns = str(random.sample(columns,10)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
         elif self.NUM%7 == 5 :
-            columns = hanshu_column
+            columns = hanshu_1
         elif self.NUM%7 == 6 :
-            columns = hanshu_columns + hanshu_column
+            columns = hanshu_s + hanshu_1
         else:
-            columns = str(random.sample(columns,5)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+            columns = " * "
         
         return columns
 
@@ -225,8 +219,10 @@ class TDWhere_makesql:
             time_window = td_interval + ' ' + td_fill 
         elif self.NUM%8 == 5 :
             time_window = td_interval + ' ' + td_sliding + ' ' + td_fill 
-        else:
+        elif self.NUM%8 == 6 :
             time_window = td_session
+        else:
+            time_window =  "  "
         
         return time_window
 
@@ -285,19 +281,38 @@ class TDWhere_makesql:
             q_where = random.sample(query_where[0],6)
         else:
             q_where = random.sample(query_where[0],4) + random.sample(tag_where[0],4)
+        
+        if self.NUM%3 ==0:
+            q_like_match = str(random.sample(query_where[1],1)).replace("[","").replace("]","").replace("\"","")
+        elif self.NUM%3 ==1:
+            q_like_match = tag_where[1]
+        else :
+            q_like_match = " "
 
         if self.NUM%2 ==0:
-            q_in_where = str(query_where[1]).replace("[","").replace("]","").replace("'","")
+            q_in_where = str(query_where[2]).replace("[","").replace("]","").replace("'","")
         else:
-            q_in_where = str(tag_where[1]).replace("[","").replace("]","").replace("'","")
+            q_in_where = str(tag_where[2]).replace("[","").replace("]","").replace("'","")
 
-        column = self.column()
-        hanshu_column = self.hanshu_int()
+        column_hanshu = self.column_hanshu()
         time_window = self.time_window()
         og_by = self.orderby_groupby()
         limit_offset = self.limit_offset()
-        
-        return(column,hanshu_column,table,q_where,q_in_where,time_window,og_by,limit_offset)
+               
+        return(column_hanshu,table,q_where,q_like_match,q_in_where,time_window,og_by,limit_offset)
+
+    def regular_where2(self):
+        where2 = self.regular_where()
+        hanshu_two = self.hanshu_two()
+
+        table = where2[1]
+        q_where = where2[2]
+        q_in_where = where2[3]
+        time_window = where2[4]
+        og_by = where2[5]
+        limit_offset = where2[6]
+        return(hanshu_two,table,q_where,q_in_where,time_window,og_by,limit_offset)
+
 
     def altertable(self):
         int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_bool)','(q_bool_null)','(q_ts_null)','(q_ts)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
