@@ -67,8 +67,7 @@ class TDWhere_makesql:
         'q_tinyint < -127 and ' , 'q_tinyint > 127 and ' , 'q_int > 2147483647 and ' , 'q_int < -2147483647 and ','q_bigint between  9223372036854775807 and -9223372036854775807 and ',' q_int between 2147483647 and -2147483647 and ',
         'q_smallint between 32767 and -32767 and ', 'q_tinyint between 127 and -127  and ','q_bigint is null and ' , 'q_int is null and ' , 'q_smallint is null and ' , 'q_tinyint is null and ' ,
         'q_bigint >= 0 and ' , 'q_smallint >= 0 and ', 'q_tinyint >= 0 and ' ,  'q_int >= 0 and ','q_bigint between  0 and 9223372036854775807 and ',' q_int between 0 and 2147483647 and ',
-        'q_smallint between 0 and 32767 and ', 'q_tinyint between 0 and 127  and ','q_bigint is not null and ' , 'q_int is not null and ' ,
-        'q_int like 123% ']
+        'q_smallint between 0 and 32767 and ', 'q_tinyint between 0 and 127  and ','q_bigint is not null and ' , 'q_int is not null and ' ,]
 
         q_fl_do_where = ['q_float >= -3.4E38 and ','q_float <= 3.4E38 and ', 'q_double >= -1.7E308 and ','q_double <= 1.7E308 and ', 'q_float between -3.4E38 and 3.4E38 and ','q_double between -1.7E308 and 1.7E308 and ' ,
         'q_float is not null and ' ,'q_double is not null and ' ,'q_float >= 0 and ', 'q_double >= 0 and ' , 'q_float between 0 and 3.4E38 and ',
@@ -81,9 +80,12 @@ class TDWhere_makesql:
         
         q_where = random.sample(q_int_where,4) + random.sample(q_fl_do_where,3) + random.sample(q_nc_bi_bo_ts_where,2)
 
-        q_like = ['q_binary like \'123_\' and','q_binary like \'abc_\' and','q_nchar like \'123_\' and','q_nchar like \'abc_\' and','q_binary like \'123%\' and','q_binary like \'abc%\' and','q_nchar like \'123_\' and','q_nchar like \'abc%\' and',]
+        q_like = ['q_binary like \'123_\' and','q_binary like \'abc_\' and','q_nchar like \'123_\' and','q_nchar like \'abc_\' and','q_binary like \'123%\' and','q_binary like \'abc%\' and','q_nchar like \'123_\' and','q_nchar like \'abc%\' and',
+        't_binary like \'123_\' and','t_binary like \'abc_\' and','t_nchar like \'123_\' and','t_nchar like \'abc_\' and','t_binary like \'123%\' and','t_binary like \'abc%\' and','t_nchar like \'123_\' and','t_nchar like \'abc%\' and',]
         q_match = ['q_binary match \'123_\' and','q_binary match \'abc_\' and','q_nchar match \'123_\' and','q_nchar match \'abc_\' and','q_binary match \'123_\' and','q_binary match \'abc_\' and','q_nchar match \'123_\' and','q_nchar match \'abc_\' and',
-        'q_binary nmatch \'123_\' and','q_binary nmatch \'abc_\' and','q_nchar nmatch \'123_\' and','q_nchar nmatch \'abc_\' and','q_binary nmatch \'123_\' and','q_binary nmatch \'abc_\' and','q_nchar nmatch \'123_\' and','q_nchar nmatch \'abc_\' and',]
+        'q_binary nmatch \'123_\' and','q_binary nmatch \'abc_\' and','q_nchar nmatch \'123_\' and','q_nchar nmatch \'abc_\' and','q_binary nmatch \'123_\' and','q_binary nmatch \'abc_\' and','q_nchar nmatch \'123_\' and','q_nchar nmatch \'abc_\' and',
+        't_binary match \'123_\' and','t_binary match \'abc_\' and','t_nchar match \'123_\' and','t_nchar match \'abc_\' and','t_binary match \'123_\' and','t_binary match \'abc_\' and','t_nchar match \'123_\' and','t_nchar match \'abc_\' and',
+        't_binary nmatch \'123_\' and','t_binary nmatch \'abc_\' and','t_nchar nmatch \'123_\' and','t_nchar nmatch \'abc_\' and','t_binary nmatch \'123_\' and','t_binary nmatch \'abc_\' and','t_nchar nmatch \'123_\' and','t_nchar nmatch \'abc_\' and',]
         q_like_match = random.sample(q_like,1) + random.sample(q_match,1)
 
         q_in_where = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or q_bool = false)' , '(q_bool = 0 or q_bool = 1)',]
@@ -115,9 +117,9 @@ class TDWhere_makesql:
 
         column_tag = self.column_tag()
         column = str(random.sample(column_tag,1)).replace("[","").replace("]","").replace("\"","").replace("(","").replace(")","").replace("'","")
-        likes = [' like ' , ' match ' ,' nmatch ']
+        likes = [' LIKE ' , ' MATCH ' ,' NMATCH ',' CONTAINS ']
         like = str(random.sample(likes,1)).replace("[","").replace("]","").replace("\"","").replace("'","")
-        conditions = ['\'1234_\' and ' , '\'abc4_\' and' , '\'1234%\' and ' , '\'abc4%\' and', '\'12aada@#!!34%\' and ' , '\'ab#%&%^&^*^(c4%\' and']
+        conditions = ['\'1234_\' and ' , '\'abc4_\' and' , '\'1234%\' and ' , '\'a_bc4%\' and', '\'12aada@#!!34%\' and ' , '\'ab#%&%^&^*^(c4%\' and']
         condition = str(random.sample(conditions,1)).replace("[","").replace("]","").replace("\"","")
         t_like_match = column + like  + condition
 
@@ -138,7 +140,7 @@ class TDWhere_makesql:
     def hanshu_two(self):
         hanshu1=self.hanshu()
         hanshu2=self.hanshu()
-        char =[' + ' , ' - ' ,'  * ' ,' / ' ,' % ' ,' ! ' ,' = ' ,' == ' ,' != ' ,' > ' ,' >= ' ,' < ' ,' <=' ,'<> ' ,]
+        char =[' + ' , ' - ' ,'  * ' ,' / ' ,' % ' ,' ! ' ,' = ' ,' == ' ,' != ' ,' > ' ,' >= ' ,' < ' ,' <= ' ,' <> ' ,]
         hanshu_two = hanshu1 + str(random.sample(char,1)).replace("[","").replace("]","").replace("'","") + hanshu2
         return hanshu_two
         
@@ -313,6 +315,51 @@ class TDWhere_makesql:
         limit_offset = where2[6]
         return(hanshu_two,table,q_where,q_in_where,time_window,og_by,limit_offset)
 
+    def q_join_where(self):
+        q_int_where = [ 't1._c0 = t2._C0 and ' ,'t1.ts = t2.ts and ' ,'t1.q_int = t2.q_int and ' , 't1.q_bigint = t2.q_bigint and ' ,'t1.q_smallint = t2.q_smallint and ' ,'t1.q_tinyint = t2.q_tinyint and ', 
+        't1.q_float = t2.q_float and ' ,'t1.q_double = t2.q_double and ' , 't1.q_bool = t2.q_bool and ' ,'t1.q_binary = t2.q_binary and ' ,'t1.q_nchar = t2.q_nchar and ', 't1.q_ts = t2.q_ts and ' ,
+        't1.q_ts_null = t2.q_ts and ' ,'t1.q_int_null = t2.q_int and ' , 't1.q_bigint_null = t2.q_bigint and ' ,'t1.q_smallint_null = t2.q_smallint and ' ,'t1.q_tinyint_null = t2.q_tinyint and ', 
+        't1.q_float_null = t2.q_float and ' ,'t1.q_double_null = t2.q_double and ' , 't1.q_bool_null = t2.q_bool and ' ,'t1.q_binary_null = t2.q_binary and ' ,'t1.q_nchar_null = t2.q_nchar and ', ]
+        q_join_where = random.sample(q_int_where,1) 
+        return q_join_where
+
+    def t_join_where(self):
+        t_int_where = ['t1.loc = t2.loc and ' ,'t1.t_int = t2.t_int and ' , 't1.t_bigint = t2.t_bigint and ' ,'t1.t_smallint = t2.t_smallint and ' ,'t1.t_tinyint = t2.t_tinyint and ', 't1.tbname = t2.tbname and ' ,
+        't1.t_float = t2.t_float and ' ,'t1.t_double = t2.t_double and ' , 't1.t_bool = t2.t_bool and ' ,'t1.t_binary = t2.t_binary and ' ,'t1.t_nchar = t2.t_nchar and ', 't1.t_ts = t2.t_ts and ' , ]
+        t_join_where = random.sample(t_int_where,1) 
+        return t_join_where
+
+    def in_join_where(self):
+        t_int_where = ['t1.t_bool in (0 , 1) ' ,  't1.t_bool in ( true , false) ' ,' (t1.t_bool = true or t1.t_bool = false)' , '(t1.t_bool = 0 or t1.t_bool = 1)', 
+        't1.q_bool in (0 , 1) ' ,  't1.q_bool in ( true , false) ' ,' (t1.q_bool = true or t1.q_bool = false)' , '(t1.q_bool = 0 or t1.q_bool = 1)',
+        't2.t_bool in (0 , 1) ' ,  't2.t_bool in ( true , false) ' ,' (t2.t_bool = true or t2.t_bool = false)' , '(t2.t_bool = 0 or t2.t_bool = 1)', 
+        't2.q_bool in (0 , 1) ' ,  't2.q_bool in ( true , false) ' ,' (t2.q_bool = true or t2.q_bool = false)' , '(t2.q_bool = 0 or t2.q_bool = 1)',]
+        in_join_where = str(random.sample(t_int_where,1)).replace("[","").replace("]","").replace("'","")
+        return in_join_where
+    
+    def regular_2table(self):
+        query_where = self.q_join_where()
+        tag_where = self.t_join_where()
+
+        table_list = ['regular_table_1','table_1','regular_table_2','table_2','table_null','regular_table_null','stable_1','stable_2']
+        stable_list = ['stable_1','stable_2']
+        table1 = str(random.sample(table_list,1)).replace("[","").replace("]","").replace("'","")
+        table2 = str(random.sample(table_list,1)).replace("[","").replace("]","").replace("'","")
+        if (table1 not in stable_list) and (table2 not in stable_list):
+            q_where = query_where
+        else:
+            q_where = tag_where + query_where
+
+        q_in_where = self.in_join_where()
+
+        where2 = self.regular_where()
+        column_hanshu = where2[0]
+
+        q_like_match = where2[3]
+        time_window = where2[5]
+        og_by = where2[6]
+        limit_offset = where2[7]
+        return(column_hanshu,table1,table2,q_where,q_like_match,q_in_where,time_window,og_by,limit_offset)
 
     def altertable(self):
         int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_bool)','(q_bool_null)','(q_ts_null)','(q_ts)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
