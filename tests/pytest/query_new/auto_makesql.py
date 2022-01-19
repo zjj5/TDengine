@@ -111,43 +111,43 @@ class TDTestCase:
                             sql = "select %s from (select * from %s where %s %s %s ) %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
                             tdWhere_makesql.execution_sql(sql)
                   
-                            # sql="select count(*) in (\"a\",\"b\") from stable_1 dd where %s %s group by tbname;" %(q_where,q_in_where)
-                            # tdWhere_makesql.execution_sql(sql)
+                            sql="select count(*) in (\"a\",\"b\") from stable_1 dd where %s %s group by tbname;" %(q_where,q_in_where)
+                            tdWhere_makesql.execution_sql(sql)
 
                             
-                    # print("case2:select different column_hanshu from table where condition time_window order\group_by (s)limit_(s)offset")
+                    print("case2:select different column_hanshu from table where condition time_window order\group_by (s)limit_(s)offset")
 
-                    # regular_where2 = tdWhere_makesql.regular_where2()
-                    # tdWhere_makesql.altertable()
-                    # column_hanshu = regular_where2[0]
-                    # table = regular_where2[1]
-                    # for i in range(2,len(regular_where2[2])+1):
-                    #     q_where = list(combinations(regular_where2[2],i))
-                    #     for q_where in q_where:
-                    #         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                    #         q_in_where = regular_where2[3]                            
-                    #         time_window = regular_where2[4]
-                    #         og_by = regular_where2[5]
-                    #         limit_offset = regular_where2[6]
+                    regular_where2 = tdWhere_makesql.regular_where2()
+                    tdWhere_makesql.altertable()
+                    column_hanshu = regular_where2[0]
+                    table = regular_where2[1]
+                    for i in range(2,len(regular_where2[2])+1):
+                        q_where = list(combinations(regular_where2[2],i))
+                        for q_where in q_where:
+                            q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                            q_in_where = regular_where2[3]                            
+                            time_window = regular_where2[4]
+                            og_by = regular_where2[5]
+                            limit_offset = regular_where2[6]
 
-                    #         sql = "select %s from %s where %s %s " %(column_hanshu,table,q_where,q_in_where)
-                    #         tdWhere_makesql.execution_sql(sql)
+                            sql = "select %s from %s where %s %s " %(column_hanshu,table,q_where,q_in_where)
+                            tdWhere_makesql.execution_sql(sql)
 
-                    #         sql = "(select %s from %s where %s %s )" %(column_hanshu,table,q_where,q_in_where)
-                    #         sql += " union all (select %s from %s where %s %s )" %(column_hanshu,table,q_in_where,limit_offset)
-                    #         tdWhere_makesql.execution_sql(sql)
+                            sql = "(select %s from %s where %s %s )" %(column_hanshu,table,q_where,q_in_where)
+                            sql += " union all (select %s from %s where %s %s )" %(column_hanshu,table,q_in_where,limit_offset)
+                            tdWhere_makesql.execution_sql(sql)
 
-                    #         sql = "select %s from %s where %s %s %s %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
-                    #         tdWhere_makesql.execution_sql(sql)
+                            sql = "select %s from %s where %s %s %s %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
+                            tdWhere_makesql.execution_sql(sql)
                             
-                    #         sql = "select * from (select %s from %s where %s %s %s %s %s)" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
-                    #         tdWhere_makesql.execution_sql(sql)
+                            sql = "select * from (select %s from %s where %s %s %s %s %s)" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
+                            tdWhere_makesql.execution_sql(sql)
 
-                    #         sql = "select %s from (select * from %s) where %s %s %s %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
-                    #         tdWhere_makesql.execution_sql(sql)
+                            sql = "select %s from (select * from %s) where %s %s %s %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
+                            tdWhere_makesql.execution_sql(sql)
 
-                    #         sql = "select %s from (select * from %s where %s %s %s) %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
-                    #         tdWhere_makesql.execution_sql(sql)
+                            sql = "select %s from (select * from %s where %s %s %s) %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
+                            tdWhere_makesql.execution_sql(sql)
 
                     print("case3:select column_hanshu from table1、table2 where join_condition (s)limit_(s)offset")
 
