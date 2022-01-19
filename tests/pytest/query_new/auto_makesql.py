@@ -35,8 +35,8 @@ class TDTestCase:
     def caseDescription(self):
         '''
         case1<xyguo>:select column_hanshu from table where condition time_window order\group_by (s)limit_(s)offset
-        case2<xyguo>:select * from regular_table where condition order by ts asc | desc && select * from ( select front )
-        case3<xyguo>:
+        case2<xyguo>:select different column_hanshu from table where condition time_window order\group_by (s)limit_(s)offset
+        case3<xyguo>:select column_hanshu from table1、table2 where join_condition (s)limit_(s)offset
         ''' 
         return
 
@@ -111,13 +111,12 @@ class TDTestCase:
                             sql = "select %s from (select * from %s where %s %s %s ) %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
                             tdWhere_makesql.execution_sql(sql)
                   
-                            #sql2 = "select * from %s where %s %s %s" %(table,q_where,q_in_where,time_window)
-                            #sql="select count(*) in (\"a\",\"b\") from stable_1 dd where %s %s group by tbname;" %(q_where,q_in_where)
-                            #tdWhere_makesql.execution_sql(sql)
+                            sql2 = "select * from %s where %s %s %s" %(table,q_where,q_in_where,time_window)
+                            sql="select count(*) in (\"a\",\"b\") from stable_1 dd where %s %s group by tbname;" %(q_where,q_in_where)
+                            tdWhere_makesql.execution_sql(sql)
 
                             
-
-                    # print("case2:select column_hanshu from table where condition time_window order\group_by (s)limit_(s)offset")
+                    # print("case2:select different column_hanshu from table where condition time_window order\group_by (s)limit_(s)offset")
 
                     # regular_where2 = tdWhere_makesql.regular_where2()
                     # tdWhere_makesql.altertable()
@@ -150,6 +149,27 @@ class TDTestCase:
 
                     #         sql = "select %s from (select * from %s where %s %s %s) %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
                     #         tdWhere_makesql.execution_sql(sql)
+
+                    print("case3:select column_hanshu from table1、table2 where join_condition (s)limit_(s)offset")
+
+                    #tdCreateData.restartDnodes()
+                    regular_2table = tdWhere_makesql.regular_2table()
+                    tdWhere_makesql.altertable()
+                    column_hanshu = regular_2table[0]
+                    table1 = regular_2table[1]    
+                    table2 = regular_2table[2]                 
+                    for i in range(1,len(regular_2table[3])+1):
+                        q_where = list(combinations(regular_2table[3],i))
+                        for q_where in q_where:
+                            q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                            q_like_match = regular_2table[4]   
+                            q_in_where = regular_2table[5]                         
+                            time_window = regular_2table[6]
+                            og_by = regular_2table[7]
+                            limit_offset = regular_2table[8]
+
+                            sql = "select %s from %s t1 , %s t2 where %s %s %s " %(column_hanshu,table1,table2,q_where,q_in_where,limit_offset)
+                            tdWhere_makesql.execution_sql(sql)
                             
             except Exception as e:
                 raise e   
