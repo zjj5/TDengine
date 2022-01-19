@@ -140,7 +140,7 @@ class TDWhere_makesql:
     def hanshu_two(self):
         hanshu1=self.hanshu()
         hanshu2=self.hanshu()
-        char =[' + ' , ' - ' ,'  * ' ,' / ' ,' % ' ,' ! ' ,' = ' ,' == ' ,' != ' ,' > ' ,' >= ' ,' < ' ,' <= ' ,' <> ' ,]
+        char =[' + ' , ' - ' ,'  * ' ,' / ' ,' % ' ,' ! ' ,' = ' ,' == ' ,' != ' ,' > ' ,' >= ' ,' < ' ,' <= ' ,' <> ' ,' LIKE ' , ' MATCH ' ,' NMATCH ',' CONTAINS ',' IN ',' NOT IN ']
         hanshu_two = hanshu1 + str(random.sample(char,1)).replace("[","").replace("]","").replace("'","") + hanshu2
         return hanshu_two
         
