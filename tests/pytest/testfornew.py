@@ -29,7 +29,7 @@ class TDTestCase:
         os.system("sudo rm -rfv *cmd*txt")
         os.system("cd /root/gxy/TDinternal/community/tests/pytest")
 
-        for i in range(300):           
+        for i in range(1000):           
             try:
                 testcmd1 = os.system("sudo python3 ./test.py -f query_new/auto_makesql.py   >>/root/log/testcmd1.txt")
                 print ("The regular_query_null.py num:%d result is %d " % (i ,  testcmd1))
