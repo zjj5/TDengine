@@ -111,8 +111,8 @@ class TDTestCase:
                             sql = "select %s from (select * from %s where %s %s %s ) %s %s" %(column_hanshu,table,q_where,q_in_where,time_window,og_by,limit_offset)
                             tdWhere_makesql.execution_sql(sql)
                   
-                            sql="select count(*) in (\"a\",\"b\") from stable_1 dd where %s %s group by tbname;" %(q_where,q_in_where)
-                            tdWhere_makesql.execution_sql(sql)
+                            # sql="select count(*) in (\"a\",\"b\") from stable_1 dd where %s %s group by tbname;" %(q_where,q_in_where)
+                            # tdWhere_makesql.execution_sql(sql)
 
                             
                     print("case2:select different column_hanshu from table where condition time_window order\group_by (s)limit_(s)offset")
