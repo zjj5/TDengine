@@ -73,12 +73,20 @@ class TDCom:
                 ts = int(round(ts * 1000))
                 dt = datetime.fromtimestamp(ts // 1000)
                 dt = dt.strftime('%Y-%m-%d %H:%M:%S') + '.' + str(int(ts % 1000)).zfill(3) + '000'
-                print("dt---", dt)
             elif precision == "us":
                 ts = int(round(ts * 1000000))
                 dt = datetime.fromtimestamp(ts // 1000000)
                 dt = dt.strftime('%Y-%m-%d %H:%M:%S') + '.' + str(int(ts % 1000000)).zfill(6)
         return ts, dt
+
+    def gen_tag_col_str(self, gen_type, data_type, count):
+        tag_col_str = ''
+        for i in range(count):
+            if i != count-1:
+                tag_col_str += f'{gen_type}{i} {data_type},'
+            else:
+                tag_col_str += f'{gen_type}{i} {data_type}'
+        return tag_col_str
 
     def genTbParams(self, precision, ts, ctinyint_value, csmallint_value, cint_value, cbigint_value, cfloat_value, cdouble_value, 
                     cbinary_value, cnchar_value, cbool_value, cutinyint_value, cusmallint_value, cuint_value, cubigint_value):
