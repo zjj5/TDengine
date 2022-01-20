@@ -123,8 +123,8 @@ class TDWhere_makesql:
         condition = str(random.sample(conditions,1)).replace("[","").replace("]","").replace("\"","")
         t_like_match = column + like  + condition
 
-        q_in_where = ['t_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
-        t_in = random.sample(q_in_where,1)
+        t_in_where = ['t_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
+        t_in = random.sample(t_in_where,1)
         
         return(t_where,t_like_match,t_in)
 
