@@ -27,14 +27,20 @@ from faker import Faker
 
 class TDWhere:
     updatecfgDict={'maxSQLLength':1048576}
-    NUM = random.randint(1, 10)
+    NUM = random.randint(1, 30)
     print(NUM)
 
     def init(self, conn, logSql):
         tdLog.debug("start to execute %s" % __file__)
         tdSql.init(conn.cursor(), logSql)
 
-        os.system("rm -rf util/where.py.sql")        
+        os.system("rm -rf util/where.py.sql")      
+
+    def column_tag(self):
+        int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
+        bia_column = ['(*)','(_c0)','(_C0)','(q_bool)','(q_binary)','(q_nchar)','(q_ts)','(q_bool_null)','(q_binary_null)','(q_nchar_null)','(q_ts_null)']
+        tag_column = ['(tbname)','(loc)','(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
+        column_tag = int_column + bia_column + tag_column    
 
     # column and tag query
     # **int + floot_dou + other
@@ -44,8 +50,7 @@ class TDWhere:
 
         q_int_where = ['q_bigint >= -9223372036854775807 and ' , 'q_bigint <= 9223372036854775807 and ','q_smallint >= -32767 and ', 'q_smallint <= 32767 and ',
         'q_tinyint >= -127 and ' , 'q_tinyint <= 127 and ' , 'q_int <= 2147483647 and ' , 'q_int >= -2147483647 and ',
-        'q_tinyint != 128 and ',
-        'q_bigint between  -9223372036854775807 and 9223372036854775807 and ',' q_int between -2147483647 and 2147483647 and ',
+        'q_tinyint != 128 and ','q_bigint between  -9223372036854775807 and 9223372036854775807 and ',' q_int between -2147483647 and 2147483647 and ',
         'q_smallint between -32767 and 32767 and ', 'q_tinyint between -127 and 127  and ',
         'q_bigint is not null and ' , 'q_int is not null and ' , 'q_smallint is not null and ' , 'q_tinyint is not null and ' ,]
 
@@ -57,10 +62,18 @@ class TDWhere:
         
         q_where = random.sample(q_int_where,4) + random.sample(q_fl_do_where,2) + random.sample(q_nc_bi_bo_ts_where,2)
 
+        q_like = ['q_binary like \'123_\' and','q_binary like \'abc_\' and','q_nchar like \'123_\' and','q_nchar like \'abc_\' and','q_binary like \'123%\' and','q_binary like \'abc%\' and','q_nchar like \'123_\' and','q_nchar like \'abc%\' and',
+        't_binary like \'123_\' and','t_binary like \'abc_\' and','t_nchar like \'123_\' and','t_nchar like \'abc_\' and','t_binary like \'123%\' and','t_binary like \'abc%\' and','t_nchar like \'123_\' and','t_nchar like \'abc%\' and',]
+        q_match = ['q_binary match \'123_\' and','q_binary match \'abc_\' and','q_nchar match \'123_\' and','q_nchar match \'abc_\' and','q_binary match \'123_\' and','q_binary match \'abc_\' and','q_nchar match \'123_\' and','q_nchar match \'abc_\' and',
+        'q_binary nmatch \'123_\' and','q_binary nmatch \'abc_\' and','q_nchar nmatch \'123_\' and','q_nchar nmatch \'abc_\' and','q_binary nmatch \'123_\' and','q_binary nmatch \'abc_\' and','q_nchar nmatch \'123_\' and','q_nchar nmatch \'abc_\' and',
+        't_binary match \'123_\' and','t_binary match \'abc_\' and','t_nchar match \'123_\' and','t_nchar match \'abc_\' and','t_binary match \'123_\' and','t_binary match \'abc_\' and','t_nchar match \'123_\' and','t_nchar match \'abc_\' and',
+        't_binary nmatch \'123_\' and','t_binary nmatch \'abc_\' and','t_nchar nmatch \'123_\' and','t_nchar nmatch \'abc_\' and','t_binary nmatch \'123_\' and','t_binary nmatch \'abc_\' and','t_nchar nmatch \'123_\' and','t_nchar nmatch \'abc_\' and',]
+        q_like_match = random.sample(q_like,1) + random.sample(q_match,1)
+
         q_in_where = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or  q_bool = false)' , '(q_bool = 0 or q_bool = 1)',]
         q_in = random.sample(q_in_where,1)
         
-        return(q_where,q_in)
+        return(q_where,q_like_match,q_in)
 
     def q_where_null(self):  
 
@@ -86,8 +99,7 @@ class TDWhere:
     def t_where(self):   
         t_int_where = ['t_bigint >= -9223372036854775807 and ' , 't_bigint <= 9223372036854775807 and ','t_smallint >= -32767 and ', 't_smallint <= 32767 and ',
         't_tinyint >= -127 and ' , 't_tinyint <= 127 and ' , 't_int <= 2147483647 and ' , 't_int >= -2147483647 and ',
-        't_tinyint != 128 and ',
-        't_bigint between  -9223372036854775807 and 9223372036854775807 and ',' t_int between -2147483647 and 2147483647 and ',
+        't_tinyint != 128 and ','t_bigint between  -9223372036854775807 and 9223372036854775807 and ',' t_int between -2147483647 and 2147483647 and ',
         't_smallint between -32767 and 32767 and ', 't_tinyint between -127 and 127  and ',
         't_bigint is not null and ' , 't_int is not null and ' , 't_smallint is not null and ' , 't_tinyint is not null and ' ,]
 
@@ -99,9 +111,18 @@ class TDWhere:
 
         t_where = random.sample(t_int_where,4) + random.sample(t_fl_do_where,2) + random.sample(t_nc_bi_bo_ts_where,2)
         
-        t_in = ['t_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or  t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
-        
-        return(t_where,t_in)
+        column_tag = self.column_tag()
+        column = str(random.sample(column_tag,1)).replace("[","").replace("]","").replace("\"","").replace("(","").replace(")","").replace("'","")
+        likes = [' LIKE ' , ' MATCH ' ,' NMATCH ',' CONTAINS ']
+        like = str(random.sample(likes,1)).replace("[","").replace("]","").replace("\"","").replace("'","")
+        conditions = ['\'1234_\' and ' , '\'abc4_\' and' , '\'1234%\' and ' , '\'a_bc4%\' and', '\'12aada@#!!34%\' and ' , '\'ab#%&%^&^*^(c4%\' and']
+        condition = str(random.sample(conditions,1)).replace("[","").replace("]","").replace("\"","")
+        t_like_match = column + like  + condition
+
+        t_in_where = ['t_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or  t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
+        t_in = random.sample(t_in_where,1)
+
+        return(t_where,t_like_match,t_in)
 
     def t_where_null(self):   
         t_int_where = ['t_bigint < -9223372036854775807 and ' , 't_bigint > 9223372036854775807 and ','t_smallint < -32767 and ', 't_smallint > 32767 and ',
@@ -149,16 +170,16 @@ class TDWhere:
         tag_column = ['(tbname)','(loc)','(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
         columns = int_column + bia_column + tag_column         
 
-        if self.NUM == 1:
+        if self.NUM%5 == 1:
             columns = str(random.sample(int_column,1)+random.sample(bia_column,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
-        elif self.NUM == 2:
+        elif self.NUM%5 == 2:
             columns = str(random.sample(bia_column,2)+random.sample(tag_column,2)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
-        elif self.NUM == 3:
+        elif self.NUM%5 == 3:
             columns = str(random.sample(int_column,3)+random.sample(tag_column,3)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
-        elif self.NUM == 4:
+        elif self.NUM%5 == 4:
             columns = str(random.sample(columns,10)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
         else:
-            columns = str(random.sample(columns,5)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+            columns = " * "
         
         return columns
 
@@ -168,30 +189,29 @@ class TDWhere:
         tag_column = ['(tbname)','(loc)','(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
         columns = int_column + bia_column + tag_column
 
-        hanshu_column = self.hanshu_int()
+        hanshu_1 = self.hanshu_int()
 
-        hanshu_columns = ''
+        hanshu_s = ''
         for i in range(3):
-            hanshu_column = self.hanshu_int()
-            hanshu_columns += hanshu_column + ','            
+            hanshu_1 = self.hanshu_int()
+            hanshu_s += hanshu_1 + ','            
 
-        if self.NUM == 1:
+        if self.NUM%7 == 1:
             columns = str(random.sample(int_column,1)+random.sample(bia_column,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
-        elif self.NUM == 2:
+        elif self.NUM%7 == 2:
             columns = str(random.sample(bia_column,2)+random.sample(tag_column,2)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
-        elif self.NUM == 3:
+        elif self.NUM%7 == 3:
             columns = str(random.sample(int_column,3)+random.sample(tag_column,3)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
-        elif self.NUM == 4:
+        elif self.NUM%7 == 4:
             columns = str(random.sample(columns,10)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
-        elif self.NUM == 5 :
-            columns = hanshu_column
-        elif self.NUM == 6 :
-            columns = hanshu_columns + hanshu_column
+        elif self.NUM%7 == 5 :
+            columns = hanshu_1
+        elif self.NUM%7 == 6 :
+            columns = hanshu_s + hanshu_1
         else:
-            columns = str(random.sample(columns,5)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+            columns = " * "
         
         return columns
-
 
     def time_window(self):       
         time = ['1','2','3','4','5','6','7','8','9','10']
@@ -226,18 +246,72 @@ class TDWhere:
         
         return time_window
 
+    def orderby_groupby(self):    
+        int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
+        bia_column = ['(*)','(_c0)','(_C0)','(q_bool)','(q_binary)','(q_nchar)','(q_ts)','(q_bool_null)','(q_binary_null)','(q_nchar_null)','(q_ts_null)']
+        tag_column = ['(tbname)','(loc)','(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
+        columns = int_column + bia_column + tag_column
+        column = str(random.sample(columns,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+
+        if self.NUM%10 == 1:
+            og_by = " order by ts "
+        elif self.NUM%10 == 2:
+            og_by = " order by %s " %column
+        elif self.NUM%10 == 3:
+            og_by = " order by %s desc " %column
+        elif self.NUM%10 == 4:
+            og_by = " group by %s " %column
+        elif self.NUM%10 == 5 :
+            og_by = " group by tbname , %s " %column
+        elif self.NUM%10 == 6 :
+            og_by = " group by tbname , %s order by %s " %(column,column)
+        elif self.NUM%10 == 7 :
+            og_by = " group by tbname , %s order by %s desc" %(column,column)
+        else:
+            og_by = "  "
+        
+        return og_by
+
+    def limit_offset(self):       
+        if self.NUM%8 == 1:
+            limit_offset = " limit 10 offset 10 slimit 10 offset 10 "
+        elif self.NUM%8 == 2:
+            limit_offset = " limit 10 "
+        elif self.NUM%8 == 3:
+            limit_offset = " limit 10 offset 10 " 
+        elif self.NUM%8 == 4:
+            limit_offset = " slimit 10 "
+        elif self.NUM%8 == 5 :
+            limit_offset = " slimit 10 soffset 10 "
+        elif self.NUM%8 == 6 :
+            limit_offset = " slimit 10 offset 10 "
+        else:
+            limit_offset = " "
+        
+        return limit_offset
+
     def regular_where(self):       
         regular_q_where = self.q_where()
         
         q_where = random.sample(regular_q_where[0],5) 
-        #q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","").replace("[","").replace("]","")
-        q_in_where = str(regular_q_where[1]).replace("[","").replace("]","").replace("'","")
+        #q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","").replace("[","").replace("]","")        
+
+        if self.NUM%3 ==0:
+            q_like_match = str(random.sample(regular_q_where[1],1)).replace("[","").replace("]","").replace("\"","")
+        elif self.NUM%3 ==1:
+            q_like_match = regular_q_where[1]
+        else :
+            q_like_match = " "
+
+        q_in_where = str(regular_q_where[2]).replace("[","").replace("]","").replace("'","")
 
         column = self.column()
         hanshu_column = self.hanshu_int()
         time_window = self.time_window()
+        og_by = self.orderby_groupby()
+        limit_offset = self.limit_offset()
         
-        return(q_where,q_in_where,hanshu_column,time_window,column)
+        return(column,hanshu_column,q_where,q_like_match,q_in_where,time_window,og_by,limit_offset)
 
     def regular_where_null(self):       
         regular_q_where_null = self.q_where_null()
@@ -271,9 +345,9 @@ class TDWhere:
         stable_t_where = self.t_where()
 
         qt_where = random.sample(stable_q_where[0],3) + random.sample(stable_t_where[0],3)
-        print(qt_where)
+        #print(qt_where)
         qt_in_where = random.sample((stable_q_where[1] + stable_t_where[1]),1)
-        print(qt_in_where)
+        qt_in_where = str(qt_in_where).replace("[","").replace("]","").replace("'","")
 
         hanshu_column = self.hanshu_int()
         time_window = self.time_window()
