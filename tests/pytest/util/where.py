@@ -40,7 +40,9 @@ class TDWhere:
         int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
         bia_column = ['(*)','(_c0)','(_C0)','(q_bool)','(q_binary)','(q_nchar)','(q_ts)','(q_bool_null)','(q_binary_null)','(q_nchar_null)','(q_ts_null)']
         tag_column = ['(tbname)','(loc)','(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
-        column_tag = int_column + bia_column + tag_column    
+        column_tag = int_column + bia_column + tag_column  
+
+        return  column_tag
 
     # column and tag query
     # **int + floot_dou + other
@@ -69,6 +71,7 @@ class TDWhere:
         't_binary match \'123_\' and','t_binary match \'abc_\' and','t_nchar match \'123_\' and','t_nchar match \'abc_\' and','t_binary match \'123_\' and','t_binary match \'abc_\' and','t_nchar match \'123_\' and','t_nchar match \'abc_\' and',
         't_binary nmatch \'123_\' and','t_binary nmatch \'abc_\' and','t_nchar nmatch \'123_\' and','t_nchar nmatch \'abc_\' and','t_binary nmatch \'123_\' and','t_binary nmatch \'abc_\' and','t_nchar nmatch \'123_\' and','t_nchar nmatch \'abc_\' and',]
         q_like_match = random.sample(q_like,1) + random.sample(q_match,1)
+        q_like_match = random.sample(q_like_match,1)
 
         q_in_where = ['q_bool in (0 , 1) ' ,  'q_bool in ( true , false) ' ,' (q_bool = true or  q_bool = false)' , '(q_bool = 0 or q_bool = 1)',]
         q_in = random.sample(q_in_where,1)
@@ -299,7 +302,8 @@ class TDWhere:
         
         return limit_offset
 
-    def regular_where(self):       
+    def regular_where(self):  
+        #return all data     
         regular_q_where = self.q_where()
         
         q_where = random.sample(regular_q_where[0],5) 
@@ -322,7 +326,8 @@ class TDWhere:
         
         return(column,hanshu_column,q_where,q_like_match,q_in_where,time_window,og_by,limit_offset)
 
-    def regular_where_null(self):       
+    def regular_where_null(self):  
+        #return null data      
         regular_q_where_null = self.q_where_null()
         
         q_where_null = random.sample(regular_q_where_null[0],5) 
@@ -337,23 +342,30 @@ class TDWhere:
 
         return(column,hanshu_column,q_where_null,q_like_match_null,q_in_where_null,time_window,og_by,limit_offset)
 
-    def regular_where_all_and_null(self):   
+    def regular_where_all_and_null(self):  
+        #return all data + #return null data  
         regular_q_where = self.q_where()
         
         q_where = random.sample(regular_q_where[0],5) 
-        q_in_where = str(regular_q_where[1]).replace("[","").replace("]","").replace("'","")
+        q_like_match = str(regular_q_where[1]).replace("[","").replace("]","").replace("\"","")
+        q_in_where = str(regular_q_where[2]).replace("[","").replace("]","").replace("'","")
 
         regular_q_where_null = self.q_where_null()
         
         q_where_null = random.sample(regular_q_where_null[0],5) 
-        q_in_where_null = str(regular_q_where_null[1]).replace("[","").replace("]","").replace("'","")
+        q_like_match_null = str(regular_q_where_null[1]).replace("[","").replace("]","").replace("\"","")
+        q_in_where_null = str(regular_q_where_null[2]).replace("[","").replace("]","").replace("'","")
 
+        column = self.column()
         hanshu_column = self.hanshu_int()
         time_window = self.time_window()
+        og_by = self.orderby_groupby()
+        limit_offset = self.limit_offset()
 
-        return(q_where,q_in_where,q_where_null,q_in_where_null,hanshu_column,time_window)
+        return(column,hanshu_column,q_where,q_like_match,q_in_where,q_where_null,q_like_match_null,q_in_where_null,time_window,og_by,limit_offset)
 
-    def stable_where(self):       
+    def stable_where(self):  
+        #return all data      
         stable_q_where = self.q_where()
         stable_t_where = self.t_where()
 
@@ -367,7 +379,7 @@ class TDWhere:
 
         return(qt_where,qt_in_where,hanshu_column,time_window)
 
-    # test >=0 <=0
+    # test >=0 <=0,later
     def regular_where_all_null(self):   
         q_where = self.q_where()
         
@@ -405,6 +417,7 @@ class TDWhere:
 
         return(q_where_add,q_where_sub)
 
+    # test all and null,later
     def stable_where_all(self):  
         regular_where_all = self.regular_where_all()
 
@@ -438,7 +451,7 @@ class TDWhere:
 
         return(qt_where_add,qt_where_sub,qt_in,hanshu_column)
 
-    # test all and null
+    # test all and null,later
     def regular_where_all(self):     
         q_where = self.q_where()  
 
@@ -471,6 +484,7 @@ class TDWhere:
 
         return(q_where_add,q_where_sub)
 
+    # test all and null,later
     def stable_where_all(self):  
         regular_where_all = self.regular_where_all()
 
