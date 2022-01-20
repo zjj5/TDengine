@@ -91,11 +91,11 @@ class TDTestCase:
 
                     regular_where_null = tdWhere.regular_where_null()
                     sql1 = 'select * from %s;'  % table
-                    for i in range(2,len(regular_where_null[0])+1):
-                        q_where = list(combinations(regular_where_null[0],i))
+                    for i in range(2,len(regular_where_null[2])+1):
+                        q_where = list(combinations(regular_where_null[2],i))
                         for q_where in q_where:
                             q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            q_in_where = regular_where_null[1]
+                            q_in_where = regular_where_null[4]
                             sql2 = "select * from %s where %s %s " %(table,q_where,q_in_where)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
@@ -113,11 +113,11 @@ class TDTestCase:
 
                     regular_where_null = tdWhere.regular_where_null()
                     sql1 = 'select * from %s ;' % table
-                    for i in range(2,len(regular_where_null[0])+1):
-                        q_where = list(combinations(regular_where_null[0],i))
+                    for i in range(2,len(regular_where_null[2])+1):
+                        q_where = list(combinations(regular_where_null[2],i))
                         for q_where in q_where:
                             q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            q_in_where = regular_where_null[1]
+                            q_in_where = regular_where_null[4]
                             sql2 = "select * from %s where %s %s order by ts" %(table,q_where,q_in_where)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
@@ -132,11 +132,11 @@ class TDTestCase:
                     
                     regular_where_null = tdWhere.regular_where_null()
                     sql1 = 'select * from %s order by ts desc;' % table
-                    for i in range(2,len(regular_where_null[0])+1):
-                        q_where = list(combinations(regular_where_null[0],i))
+                    for i in range(2,len(regular_where_null[2])+1):
+                        q_where = list(combinations(regular_where_null[2],i))
                         for q_where in q_where:
                             q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            q_in_where = regular_where_null[1]
+                            q_in_where = regular_where_null[4]
                             sql2 = "select * from %s where %s %s order by ts desc" %(table,q_where,q_in_where)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
@@ -154,11 +154,11 @@ class TDTestCase:
 
                     regular_where_null = tdWhere.regular_where_null()
                     sql1 = 'select * from %s;' % table
-                    for i in range(2,len(regular_where_null[0])+1):
-                        q_where = list(combinations(regular_where_null[0],i))
+                    for i in range(2,len(regular_where_null[2])+1):
+                        q_where = list(combinations(regular_where_null[2],i))
                         for q_where in q_where:
                             q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            q_in_where = regular_where_null[1]
+                            q_in_where = regular_where_null[4]
                             sql2 = "select * from %s where %s %s order by ts limit 10" %(table,q_where,q_in_where)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
@@ -176,11 +176,11 @@ class TDTestCase:
 
                     regular_where_null = tdWhere.regular_where_null()
                     sql1 = 'select * from %s limit 10 offset 5;' % table
-                    for i in range(2,len(regular_where_null[0])+1):
-                        q_where = list(combinations(regular_where_null[0],i))
+                    for i in range(2,len(regular_where_null[2])+1):
+                        q_where = list(combinations(regular_where_null[2],i))
                         for q_where in q_where:
                             q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            q_in_where = regular_where_null[1]
+                            q_in_where = regular_where_null[4]
                             sql2 = "select * from %s where %s %s order by ts limit 10 offset 5" %(table,q_where,q_in_where)
                             tdCreateData.result_0(sql2)
                             cur1.execute(sql2)
