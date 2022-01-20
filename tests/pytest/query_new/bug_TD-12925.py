@@ -71,7 +71,10 @@ class TDTestCase:
 
                     print("=========================================case1=========================================")
 
-                    sql = "select round(q_double_null) != round(q_double_null) from stable_2 where q_float >= -3.4e38 and  q_double <= 1.7e308 and   (q_bool = true or  q_bool = false)"
+                    char =[' LIKE ' , ' MATCH ' ,' NMATCH ']
+                    char = str(random.sample(char,1)).replace("[","").replace("]","").replace("'","")
+                    sql = "select round(q_double_null) %s round(q_double_null) from stable_2 where q_float >= -3.4e38 and  q_double <= 1.7e308 and   (q_bool = true or  q_bool = false)" %char
+                            
                     tdSql.query(sql)
 
 
