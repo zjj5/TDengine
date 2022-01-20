@@ -370,14 +370,20 @@ class TDWhere:
         stable_t_where = self.t_where()
 
         qt_where = random.sample(stable_q_where[0],3) + random.sample(stable_t_where[0],3)
-        #print(qt_where)
-        qt_in_where = random.sample((stable_q_where[1] + stable_t_where[1]),1)
-        qt_in_where = str(qt_in_where).replace("[","").replace("]","").replace("'","")
+        
+        qt_like_match = random.sample(stable_q_where[1],1) + random.sample(stable_t_where[1],1)
+        qt_like_match = str(random.sample(qt_like_match,1)).replace("[","").replace("]","").replace("\"","")
 
+        qt_in_where = random.sample(stable_q_where[2],1) + random.sample(stable_t_where[2],1)
+        qt_in_where = str(random.sample(qt_in_where,1)).replace("[","").replace("]","").replace("'","")
+
+        column = self.column()
         hanshu_column = self.hanshu_int()
         time_window = self.time_window()
+        og_by = self.orderby_groupby()
+        limit_offset = self.limit_offset()
 
-        return(qt_where,qt_in_where,hanshu_column,time_window)
+        return(column,hanshu_column,qt_where,qt_like_match,qt_in_where,time_window,og_by,limit_offset)
 
     # test >=0 <=0,later
     def regular_where_all_null(self):   
