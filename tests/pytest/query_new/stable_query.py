@@ -57,9 +57,6 @@ class TDTestCase:
         cur1.execute('use "%s";' %db)
         sql = 'select * from stable_1 limit 5;'
         cur1.execute(sql)
-        for data in cur1:
-            print("ts = %s" %data[0])       
-        print(conn1)
 
         for i in range(2):
             try:
