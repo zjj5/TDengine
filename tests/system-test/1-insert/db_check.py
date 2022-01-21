@@ -75,6 +75,11 @@ class TDTestCase:
         dbname = '1' + tdCom.get_long_name(len=5, mode="letters")
         tdSql.error(f'create database if not exists {dbname}')
         dbname = tdCom.get_long_name(len=3, mode="letters")
+        tdSql.error(f'create data base if not exists {dbname}')
+        tdSql.error(f'create database i f not exists {dbname}')
+        tdSql.error(f'cre ate database if not exists {dbname}')
+        tdSql.error(f'create database if n ot exists {dbname}')
+        tdSql.error(f'create database if not e xists {dbname}')
         for insert_str in tdCom.gen_symbol_list():
             d_list = list(dbname)
             for i in range(len(d_list)+1):
