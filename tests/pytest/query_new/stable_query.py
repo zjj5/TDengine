@@ -33,7 +33,16 @@ import subprocess
 class TDTestCase:
     def caseDescription(self):
         '''
-        case1<xyguo>:
+        case1<xyguo>:select * from stable where condition && select * from ( select front )
+        case2<xyguo>:select * from stable where condition order by ts asc | desc && select * from ( select front )
+        case3<xyguo>:select * from stable where condition order by ts limit && select * from ( select front )
+        case4<xyguo>:select * from stable where condition order by ts limit offset && select * from ( select front )
+        case5<xyguo>:
+        case6<xyguo>:
+        case7<xyguo>:
+        case8<xyguo>:
+        case9<xyguo>:
+        case10<xyguo>:
         ''' 
         return
 
@@ -69,7 +78,7 @@ class TDTestCase:
                     print(db)
                     cur1.execute('use "%s";' %db)                 
 
-                    print("case1:select * from stable where condition")
+                    print("case1:select * from stable where condition && select * from ( select front )")
                     print("=========================================case1=========================================")
 
                     stable_where = tdWhere.stable_where()
@@ -91,7 +100,7 @@ class TDTestCase:
                             tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                             cur1.execute(sql2)
 
-                    print("case2:select * from stable where condition order by ts")
+                    print("case2:select * from stable where condition order by ts asc | desc && select * from ( select front )")
                     print("=========================================case2=========================================")
 
                     stable_where = tdWhere.stable_where()
@@ -116,7 +125,7 @@ class TDTestCase:
                             sql2 = "select * from (select * from stable_1 ) where tbname in ('table_1') and %s %s order by ts " %(qt_where,qt_in_where)
                             tdSql.error(sql2)
 
-                    print("case3:select * from stable where condition order by ts limit ")
+                    print("case3:select * from stable where condition order by ts limit && select * from ( select front ) ")
                     print("=========================================case3=========================================")
 
                     stable_where = tdWhere.stable_where()
@@ -141,7 +150,7 @@ class TDTestCase:
                             sql2 = "select * from (select * from stable_1) where tbname in ('table_1') and %s %s order by ts limit 10" %(qt_where,qt_in_where)
                             tdSql.error(sql2)
 
-                    print("case4:select * from stable where condition order by ts limit offset")
+                    print("case4:select * from stable where condition order by ts limit offset && select * from ( select front )")
                     print("=========================================case4=========================================")
 
                     stable_where = tdWhere.stable_where()
