@@ -87,7 +87,7 @@ class TDTestCase:
                     cur1.execute('use "%s";' %db)                 
 
                     print("case1:select * from regular_table where condition[null data] && select * from ( select front )")
-                    print("=========================================case1=========================================")
+                    print("\n\n\n=========================================case1=========================================\n\n\n")
 
                     regular_where_null = tdWhere.regular_where_null()
                     sql1 = 'select * from %s;'  % table
@@ -109,7 +109,7 @@ class TDTestCase:
                             cur1.execute(sql2)
 
                     print("case2:select * from regular_table where condition[null data] order by ts asc | desc && select * from ( select front )")
-                    print("=========================================case2=========================================")
+                    print("\n\n\n=========================================case2=========================================\n\n\n")
 
                     regular_where_null = tdWhere.regular_where_null()
                     sql1 = 'select * from %s ;' % table
@@ -150,7 +150,7 @@ class TDTestCase:
                             cur1.execute(sql2)
 
                     print("case3:select * from regular_table where condition[null data] order by ts limit && select * from ( select front )")
-                    print("=========================================case3=========================================")
+                    print("\n\n\n=========================================case3=========================================\n\n\n")
 
                     regular_where_null = tdWhere.regular_where_null()
                     sql1 = 'select * from %s;' % table
@@ -172,7 +172,7 @@ class TDTestCase:
                             cur1.execute(sql2)
 
                     print("case4:select * from regular_table where condition[null data] order by ts limit offset && select * from ( select front )")
-                    print("=========================================case4=========================================")
+                    print("\n\n\n=========================================case4=========================================\n\n\n")
 
                     regular_where_null = tdWhere.regular_where_null()
                     sql1 = 'select * from %s limit 10 offset 5;' % table
