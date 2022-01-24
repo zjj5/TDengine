@@ -66,20 +66,34 @@ class TDTestCase:
             tdSql.check_equal(res[0][0], dbname.lower())
             tdSql.execute(f'drop database if exists {dbname}')
 
-    def illegal_dbname_check(self):
+    def illegal_dbsql_check(self):
         '''
-            starts with number
             mixed invalid symbol
             mixed space
         '''
-        dbname = '1' + tdCom.get_long_name(len=5, mode="letters")
-        tdSql.error(f'create database if not exists {dbname}')
-        dbname = tdCom.get_long_name(len=3, mode="letters")
+        dbname = tdCom.get_long_name(len=5, mode="letters")
+        tdSql.execute(f'create database if not exists {dbname}')
+        tdSql.error(f'create database {dbname}')
         tdSql.error(f'create data base if not exists {dbname}')
         tdSql.error(f'create database i f not exists {dbname}')
         tdSql.error(f'cre ate database if not exists {dbname}')
         tdSql.error(f'create database if n ot exists {dbname}')
         tdSql.error(f'create database if not e xists {dbname}')
+        tdSql.error(f'@create database if not exists {dbname}')
+        tdSql.error(f'cre#ate database if not exists {dbname}')
+        tdSql.error(f'create( database if not exists {dbname}')
+        tdSql.error(f'create )database if not exists {dbname}')
+        tdSql.error(f'create data&base if not exists {dbname}')
+        tdSql.error(f'create database- if not exists {dbname}')
+        tdSql.error(f'create database ¥if not exists {dbname}')
+        tdSql.error(f'create database i*f not exists {dbname}')
+        tdSql.error(f'create database if! not exists {dbname}')
+        tdSql.error(f'create database if +not exists {dbname}')
+        tdSql.error(f'create database if n!ot exists {dbname}')
+        tdSql.error(f'create database if not| exists {dbname}')
+        tdSql.error(f'create database if not >exists {dbname}')
+        tdSql.error(f'create database if not ex<ists {dbname}')
+        tdSql.error(f'create database if not exists? {dbname}')
         for insert_str in tdCom.gen_symbol_list():
             d_list = list(dbname)
             for i in range(len(d_list)+1):
@@ -92,7 +106,7 @@ class TDTestCase:
         self.dbname_length_check()
         self.dbname_backquote_unsupport_check()
         self.upper_lower_dbname_check()
-        self.illegal_dbname_check()
+        self.illegal_dbsql_check()
 
         if self.err_case > 0:
             tdLog.exit(f"{self.err_case} failed")
