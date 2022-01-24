@@ -60,6 +60,11 @@ class TDTestCase:
         db = "stable_db_null"
         tdCreateData.dropandcreateDB_random("%s" %db,1) 
 
+        table_list = ['stable_1','stable_2',]
+        table = str(random.sample(table_list,1)).replace("[","").replace("]","")
+        table_null_list = ['stable_null_data','stable_null_childtable']
+        table_null = str(random.sample(table_null_list,1)).replace("[","").replace("]","")
+
         conn1 = taos.connect(host="127.0.0.1", user="root", password="taosdata", config="/etc/taos/")
         print(conn1)
         cur1 = conn1.cursor()
@@ -89,15 +94,15 @@ class TDTestCase:
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                         q_in_where = stable_where_null[4]
-                        sql2 = "select * from stable_1 where %s %s " %(q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s " %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from stable_1 where %s %s )" %(q_where,q_in_where)
+                        sql2 = "select * from (select * from %s where %s %s )" %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from stable_1) where %s %s " %(q_where,q_in_where)
+                        sql2 = "select * from (select * from %s) where %s %s " %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
 
@@ -111,15 +116,15 @@ class TDTestCase:
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                         q_in_where = stable_where_null[4]
-                        sql2 = "select * from stable_1 where %s %s order by ts" %(q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s order by ts" %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from stable_1 where %s %s order by ts)" %(q_where,q_in_where)
+                        sql2 = "select * from (select * from %s where %s %s order by ts)" %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from stable_1) where %s %s order by ts" %(q_where,q_in_where)
+                        sql2 = "select * from (select * from %s) where %s %s order by ts" %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
                 
@@ -130,15 +135,15 @@ class TDTestCase:
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                         q_in_where = stable_where_null[4]
-                        sql2 = "select * from stable_1 where %s %s order by ts desc" %(q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s order by ts desc" %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from stable_1 where %s %s order by ts desc)" %(q_where,q_in_where)
+                        sql2 = "select * from (select * from %s where %s %s order by ts desc)" %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from stable_1) where %s %s order by ts desc" %(q_where,q_in_where)
+                        sql2 = "select * from (select * from %s) where %s %s order by ts desc" %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
 
@@ -152,15 +157,15 @@ class TDTestCase:
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                         q_in_where = stable_where_null[4]
-                        sql2 = "select * from stable_1 where %s %s order by ts limit 10" %(q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s order by ts limit 10" %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from stable_1 where %s %s order by ts limit 10)" %(q_where,q_in_where)
+                        sql2 = "select * from (select * from %s where %s %s order by ts limit 10)" %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from stable_1) where %s %s order by ts limit 10" %(q_where,q_in_where)
+                        sql2 = "select * from (select * from %s) where %s %s order by ts limit 10" %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
 
@@ -174,15 +179,15 @@ class TDTestCase:
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                         q_in_where = stable_where_null[4]
-                        sql2 = "select * from stable_1 where %s %s order by ts limit 10 offset 5" %(q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s order by ts limit 10 offset 5" %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from stable_1 where %s %s order by ts limit 10 offset 5)" %(q_where,q_in_where)
+                        sql2 = "select * from (select * from %s where %s %s order by ts limit 10 offset 5)" %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from stable_1) where %s %s order by ts limit 10 offset 5" %(q_where,q_in_where)
+                        sql2 = "select * from (select * from %s) where %s %s order by ts limit 10 offset 5" %(table,q_where,q_in_where)
                         tdCreateData.result_0(sql2)
                         cur1.execute(sql2)
                           
