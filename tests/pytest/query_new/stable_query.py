@@ -55,6 +55,7 @@ class TDTestCase:
 
     def run(self):
         tdSql.prepare()
+        startTime = time.time() 
 
         db = "stable_db"
         tdCreateData.dropandcreateDB_random("%s" %db,1) 
@@ -73,132 +74,132 @@ class TDTestCase:
                 taos_cmd1 = "taos -f query_new/%s.sql" % testcaseFilename
                 _ = subprocess.check_output(taos_cmd1, shell=True).decode("utf-8")
                 print(conn1)
+                cur1.execute('use "%s";' %db)                 
 
-                for i in range(2):
-                    print(db)
-                    cur1.execute('use "%s";' %db)                 
+                print("case1:select * from stable where condition && select * from ( select front )")
+                print("\n\n\n=========================================case1=========================================\n\n\n")
 
-                    print("case1:select * from stable where condition && select * from ( select front )")
-                    print("\n\n\n=========================================case1=========================================\n\n\n")
+                stable_where = tdWhere.stable_where()
+                sql1 = 'select * from stable_1;' 
+                for i in range(2,len(stable_where[2])+1):
+                    qt_where = list(combinations(stable_where[2],i))
+                    for qt_where in qt_where:
+                        qt_where = str(qt_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        qt_in_where = stable_where[4]
+                        sql2 = "select * from stable_1 where %s %s " %(qt_where,qt_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                    stable_where = tdWhere.stable_where()
-                    sql1 = 'select * from stable_1;' 
-                    for i in range(2,len(stable_where[2])+1):
-                        qt_where = list(combinations(stable_where[2],i))
-                        for qt_where in qt_where:
-                            qt_where = str(qt_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            qt_in_where = stable_where[4]
-                            sql2 = "select * from stable_1 where %s %s " %(qt_where,qt_in_where)
-                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                            cur1.execute(sql2)
+                        sql2 = "select * from (select * from stable_1 where %s %s ) " %(qt_where,qt_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from stable_1 where %s %s ) " %(qt_where,qt_in_where)
-                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                            cur1.execute(sql2)
+                        sql2 = "select * from (select * from stable_1 ) where %s %s " %(qt_where,qt_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from stable_1 ) where %s %s " %(qt_where,qt_in_where)
-                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                            cur1.execute(sql2)
+                print("case2:select * from stable where condition order by ts asc | desc && select * from ( select front )")
+                print("\n\n\n=========================================case2=========================================\n\n\n")
 
-                    print("case2:select * from stable where condition order by ts asc | desc && select * from ( select front )")
-                    print("\n\n\n=========================================case2=========================================\n\n\n")
+                stable_where = tdWhere.stable_where()
+                sql1 = 'select * from stable_1;' 
+                for i in range(2,len(stable_where[2])+1):
+                    qt_where = list(combinations(stable_where[2],i))
+                    for qt_where in qt_where:
+                        qt_where = str(qt_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        qt_in_where = stable_where[4]
+                        sql2 = "select * from stable_1 where tbname in ('table_1') and %s %s order by ts" %(qt_where,qt_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                    stable_where = tdWhere.stable_where()
-                    sql1 = 'select * from stable_1;' 
-                    for i in range(2,len(stable_where[2])+1):
-                        qt_where = list(combinations(stable_where[2],i))
-                        for qt_where in qt_where:
-                            qt_where = str(qt_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            qt_in_where = stable_where[4]
-                            sql2 = "select * from stable_1 where tbname in ('table_1') and %s %s order by ts" %(qt_where,qt_in_where)
-                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                            cur1.execute(sql2)
+                        sql2 = "select * from (select * from stable_1 where tbname in ('table_1') and %s %s order by ts ) " %(qt_where,qt_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from stable_1 where tbname in ('table_1') and %s %s order by ts ) " %(qt_where,qt_in_where)
-                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                            cur1.execute(sql2)
+                        sql2 = "select * from (select * from stable_1  where tbname in ('table_1')) where %s %s order by ts " %(qt_where,qt_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from stable_1  where tbname in ('table_1')) where %s %s order by ts " %(qt_where,qt_in_where)
-                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                            cur1.execute(sql2)
+                        sql2 = "select * from (select * from stable_1 ) where tbname in ('table_1') and %s %s order by ts " %(qt_where,qt_in_where)
+                        tdSql.error(sql2)
 
-                            sql2 = "select * from (select * from stable_1 ) where tbname in ('table_1') and %s %s order by ts " %(qt_where,qt_in_where)
-                            tdSql.error(sql2)
+                print("case3:select * from stable where condition order by ts limit && select * from ( select front ) ")
+                print("\n\n\n=========================================case3=========================================\n\n\n")
 
-                    print("case3:select * from stable where condition order by ts limit && select * from ( select front ) ")
-                    print("\n\n\n=========================================case3=========================================\n\n\n")
+                stable_where = tdWhere.stable_where()
+                sql1 = 'select * from stable_1;' 
+                for i in range(2,len(stable_where[2])+1):
+                    qt_where = list(combinations(stable_where[2],i))
+                    for qt_where in qt_where:
+                        qt_where = str(qt_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        qt_in_where = stable_where[4]
+                        sql2 = "select * from stable_1 where tbname in ('table_1') and %s %s order by ts limit 10" %(qt_where,qt_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                    stable_where = tdWhere.stable_where()
-                    sql1 = 'select * from stable_1;' 
-                    for i in range(2,len(stable_where[2])+1):
-                        qt_where = list(combinations(stable_where[2],i))
-                        for qt_where in qt_where:
-                            qt_where = str(qt_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            qt_in_where = stable_where[4]
-                            sql2 = "select * from stable_1 where tbname in ('table_1') and %s %s order by ts limit 10" %(qt_where,qt_in_where)
-                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                            cur1.execute(sql2)
+                        sql2 = "select * from (select * from stable_1 where tbname in ('table_1') and %s %s order by ts limit 10)" %(qt_where,qt_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from stable_1 where tbname in ('table_1') and %s %s order by ts limit 10)" %(qt_where,qt_in_where)
-                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                            cur1.execute(sql2)
+                        sql2 = "select * from (select * from stable_1 where tbname in ('table_1')) where %s %s order by ts limit 10" %(qt_where,qt_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from stable_1 where tbname in ('table_1')) where %s %s order by ts limit 10" %(qt_where,qt_in_where)
-                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                            cur1.execute(sql2)
+                        sql2 = "select * from (select * from stable_1) where tbname in ('table_1') and %s %s order by ts limit 10" %(qt_where,qt_in_where)
+                        tdSql.error(sql2)
 
-                            sql2 = "select * from (select * from stable_1) where tbname in ('table_1') and %s %s order by ts limit 10" %(qt_where,qt_in_where)
-                            tdSql.error(sql2)
+                print("case4:select * from stable where condition order by ts limit offset && select * from ( select front )")
+                print("\n\n\n=========================================case4=========================================\n\n\n")
 
-                    print("case4:select * from stable where condition order by ts limit offset && select * from ( select front )")
-                    print("\n\n\n=========================================case4=========================================\n\n\n")
+                stable_where = tdWhere.stable_where()
+                sql1 = 'select * from stable_1 limit 10 offset 5;' 
+                for i in range(2,len(stable_where[2])+1):
+                    qt_where = list(combinations(stable_where[2],i))
+                    for qt_where in qt_where:
+                        qt_where = str(qt_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        qt_in_where = stable_where[4]
+                        sql2 = "select * from stable_1 where tbname in ('table_1') and %s %s order by ts limit 10 offset 5" %(qt_where,qt_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                    stable_where = tdWhere.stable_where()
-                    sql1 = 'select * from stable_1 limit 10 offset 5;' 
-                    for i in range(2,len(stable_where[2])+1):
-                        qt_where = list(combinations(stable_where[2],i))
-                        for qt_where in qt_where:
-                            qt_where = str(qt_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            qt_in_where = stable_where[4]
-                            sql2 = "select * from stable_1 where tbname in ('table_1') and %s %s order by ts limit 10 offset 5" %(qt_where,qt_in_where)
-                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                            cur1.execute(sql2)
+                        sql2 = "select * from (select * from stable_1 where tbname in ('table_1') and %s %s order by ts limit 10 offset 5)" %(qt_where,qt_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from stable_1 where tbname in ('table_1') and %s %s order by ts limit 10 offset 5)" %(qt_where,qt_in_where)
-                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                            cur1.execute(sql2)
+                        sql2 = "select * from (select * from stable_1 where tbname in ('table_1')) where %s %s order by ts limit 10 offset 5" %(qt_where,qt_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                            sql2 = "select * from (select * from stable_1 where tbname in ('table_1')) where %s %s order by ts limit 10 offset 5" %(qt_where,qt_in_where)
-                            tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                            cur1.execute(sql2)
+                        sql2 = "select * from (select * from stable_1) where tbname in ('table_1') and %s %s order by ts limit 10 offset 5" %(qt_where,qt_in_where)
+                        tdSql.error(sql2)                                  
 
-                            sql2 = "select * from (select * from stable_1) where tbname in ('table_1') and %s %s order by ts limit 10 offset 5" %(qt_where,qt_in_where)
-                            tdSql.error(sql2)                                  
+                print("\n\n\n=======================================error case=======================================\n\n\n")
+                print("case1:select * from stable where condition interval | sliding | Fill && select * from ( select front )")
+                print("\n\n\n=========================================case1=========================================\n\n\n")
 
-                    print("\n\n\n=======================================error case=======================================\n\n\n")
-                    print("case1:select * from stable where condition interval | sliding | Fill && select * from ( select front )")
-                    print("\n\n\n=========================================case1=========================================\n\n\n")
+                stable_where = tdWhere.stable_where()
+                sql1 = 'select * from stable_1 interval(3s) sliding(3n) Fill(NEXT);'  
+                for i in range(2,len(stable_where[2])+1):
+                    q_where = list(combinations(stable_where[2],i))
+                    for q_where in q_where:
+                        q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_in_where = stable_where[4]
+                        time_window = stable_where[5]
+                        sql2 = "select * from stable_1 where %s %s %s" %(q_where,q_in_where,time_window)
+                        tdSql.error(sql2)
 
-                    stable_where = tdWhere.stable_where()
-                    sql1 = 'select * from stable_1 interval(3s) sliding(3n) Fill(NEXT);'  
-                    for i in range(2,len(stable_where[2])+1):
-                        q_where = list(combinations(stable_where[2],i))
-                        for q_where in q_where:
-                            q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                            q_in_where = stable_where[4]
-                            time_window = stable_where[5]
-                            sql2 = "select * from stable_1 where %s %s %s" %(q_where,q_in_where,time_window)
-                            tdSql.error(sql2)
+                        sql2 = "select * from (select * from stable_1 where %s %s %s)" %(q_where,q_in_where,time_window)
+                        tdSql.error(sql2)
 
-                            sql2 = "select * from (select * from stable_1 where %s %s %s)" %(q_where,q_in_where,time_window)
-                            tdSql.error(sql2)
-
-                            sql2 = "select * from (select * from stable_1) where %s %s %s" %(q_where,q_in_where,time_window)
-                            tdSql.error(sql2)
+                        sql2 = "select * from (select * from stable_1) where %s %s %s" %(q_where,q_in_where,time_window)
+                        tdSql.error(sql2)
 
 
             except Exception as e:
                 raise e   
+
+        endTime = time.time()
+        print("total time %ds" % (endTime - startTime))
 
     def stop(self):
         tdSql.close()
