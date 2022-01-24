@@ -151,10 +151,18 @@ class TDWhere:
 
         t_where_null = random.sample(t_int_where,4) + random.sample(t_fl_do_where,2) + random.sample(t_nc_bi_bo_ts_where,2)
         
+        column_tag = self.column_tag()
+        column = str(random.sample(column_tag,1)).replace("[","").replace("]","").replace("\"","").replace("(","").replace(")","").replace("'","")
+        likes = [' LIKE ' , ' MATCH ' ,' NMATCH ',' CONTAINS ']
+        like = str(random.sample(likes,1)).replace("[","").replace("]","").replace("\"","").replace("'","")
+        conditions = ['\'1234_\' and ' , '\'abc4_\' and' , '\'1234%\' and ' , '\'a_bc4%\' and', '\'12aada@#!!34%\' and ' , '\'ab#%&%^&^*^(c4%\' and']
+        condition = str(random.sample(conditions,1)).replace("[","").replace("]","").replace("\"","")
+        t_like_match_null = column + like  + condition
+        
         t_in_where = ['t_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or  t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
         t_in_null = random.sample(t_in_where,1)
 
-        return(t_where_null,t_in_null)
+        return(t_where_null,t_like_match_null,t_in_null)
 
     def hanshu_int(self):       
         hanshu = ['MIN','AVG','MAX','COUNT','SUM','STDDEV','FIRST','LAST','LAST_ROW','','SPREAD','CEIL','FLOOR','ROUND']
@@ -384,6 +392,27 @@ class TDWhere:
         limit_offset = self.limit_offset()
 
         return(column,hanshu_column,qt_where,qt_like_match,qt_in_where,time_window,og_by,limit_offset)
+
+    def stable_where_null(self):  
+        #return null data      
+        stable_q_where_null = self.q_where_null()
+        stable_t_where_null = self.t_where_null()
+        
+        qt_where_null = random.sample(stable_q_where_null[0],3) + random.sample(stable_t_where_null[0],3) 
+
+        qt_like_match_null = random.sample(stable_q_where_null[1],1) + random.sample(stable_t_where_null[1],1)
+        qt_like_match_null = str(random.sample(qt_like_match_null,1)).replace("[","").replace("]","").replace("\"","")
+
+        qt_in_where_null = random.sample(stable_q_where_null[2],1) + random.sample(stable_t_where_null[2],1)
+        qt_in_where_null = str(random.sample(qt_in_where_null,1)).replace("[","").replace("]","").replace("'","")
+
+        column = self.column()
+        hanshu_column = self.hanshu_int()
+        time_window = self.time_window()
+        og_by = self.orderby_groupby()
+        limit_offset = self.limit_offset()
+
+        return(column,hanshu_column,qt_where_null,qt_like_match_null,qt_in_where_null,time_window,og_by,limit_offset)
 
     # test >=0 <=0,later
     def regular_where_all_null(self):   
