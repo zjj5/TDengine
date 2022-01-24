@@ -86,54 +86,54 @@ class TDTestCase:
                 print(conn1)
                 cur1.execute('use "%s";' %db)                 
 
-                # print("case1:select * from stable_1 where condition union all select * from stable_2[null data] where condition && select * from ( union all )")
-                # print("\n\n\n=========================================case1=========================================\n\n\n")
-                # stable_where = tdWhere.stable_where()
-                # sql1 = 'select * from %s;' % table
-                # for i in range(2,len(stable_where[2])+1):
-                #     q_where = list(combinations(stable_where[2],i))
-                #     for q_where in q_where:
-                #         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                #         q_in_where = stable_where[4]
-                #         sql2 = "select * from %s where %s %s " %(table,q_where,q_in_where)
-                #         sql2 += " union all select * from %s where %s %s " %(table_null,q_where,q_in_where)
-                #         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                #         cur1.execute(sql2)
+                print("case1:select * from stable_1 where condition union all select * from stable_2[null data] where condition && select * from ( union all )")
+                print("\n\n\n=========================================case1=========================================\n\n\n")
+                stable_where = tdWhere.stable_where()
+                sql1 = 'select * from %s;' % table
+                for i in range(2,len(stable_where[2])+1):
+                    q_where = list(combinations(stable_where[2],i))
+                    for q_where in q_where:
+                        q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_in_where = stable_where[4]
+                        sql2 = "select * from %s where %s %s " %(table,q_where,q_in_where)
+                        sql2 += " union all select * from %s where %s %s " %(table_null,q_where,q_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                #         sql2 = "select * from %s where %s %s " %(table_null,q_where,q_in_where)
-                #         sql2 += " union all select * from %s where %s %s " %(table,q_where,q_in_where)
-                #         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                #         cur1.execute(sql2)
+                        sql2 = "select * from %s where %s %s " %(table_null,q_where,q_in_where)
+                        sql2 += " union all select * from %s where %s %s " %(table,q_where,q_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                #         sql2 = "select * from ( %s )" %sql2 
-                #         tdSql.error(sql2)
+                        sql2 = "select * from ( %s )" %sql2 
+                        tdSql.error(sql2)
 
-                # print("case1.1:select * from stable_1 where condition union all select * from stable_1[null data] where condition && select * from ( union all )")
-                # print("\n\n\n=========================================case1.1=========================================\n\n\n")
-                # stable_where_all_and_null = tdWhere.stable_where_all_and_null()
-                # sql1 = 'select * from %s;' % table
-                # for i in range(2,len(stable_where_all_and_null[2])+1):
-                #     q_where = list(combinations(stable_where_all_and_null[2],i))                        
-                #     for q_where in q_where:
-                #         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                #         q_in_where = stable_where_all_and_null[4]
-                #         sql2 = ""
-                # for i in range(2,len(stable_where_all_and_null[5])+1):   
-                #     q_where_null = list(combinations(stable_where_all_and_null[5],i))     
-                #     for q_where_null in q_where_null:
-                #         q_where_null = str(q_where_null).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")                            
-                #         sql2 = "select * from %s where %s %s " %(table,q_where,q_in_where)
-                #         sql2 += " union all select * from %s where %s %s " %(table,q_where_null,q_in_where)
-                #         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                #         cur1.execute(sql2)
+                print("case1.1:select * from stable_1 where condition union all select * from stable_1[null data] where condition && select * from ( union all )")
+                print("\n\n\n=========================================case1.1=========================================\n\n\n")
+                stable_where_all_and_null = tdWhere.stable_where_all_and_null()
+                sql1 = 'select * from %s;' % table
+                for i in range(2,len(stable_where_all_and_null[2])+1):
+                    q_where = list(combinations(stable_where_all_and_null[2],i))                        
+                    for q_where in q_where:
+                        q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_in_where = stable_where_all_and_null[4]
+                        sql2 = ""
+                for i in range(2,len(stable_where_all_and_null[5])+1):   
+                    q_where_null = list(combinations(stable_where_all_and_null[5],i))     
+                    for q_where_null in q_where_null:
+                        q_where_null = str(q_where_null).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")                            
+                        sql2 = "select * from %s where %s %s " %(table,q_where,q_in_where)
+                        sql2 += " union all select * from %s where %s %s " %(table,q_where_null,q_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                #         sql2 = "select * from %s where %s %s " %(table,q_where_null,q_in_where)
-                #         sql2 += " union all select * from %s where %s %s " %(table,q_where,q_in_where)
-                #         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
-                #         cur1.execute(sql2)
+                        sql2 = "select * from %s where %s %s " %(table,q_where_null,q_in_where)
+                        sql2 += " union all select * from %s where %s %s " %(table,q_where,q_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
+                        cur1.execute(sql2)
 
-                #         sql2 = "select * from ( %s )" %sql2 
-                #         tdSql.error(sql2)
+                        sql2 = "select * from ( %s )" %sql2 
+                        tdSql.error(sql2)
 
                 print("case2:select * from stable_1 where condition order by ts asc | desc union all select * from stable_2[null data] where condition && select * from ( union all )")
                 print("\n\n\n=========================================case2=========================================\n\n\n")
