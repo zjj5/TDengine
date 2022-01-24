@@ -92,7 +92,7 @@ class TDTestCase:
                     cur1.execute('use "%s";' %db)                 
 
                     print("case1:select * from regular_table_1 where condition union all select * from regular_table_2[null data] where condition && select * from ( union all )")
-                    print("=========================================case1=========================================")
+                    print("\n\n\n=========================================case1=========================================\n\n\n")
                     regular_where = tdWhere.regular_where()
                     sql1 = 'select * from %s;' % table
                     for i in range(2,len(regular_where[2])+1):
@@ -114,7 +114,7 @@ class TDTestCase:
                             tdSql.error(sql2)
 
                     print("case1.1:select * from regular_table_1 where condition union all select * from regular_table_1[null data] where condition && select * from ( union all )")
-                    print("=========================================case1.1=========================================")
+                    print("\n\n\n=========================================case1.1=========================================\n\n\n")
                     regular_where_all_and_null = tdWhere.regular_where_all_and_null()
                     sql1 = 'select * from %s;' % table
                     for i in range(2,len(regular_where_all_and_null[2])+1):
@@ -141,7 +141,7 @@ class TDTestCase:
                             tdSql.error(sql2)
 
                     print("case2:select * from regular_table where condition order by ts asc | desc union all select * from regular_table[null data] where condition && select * from ( union all )")
-                    print("=========================================case2=========================================")
+                    print("\n\n\n=========================================case2=========================================\n\n\n")
                     regular_where = tdWhere.regular_where()
                     sql1 = 'select * from %s ;' % table
                     for i in range(2,len(regular_where[2])+1):
@@ -189,7 +189,7 @@ class TDTestCase:
                             tdSql.error(sql2)
 
                     print("case2.1:select * from regular_table where condition order by ts asc | desc union all select * from regular_table[null data] where condition && select * from ( union all )")
-                    print("=========================================case2.1=========================================")
+                    print("\n\n\n=========================================case2.1=========================================\n\n\n")
                     regular_where_all_and_null = tdWhere.regular_where_all_and_null()
                     sql1 = 'select * from %s order by ts ;' % table
                     for i in range(2,len(regular_where_all_and_null[2])+1):
@@ -241,7 +241,7 @@ class TDTestCase:
                             tdSql.error(sql2)
 
                     print("case3:select * from regular_table_1 where condition order by ts limit union all select * from regular_table_2[null data] where condition && select * from ( union all )")
-                    print("=========================================case3=========================================")
+                    print("\n\n\n=========================================case3=========================================\n\n\n")
                     regular_where = tdWhere.regular_where()
                     sql1 = 'select * from %s;' % table
                     for i in range(2,len(regular_where[2])+1):
@@ -266,7 +266,7 @@ class TDTestCase:
                             tdSql.error(sql2)
 
                     print("case3.1:select * from regular_table_1 where condition order by ts limit union all select * from regular_table_1[null data] where condition && select * from ( union all )")
-                    print("=========================================case3.1=========================================")
+                    print("\n\n\n=========================================case3.1=========================================\n\n\n")
                     regular_where_all_and_null = tdWhere.regular_where_all_and_null()
                     sql1 = 'select * from %s;' % table
                     for i in range(2,len(regular_where_all_and_null[2])+1):
@@ -293,7 +293,7 @@ class TDTestCase:
                             tdSql.error(sql2)
 
                     print("case4:select * from regular_table_1 where condition order by ts limit offset union all select * from regular_table_2[null data] where condition && select * from ( union all )")
-                    print("=========================================case4=========================================")
+                    print("\n\n\n=========================================case4=========================================\n\n\n")
                     regular_where = tdWhere.regular_where()
                     sql1 = 'select * from %s limit 10 offset 5;' % table
                     for i in range(2,len(regular_where[2])+1):
@@ -318,7 +318,7 @@ class TDTestCase:
                             tdSql.error(sql2)
 
                     print("case4.1:select * from regular_table_1 where condition order by ts limit offset union all select * from regular_table_1[null data] where condition && select * from ( union all )")
-                    print("=========================================case4.1=========================================")
+                    print("\n\n\n=========================================case4.1=========================================\n\n\n")
                     regular_where_all_and_null = tdWhere.regular_where_all_and_null()
                     sql1 = 'select * from %s limit 10 offset 5;' % table
                     for i in range(2,len(regular_where_all_and_null[2])+1):
