@@ -64,10 +64,10 @@ class TDTestCase:
         db = "regular_db_union"
         tdCreateData.dropandcreateDB_random("%s" %db,1) 
 
-        table_list = ['regular_table_1','table_1','regular_table_2','table_2','table_21']
-        table = str(random.sample(table_list,1)).replace("[","").replace("]","")
-        table_null_list = ['table_null','regular_table_null','table_3','table_4','table_22','table_null_data']
-        table_null = str(random.sample(table_null_list,1)).replace("[","").replace("]","")
+        table_list = ['regular_table_1','stable_1_1','regular_table_2','stable_1_1','stable_2_1']
+        table = str(random.sample(table_list,1)).replace("[","").replace("]","").replace("'","")
+        table_null_list = ['table_null','regular_table_null','stable_1_3','stable_1_4','stable_2_2','stable_null_data_1']
+        table_null = str(random.sample(table_null_list,1)).replace("[","").replace("]","").replace("'","")
         
         conn1 = taos.connect(host="127.0.0.1", user="root", password="taosdata", config="/etc/taos/")
         print(conn1)
