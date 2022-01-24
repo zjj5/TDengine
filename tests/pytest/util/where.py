@@ -414,6 +414,39 @@ class TDWhere:
 
         return(column,hanshu_column,qt_where_null,qt_like_match_null,qt_in_where_null,time_window,og_by,limit_offset)
 
+    def stable_where_all_and_null(self):  
+        #return all data + #return null data  
+        stable_q_where = self.q_where()
+        stable_t_where = self.t_where()
+
+        qt_where = random.sample(stable_q_where[0],3) + random.sample(stable_t_where[0],3)
+        
+        qt_like_match = random.sample(stable_q_where[1],1) + random.sample(stable_t_where[1],1)
+        qt_like_match = str(random.sample(qt_like_match,1)).replace("[","").replace("]","").replace("\"","")
+
+        qt_in_where = random.sample(stable_q_where[2],1) + random.sample(stable_t_where[2],1)
+        qt_in_where = str(random.sample(qt_in_where,1)).replace("[","").replace("]","").replace("'","")
+
+
+        stable_q_where_null = self.q_where_null()
+        stable_t_where_null = self.t_where_null()
+        
+        qt_where_null = random.sample(stable_q_where_null[0],3) + random.sample(stable_t_where_null[0],3) 
+
+        qt_like_match_null = random.sample(stable_q_where_null[1],1) + random.sample(stable_t_where_null[1],1)
+        qt_like_match_null = str(random.sample(qt_like_match_null,1)).replace("[","").replace("]","").replace("\"","")
+
+        qt_in_where_null = random.sample(stable_q_where_null[2],1) + random.sample(stable_t_where_null[2],1)
+        qt_in_where_null = str(random.sample(qt_in_where_null,1)).replace("[","").replace("]","").replace("'","")
+
+        column = self.column()
+        hanshu_column = self.hanshu_int()
+        time_window = self.time_window()
+        og_by = self.orderby_groupby()
+        limit_offset = self.limit_offset()
+
+        return(column,hanshu_column,qt_where,qt_like_match,qt_in_where,qt_where_null,qt_like_match_null,qt_in_where_null,time_window,og_by,limit_offset)
+
     # test >=0 <=0,later
     def regular_where_all_null(self):   
         q_where = self.q_where()
