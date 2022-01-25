@@ -94,14 +94,15 @@ class TDTestCase:
                     q_where = list(combinations(regular_where[2],i))
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_like_match = regular_where[3]
                         q_in_where = regular_where[4]
-                        sql2 = "select * from %s where %s %s " %(table,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s " %(table_null,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s " %(table,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s " %(table_null,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from %s where %s %s " %(table_null,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s " %(table,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s" %(table_null,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s" %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
@@ -116,19 +117,22 @@ class TDTestCase:
                     q_where = list(combinations(regular_where_all_and_null[2],i))                        
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_like_match = regular_where_all_and_null[3]
                         q_in_where = regular_where_all_and_null[4]
                         sql2 = ""
                 for i in range(2,len(regular_where_all_and_null[5])+1):   
                     q_where_null = list(combinations(regular_where_all_and_null[5],i))     
                     for q_where_null in q_where_null:
-                        q_where_null = str(q_where_null).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")                            
-                        sql2 = "select * from %s where %s %s " %(table,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s " %(table,q_where_null,q_in_where)
+                        q_where_null = str(q_where_null).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_like_match_null = regular_where_all_and_null[6]
+
+                        sql2 = "select * from %s where %s %s %s " %(table,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s" %(table,q_where_null,q_like_match_null,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from %s where %s %s " %(table,q_where_null,q_in_where)
-                        sql2 += " union all select * from %s where %s %s " %(table,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s" %(table,q_where_null,q_like_match_null,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s" %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
@@ -143,17 +147,18 @@ class TDTestCase:
                     q_where = list(combinations(regular_where[2],i))
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_like_match = regular_where[3]
                         q_in_where = regular_where[4]
-                        sql2 = "select * from %s where %s %s order by ts" %(table,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s " %(table_null,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s order by ts " %(table,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s " %(table_null,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
                         sql2 = "select * from ( %s )" %sql2 
                         tdSql.error(sql2)
 
-                        sql2 = "select * from %s where %s %s order by ts" %(table_null,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s order by ts" %(table,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s order by ts " %(table_null,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s order by ts " %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
@@ -166,17 +171,18 @@ class TDTestCase:
                     q_where = list(combinations(regular_where[2],i))
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_like_match = regular_where[3]
                         q_in_where = regular_where[4]
-                        sql2 = "select * from %s where %s %s order by ts desc" %(table,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s " %(table_null,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s order by ts desc " %(table,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s " %(table_null,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
                         sql2 = "select * from ( %s )" %sql2 
                         tdSql.error(sql2)
 
-                        sql2 = "select * from %s where %s %s order by ts desc" %(table_null,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s order by ts desc" %(table,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s order by ts desc " %(table_null,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s order by ts desc " %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
@@ -191,19 +197,22 @@ class TDTestCase:
                     q_where = list(combinations(regular_where_all_and_null[2],i))                        
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_like_match = regular_where_all_and_null[3]
                         q_in_where = regular_where_all_and_null[4]
                         sql2 = ""
                 for i in range(2,len(regular_where_all_and_null[5])+1):   
                     q_where_null = list(combinations(regular_where_all_and_null[5],i))     
                     for q_where_null in q_where_null:
-                        q_where_null = str(q_where_null).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")                            
-                        sql2 = "select * from %s where %s %s order by ts" %(table,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s " %(table,q_where_null,q_in_where)
+                        q_where_null = str(q_where_null).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_like_match_null = regular_where_all_and_null[6]
+
+                        sql2 = "select * from %s where %s %s %s order by ts " %(table,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s " %(table,q_where_null,q_like_match_null,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from %s where %s %s order by ts " %(table,q_where_null,q_in_where)
-                        sql2 += " union all select * from %s where %s %s order by ts " %(table,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s order by ts " %(table,q_where_null,q_like_match_null,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s order by ts " %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
@@ -216,19 +225,22 @@ class TDTestCase:
                     q_where = list(combinations(regular_where_all_and_null[2],i))                        
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                        q_in_where = str(regular_where_all_and_null[4]).replace("[","").replace("]","").replace("'","")
+                        q_like_match = regular_where_all_and_null[3]
+                        q_in_where = regular_where_all_and_null[4]
                         sql2 = ""
                 for i in range(2,len(regular_where_all_and_null[5])+1):   
                     q_where_null = list(combinations(regular_where_all_and_null[5],i))     
                     for q_where_null in q_where_null:
-                        q_where_null = str(q_where_null).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")                            
-                        sql2 = "select * from %s where %s %s order by ts desc" %(table,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s order by ts desc" %(table,q_where_null,q_in_where)
+                        q_where_null = str(q_where_null).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","") 
+                        q_like_match_null = regular_where_all_and_null[6]
+
+                        sql2 = "select * from %s where %s %s %s order by ts desc " %(table,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s order by ts desc " %(table,q_where_null,q_like_match_null,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from %s where %s %s order by ts desc " %(table,q_where_null,q_in_where)
-                        sql2 += " union all select * from %s where %s %s order by ts desc " %(table,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s order by ts desc " %(table,q_where_null,q_like_match_null,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s order by ts desc " %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
@@ -243,17 +255,18 @@ class TDTestCase:
                     q_where = list(combinations(regular_where[2],i))
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_like_match = regular_where[3]
                         q_in_where = regular_where[4]
-                        sql2 = "select * from %s where %s %s order by ts limit 10" %(table,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s " %(table_null,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s order by ts limit 10 " %(table,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s " %(table_null,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
                         sql2 = "select * from ( %s )" %sql2 
                         tdSql.error(sql2)
 
-                        sql2 = "select * from %s where %s %s order by ts limit 10" %(table_null,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s order by ts limit 10" %(table,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s order by ts limit 10 " %(table_null,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s order by ts limit 10 " %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
@@ -268,19 +281,22 @@ class TDTestCase:
                     q_where = list(combinations(regular_where_all_and_null[2],i))                        
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_like_match = regular_where_all_and_null[3]
                         q_in_where = regular_where_all_and_null[4]
                         sql2 = ""
                 for i in range(2,len(regular_where_all_and_null[5])+1):   
                     q_where_null = list(combinations(regular_where_all_and_null[5],i))     
                     for q_where_null in q_where_null:
                         q_where_null = str(q_where_null).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")                            
-                        sql2 = "select * from %s where %s %s order by ts limit 10" %(table,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s " %(table,q_where_null,q_in_where)
+                        q_like_match_null = regular_where_all_and_null[6]
+
+                        sql2 = "select * from %s where %s %s %s order by ts limit 10 " %(table,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s " %(table,q_where_null,q_like_match_null,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from %s where %s %s order by ts limit 10" %(table,q_where_null,q_in_where)
-                        sql2 += " union all select * from %s where %s %s order by ts limit 10" %(table,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s order by ts limit 10 " %(table,q_where_null,q_like_match_null,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s order by ts limit 10 " %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
@@ -295,17 +311,18 @@ class TDTestCase:
                     q_where = list(combinations(regular_where[2],i))
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_like_match = regular_where[3]
                         q_in_where = regular_where[4]
-                        sql2 = "select * from %s where %s %s order by ts limit 10 offset 5" %(table,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s order by ts limit 10 offset 5" %(table_null,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s order by ts limit 10 offset 5 " %(table,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s order by ts limit 10 offset 5 " %(table_null,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
                         sql2 = "select * from ( %s )" %sql2 
                         tdSql.error(sql2)
 
-                        sql2 = "select * from %s where %s %s order by ts limit 10 offset 5" %(table_null,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s order by ts limit 10 offset 5" %(table,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s order by ts limit 10 offset 5 " %(table_null,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s order by ts limit 10 offset 5 " %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
@@ -320,19 +337,22 @@ class TDTestCase:
                     q_where = list(combinations(regular_where_all_and_null[2],i))                        
                     for q_where in q_where:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_like_match = regular_where_all_and_null[3]
                         q_in_where = regular_where_all_and_null[4]
                         sql2 = ""
                 for i in range(2,len(regular_where_all_and_null[5])+1):   
                     q_where_null = list(combinations(regular_where_all_and_null[5],i))     
                     for q_where_null in q_where_null:
                         q_where_null = str(q_where_null).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")                            
-                        sql2 = "select * from %s where %s %s order by ts limit 10 offset 5 " %(table,q_where,q_in_where)
-                        sql2 += " union all select * from %s where %s %s order by ts limit 10 offset 5" %(table,q_where_null,q_in_where)
+                        q_like_match_null = regular_where_all_and_null[6]
+
+                        sql2 = "select * from %s where %s %s %s order by ts limit 10 offset 5 " %(table,q_where,q_like_match,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s order by ts limit 10 offset 5 " %(table,q_where_null,q_like_match_null,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from %s where %s %s order by ts limit 10  offset 5" %(table,q_where_null,q_in_where)
-                        sql2 += " union all select * from %s where %s %s order by ts limit 10  offset 5" %(table,q_where,q_in_where)
+                        sql2 = "select * from %s where %s %s %s order by ts limit 10  offset 5 " %(table,q_where_null,q_like_match_null,q_in_where)
+                        sql2 += " union all select * from %s where %s %s %s order by ts limit 10  offset 5 " %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
