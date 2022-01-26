@@ -57,7 +57,7 @@ class TDTestCase:
         tdSql.prepare()
         startTime = time.time() 
 
-        db = "stable_db"
+        db = "stable_all"
         tdCreateData.dropandcreateDB_random("%s" %db,1) 
 
         table_list = ['stable_1','stable_2',]
@@ -92,6 +92,7 @@ class TDTestCase:
                         qt_where = str(qt_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                         qt_like_match = stable_where[3]
                         qt_in_where = stable_where[4]
+
                         sql2 = "select * from %s where %s %s %s " %(table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
@@ -115,6 +116,7 @@ class TDTestCase:
                         qt_where = str(qt_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                         qt_like_match = stable_where[3]
                         qt_in_where = stable_where[4]
+
                         sql2 = "select * from %s where tbname in ('%s_1') and %s %s %s order by ts" %(table,table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
@@ -141,6 +143,7 @@ class TDTestCase:
                         qt_where = str(qt_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                         qt_like_match = stable_where[3]
                         qt_in_where = stable_where[4]
+
                         sql2 = "select * from %s where tbname in ('%s_1') and %s %s %s order by ts limit 10" %(table,table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
@@ -167,6 +170,7 @@ class TDTestCase:
                         qt_where = str(qt_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                         qt_like_match = stable_where[3]
                         qt_in_where = stable_where[4]
+
                         sql2 = "select * from %s where tbname in ('%s_1') and %s %s %s order by ts limit 10 offset 5" %(table,table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
@@ -195,6 +199,7 @@ class TDTestCase:
                         qt_like_match = stable_where[3]
                         qt_in_where = stable_where[4]
                         time_window = stable_where[5]
+                        
                         sql2 = "select * from %s where %s %s %s %s" %(table,qt_where,qt_like_match,qt_in_where,time_window)
                         tdSql.error(sql2)
 
