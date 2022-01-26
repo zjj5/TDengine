@@ -25,12 +25,8 @@ class TDTestCase:
     def caseDescription(self):
 
         '''
-        case1 <jayden>: [TD-11282] : check db ms/us/ns precision;\n
-        case2 <jayden>: [TD-11282] : check ts second-level >= 60;\n
-        case3 <jayden>: [TD-11282] : human date check;\n
-        case4 <jayden>: [TD-11282] : now check;\n
-        case5 <jayden>: [TD-11282] : epoch check;\n
-        case6 <jayden>: [TD-11282] : erro check;\n
+        case1 <jayden>: [TD-11282] : illegal insertsql check;\n
+        case2 <jayden>: [TD-11282] : type mismatch check;
 
         '''
         return
@@ -105,7 +101,7 @@ class TDTestCase:
         if self.err_case > 0:
             tdLog.exit(f"{self.err_case} failed")
         else:
-            tdLog.success("5 cases passed")
+            tdLog.success("2 cases passed")
 
     def stop(self):
         tdSql.close()
