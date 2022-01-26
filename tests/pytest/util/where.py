@@ -64,9 +64,6 @@ class TDWhere:
         
         q_where = random.sample(q_int_where,4) + random.sample(q_fl_do_where,2) + random.sample(q_nc_bi_bo_ts_where,2)
 
-        # q_like = ['t_binary like \'123_\' and','t_binary like \'abc_\' and','t_nchar like \'123_\' and','t_nchar like \'abc_\' and','t_binary like \'123%\' and','t_binary like \'abc%\' and','t_nchar like \'123_\' and','t_nchar like \'abc%\' and',]
-        # q_match = [ 't_binary match \'123_\' and','t_binary match \'abc_\' and','t_nchar match \'123_\' and','t_nchar match \'abc_\' and','t_binary match \'123_\' and','t_binary match \'abc_\' and','t_nchar match \'123_\' and','t_nchar match \'abc_\' and',
-        # 't_binary nmatch \'123_\' and','t_binary nmatch \'abc_\' and','t_nchar nmatch \'123_\' and','t_nchar nmatch \'abc_\' and','t_binary nmatch \'123_\' and','t_binary nmatch \'abc_\' and','t_nchar nmatch \'123_\' and','t_nchar nmatch \'abc_\' and',]
         q_like = ['q_binary like \'binary%\' and','q_binary like \'binary%\' and','q_nchar like \'nchar%\' and','q_nchar like \'nchar%\' and',]
         q_match = ['q_binary match \'binary\' and','q_binary nmatch \'binarynchar\' and','q_nchar match \'nchar\' and','q_nchar nmatch \'binarynchar\' and',]
         q_like_match = random.sample(q_like,1) + random.sample(q_match,1)
@@ -118,13 +115,18 @@ class TDWhere:
 
         t_where = random.sample(t_int_where,4) + random.sample(t_fl_do_where,2) + random.sample(t_nc_bi_bo_ts_where,2)
         
-        column_tag = self.column_tag()
-        column = str(random.sample(column_tag,1)).replace("[","").replace("]","").replace("\"","").replace("(","").replace(")","").replace("'","")
-        likes = [' LIKE ' , ' MATCH ' ,' NMATCH ',' CONTAINS ']
-        like = str(random.sample(likes,1)).replace("[","").replace("]","").replace("\"","").replace("'","")
-        conditions = ['\'1234_\' and ' , '\'abc4_\' and' , '\'1234%\' and ' , '\'a_bc4%\' and', '\'12aada@#!!34%\' and ' , '\'ab#%&%^&^*^(c4%\' and']
-        condition = str(random.sample(conditions,1)).replace("[","").replace("]","").replace("\"","")
-        t_like_match = column + like  + condition
+        # later
+        # column_tag = self.column_tag()
+        # column = str(random.sample(column_tag,1)).replace("[","").replace("]","").replace("\"","").replace("(","").replace(")","").replace("'","")
+        # likes = [' LIKE ' , ' MATCH ' ,' NMATCH ',' CONTAINS ']
+        # like = str(random.sample(likes,1)).replace("[","").replace("]","").replace("\"","").replace("'","")
+        # conditions = ['\'1234_\' and ' , '\'abc4_\' and' , '\'1234%\' and ' , '\'a_bc4%\' and', '\'12aada@#!!34%\' and ' , '\'ab#%&%^&^*^(c4%\' and']
+        # condition = str(random.sample(conditions,1)).replace("[","").replace("]","").replace("\"","")
+        # t_like_match = column + like  + condition
+        t_like = ['t_binary like \'binary%\' and','t_nchar like \'nchar%\' and',]
+        t_match = ['t_binary match \'binary\' and','t_binary nmatch \'binarynchar\' and','t_nchar match \'nchar\' and','t_nchar nmatch \'binarynchar\' and',]
+        t_like_match = random.sample(t_like,1) + random.sample(t_match,1)
+        t_like_match = random.sample(t_like_match,1)
 
         t_in_where = ['t_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or  t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
         t_in = random.sample(t_in_where,1)
@@ -146,13 +148,10 @@ class TDWhere:
 
         t_where_null = random.sample(t_int_where,4) + random.sample(t_fl_do_where,2) + random.sample(t_nc_bi_bo_ts_where,2)
         
-        column_tag = self.column_tag()
-        column = str(random.sample(column_tag,1)).replace("[","").replace("]","").replace("\"","").replace("(","").replace(")","").replace("'","")
-        likes = [' LIKE ' , ' MATCH ' ,' NMATCH ',' CONTAINS ']
-        like = str(random.sample(likes,1)).replace("[","").replace("]","").replace("\"","").replace("'","")
-        conditions = ['\'1234_\' and ' , '\'abc4_\' and' , '\'1234%\' and ' , '\'a_bc4%\' and', '\'12aada@#!!34%\' and ' , '\'ab#%&%^&^*^(c4%\' and']
-        condition = str(random.sample(conditions,1)).replace("[","").replace("]","").replace("\"","")
-        t_like_match_null = column + like  + condition
+        t_like = ['t_binary like \'binary_\' and','t_binary like 0 and','t_binary like \'0%\' and','t_nchar like \'nchar_\' and','t_nchar like 0 and','t_nchar like \'0%\' and',]
+        t_match = ['t_binary nmatch \'binary\' and','t_binary match \'binarynchar\' and','t_nchar nmatch \'nchar\' and','t_nchar match \'binarynchar\' and',]
+        t_like_match = random.sample(t_like,1) + random.sample(t_match,1)
+        t_like_match_null = random.sample(t_like_match,1)
         
         t_in_where = ['t_bool in (0 , 1) ' ,  't_bool in ( true , false) ' ,' (t_bool = true or  t_bool = false)' , '(t_bool = 0 or t_bool = 1)',]
         t_in_null = random.sample(t_in_where,1)
@@ -385,8 +384,12 @@ class TDWhere:
 
         qt_where = random.sample(stable_q_where[0],3) + random.sample(stable_t_where[0],3)
         
-        qt_like_match = random.sample(stable_q_where[1],1) + random.sample(stable_t_where[1],1)
-        qt_like_match = str(random.sample(qt_like_match,1)).replace("[","").replace("]","").replace("\"","")
+        if self.NUM%3 ==0:
+            qt_like_match = str(stable_q_where[1]).replace("[","").replace("]","").replace("\"","")
+        elif self.NUM%3 ==1:
+            qt_like_match = str(stable_t_where[1]).replace("[","").replace("]","").replace("\"","")
+        else :
+            qt_like_match = " "
 
         qt_in_where = random.sample(stable_q_where[2],1) + random.sample(stable_t_where[2],1)
         qt_in_where = str(random.sample(qt_in_where,1)).replace("[","").replace("]","").replace("'","")
