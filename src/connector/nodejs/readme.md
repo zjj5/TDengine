@@ -159,3 +159,4 @@ Please follow the [contribution guidelines](https://github.com/taosdata/TDengine
 ## License
 
 [GNU AGPL v3.0](http://www.gnu.org/licenses/agpl-3.0.html)
+
