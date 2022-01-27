@@ -211,7 +211,7 @@ class TDTestCase:
                         q_like_match = regular_where[3]
                         q_in_where = regular_where[4]
                         time_window = regular_where[5]
-                        
+
                         sql2 = "select * from %s where %s %s %s %s" %(table,q_where,q_like_match,q_in_where,time_window)
                         tdSql.error(sql2)
 
@@ -219,6 +219,9 @@ class TDTestCase:
                         tdSql.error(sql2)
 
                         sql2 = "select * from (select * from %s) where %s %s %s %s" %(table,q_where,q_like_match,q_in_where,time_window)
+                        tdSql.error(sql2)
+
+                        sql2 = "select distinct(*) from %s where %s %s %s" %(table,q_where,q_like_match,q_in_where)
                         tdSql.error(sql2)
                             
 
