@@ -92,6 +92,7 @@ class TDTestCase:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                         q_like_match = regular_where[3]
                         q_in_where = regular_where[4]
+
                         sql2 = "select * from %s where %s %s %s" %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
@@ -115,6 +116,7 @@ class TDTestCase:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                         q_like_match = regular_where[3]
                         q_in_where = regular_where[4]
+
                         sql2 = "select * from %s where %s %s %s order by ts" %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
@@ -135,6 +137,7 @@ class TDTestCase:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                         q_like_match = regular_where[3]
                         q_in_where = regular_where[4]
+
                         sql2 = "select * from %s where %s %s %s order by ts desc" %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
@@ -158,6 +161,7 @@ class TDTestCase:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                         q_like_match = regular_where[3]
                         q_in_where = regular_where[4]
+
                         sql2 = "select * from %s where %s %s %s order by ts limit 10" %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
@@ -181,6 +185,7 @@ class TDTestCase:
                         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
                         q_like_match = regular_where[3]
                         q_in_where = regular_where[4]
+
                         sql2 = "select * from %s where %s %s %s order by ts limit 10 offset 5" %(table,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
@@ -206,6 +211,7 @@ class TDTestCase:
                         q_like_match = regular_where[3]
                         q_in_where = regular_where[4]
                         time_window = regular_where[5]
+                        
                         sql2 = "select * from %s where %s %s %s %s" %(table,q_where,q_like_match,q_in_where,time_window)
                         tdSql.error(sql2)
 
