@@ -47,9 +47,7 @@ class TDWhere:
     # column and tag query
     # **int + floot_dou + other
     # q_where + t_where | q_where_null + t_where_null [前2组union] | q_where_all + t_where_all[自己union]
-    def q_where(self):       
-        # q_where = ['q_binary match \'binary%\'  'q_binary like \'binary%\'  or q_nchar = \'0\' ']
-
+    def q_where(self):  
         q_int_where = ['q_bigint >= -9223372036854775807 and ' , 'q_bigint <= 9223372036854775807 and ',
         'q_smallint >= -32767 and ', 'q_smallint <= 32767 and ',
         'q_tinyint >= -127 and ' , 'q_tinyint <= 127 and ' , 
@@ -144,7 +142,7 @@ class TDWhere:
         # conditions = ['\'1234_\' and ' , '\'abc4_\' and' , '\'1234%\' and ' , '\'a_bc4%\' and', '\'12aada@#!!34%\' and ' , '\'ab#%&%^&^*^(c4%\' and']
         # condition = str(random.sample(conditions,1)).replace("[","").replace("]","").replace("\"","")
         # t_like_match = column + like  + condition
-        t_like = ['t_binary like \'binary%\' and','t_nchar like \'nchar%\' and',]
+        t_like = ['t_binary like \'binary%\' and','t_nchar like \'nchar%\' and','(t_binary like \'binary%\'  or t_nchar = \'0\' ) and','(t_nchar like \'nchar%\' or t_binary = \'0\' ) and',]
         t_match = ['t_binary match \'binary\' and','t_binary nmatch \'binarynchar\' and','t_nchar match \'nchar\' and','t_nchar nmatch \'binarynchar\' and',]
         t_like_match = random.sample(t_like,1) + random.sample(t_match,1)
         t_like_match = random.sample(t_like_match,1)
