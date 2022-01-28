@@ -316,7 +316,7 @@ class TDSql:
             args = (caller.filename, caller.lineno, self.sql, col_name_list, expect_col_name_list)
             tdLog.exit("%s(%d) failed: sql:%s, col_name_list:%s != expect_col_name_list:%s" % args)
 
-    def checkEqual(self, elm, expect_elm):
+    def check_equal(self, elm, expect_elm):
         if elm == expect_elm:
             tdLog.info("sql:%s, elm:%s == expect_elm:%s" % (self.sql, elm, expect_elm))
         else:
