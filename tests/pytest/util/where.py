@@ -50,19 +50,26 @@ class TDWhere:
     def q_where(self):       
         # q_where = ['q_binary match \'binary%\'  'q_binary like \'binary%\'  or q_nchar = \'0\' ']
 
-        q_int_where = ['q_bigint >= -9223372036854775807 and ' , 'q_bigint <= 9223372036854775807 and ','q_smallint >= -32767 and ', 'q_smallint <= 32767 and ',
-        'q_tinyint >= -127 and ' , 'q_tinyint <= 127 and ' , 'q_int <= 2147483647 and ' , 'q_int >= -2147483647 and ',
-        'q_tinyint != 128 and ','q_bigint between  -9223372036854775807 and 9223372036854775807 and ',' q_int between -2147483647 and 2147483647 and ',
-        'q_smallint between -32767 and 32767 and ', 'q_tinyint between -127 and 127  and ',
+        q_int_where = ['q_bigint >= -9223372036854775807 and ' , 'q_bigint <= 9223372036854775807 and ',
+        'q_smallint >= -32767 and ', 'q_smallint <= 32767 and ',
+        'q_tinyint >= -127 and ' , 'q_tinyint <= 127 and ' , 
+        'q_int <= 2147483647 and ' , 'q_int >= -2147483647 and ',
+        'q_smallint between -32767 and 32767 and ', ' q_int between -2147483647 and 2147483647 and ',
+        'q_bigint between  -9223372036854775807 and 9223372036854775807 and ','q_tinyint between -127 and 127  and ',
+        'q_tinyint != 128 and ','q_smallint != 88888 and ','q_int != 8888888888 and ','q_bigint != 9999972036854775807 and ',
         'q_bigint is not null and ' , 'q_int is not null and ' , 'q_smallint is not null and ' , 'q_tinyint is not null and ' ,]
 
         q_fl_do_where = ['q_float >= -3.4E38 and ','q_float <= 3.4E38 and ', 'q_double >= -1.7E308 and ','q_double <= 1.7E308 and ', 
         'q_float between -3.4E38 and 3.4E38 and ','q_double between -1.7E308 and 1.7E308 and ' ,
         'q_float is not null and ' ,'q_double is not null and ' ,]
 
-        q_nc_bi_bo_ts_where = [ 'q_bool is not null and ' ,'q_binary is not null and ' ,'q_nchar is not null and ' ,'q_ts is not null and ' ,]
+        q_nc_bi_bo_ts_where = [ 'q_bool is not null and ' ,'q_binary is not null and ' ,'q_nchar is not null and ' ,
+        'ts is not null and' ,  'ts <= now +1h and ' , 'ts >= 1600000000000 and ' ,
+        '_c0 is not null and ' ,  '_c0 <= now +1h and ' , '_c0 >= 1600000000000 and ' ,
+        '_C0 is not null and' ,  '_C0 <= now +1h and ' ,  '_C0 >= 1600000000000 and ',
+        'q_ts is not null and' ,  'q_ts <= now +1h and ' , 'q_ts >= 1600000000000 and ',]
         
-        q_where = random.sample(q_int_where,4) + random.sample(q_fl_do_where,2) + random.sample(q_nc_bi_bo_ts_where,2)
+        q_where = random.sample(q_int_where,4) + random.sample(q_fl_do_where,2) + random.sample(q_nc_bi_bo_ts_where,3)
 
         q_like = ['q_binary like \'binary%\' and','q_binary like \'binary%\' and','q_nchar like \'nchar%\' and','q_nchar like \'nchar%\' and',]
         q_match = ['q_binary match \'binary\' and','q_binary nmatch \'binarynchar\' and','q_nchar match \'nchar\' and','q_nchar nmatch \'binarynchar\' and',]
@@ -76,19 +83,27 @@ class TDWhere:
 
     def q_where_null(self):  
 
-        q_int_where = ['q_bigint < -9223372036854775807 and ' , 'q_bigint > 9223372036854775807 and ','q_smallint < -32767 and ', 'q_smallint > 32767 and ',
-        'q_tinyint < -127 and ' , 'q_tinyint > 127 and ' , 'q_int > 2147483647 and ' , 'q_int < -2147483647 and ',
-        'q_bigint between  9223372036854775807 and -9223372036854775807 and ',' q_int between 2147483647 and -2147483647 and ',
-        'q_smallint between 32767 and -32767 and ', 'q_tinyint between 127 and -127  and ',
+        q_int_where = ['q_bigint < -9223372036854775807 and ' , 'q_bigint > 9223372036854775807 and ',
+        'q_smallint < -32767 and ', 'q_smallint > 32767 and ',
+        'q_tinyint < -127 and ' , 'q_tinyint > 127 and ' , 
+        'q_int > 2147483647 and ' , 'q_int < -2147483647 and ',
+        'q_bigint between  9223372036854775807 and -9223372036854775807 and ','q_smallint between 32767 and -32767 and ',
+        'q_int between 2147483647 and -2147483647 and ','q_tinyint between 127 and -127  and ',
+        'q_tinyint = 128 and ','q_smallint = 88888 and ','q_int = 8888888888 and ','q_bigint = 9999972036854775807 and ',
+        'q_tinyint == 128 and ','q_smallint == 88888 and ','q_int == 8888888888 and ','q_bigint == 9999972036854775807 and ',
         'q_bigint is null and ' , 'q_int is null and ' , 'q_smallint is null and ' , 'q_tinyint is null and ' ,]
 
         q_fl_do_where = ['q_float < -3.4E38 and ','q_float > 3.4E38 and ', 'q_double < -1.7E308 and ','q_double > 1.7E308 and ', 
         'q_float between 3.4E38 and -3.4E38 and ','q_double between 1.7E308 and -1.7E308 and ' ,
         'q_float is null and ' ,'q_double is null and ' ,]
 
-        q_nc_bi_bo_ts_where = [ 'q_bool is null and ' ,'q_binary is null and ' ,'q_nchar is null and ' ,'q_ts is null and ' ,]
+        q_nc_bi_bo_ts_where = [ 'q_bool is null and ' ,'q_binary is null and ' ,'q_nchar is null and ' ,
+        'ts is null and' ,  'ts >= now +100h and ' , 'ts <= 1600000000000 and ' ,
+        '_c0 is null and ' ,  '_c0 >= now +100h and ' , '_c0 <= 1600000000000 and ' ,
+        '_C0 is null and' ,  '_C0 >= now +100h and ' ,  '_C0 <= 1600000000000 and ',
+        'q_ts is null and' ,  'q_ts >= now +100h and ' , 'q_ts <= 1600000000000 and ',]
         
-        q_where_null = random.sample(q_int_where,4) + random.sample(q_fl_do_where,2) + random.sample(q_nc_bi_bo_ts_where,2)
+        q_where_null = random.sample(q_int_where,4) + random.sample(q_fl_do_where,2) + random.sample(q_nc_bi_bo_ts_where,3)
 
         q_like = ['q_binary like \'binary_\' and','q_binary like \'binarynchar%\' and','q_nchar like \'nchar_\' and','q_nchar like \'binarynchar%\' and',]
         q_match = ['q_binary nmatch \'binary\' and','q_binary match \'binarynchar\' and','q_nchar nmatch \'nchar\' and','q_nchar match \'binarynchar\' and',]
@@ -101,17 +116,21 @@ class TDWhere:
         return(q_where_null,q_like_match_null,q_in_null)
 
     def t_where(self):   
-        t_int_where = ['t_bigint >= -9223372036854775807 and ' , 't_bigint <= 9223372036854775807 and ','t_smallint >= -32767 and ', 't_smallint <= 32767 and ',
-        't_tinyint >= -127 and ' , 't_tinyint <= 127 and ' , 't_int <= 2147483647 and ' , 't_int >= -2147483647 and ',
-        't_tinyint != 128 and ','t_bigint between  -9223372036854775807 and 9223372036854775807 and ',' t_int between -2147483647 and 2147483647 and ',
-        't_smallint between -32767 and 32767 and ', 't_tinyint between -127 and 127  and ',
+        t_int_where = ['t_bigint >= -9223372036854775807 and ' , 't_bigint <= 9223372036854775807 and ',
+        't_smallint >= -32767 and ', 't_smallint <= 32767 and ',
+        't_tinyint >= -127 and ' , 't_tinyint <= 127 and ' , 
+        't_int <= 2147483647 and ' , 't_int >= -2147483647 and ',
+        't_bigint between  -9223372036854775807 and 9223372036854775807 and ','t_smallint between -32767 and 32767 and ', 
+        't_int between -2147483647 and 2147483647 and ','t_tinyint between -127 and 127  and ',        
+        't_tinyint != 128 and ','t_smallint != 88888 and ','t_int != 8888888888 and ','t_bigint != 9999972036854775807 and ',
         't_bigint is not null and ' , 't_int is not null and ' , 't_smallint is not null and ' , 't_tinyint is not null and ' ,]
 
         t_fl_do_where = ['t_float >= -3.4E38 and ','t_float <= 3.4E38 and ', 't_double >= -1.7E308 and ','t_double <= 1.7E308 and ', 
         't_float between -3.4E38 and 3.4E38 and ','t_double between -1.7E308 and 1.7E308 and ' ,
         't_float is not null and ' ,'t_double is not null and ' ,]
 
-        t_nc_bi_bo_ts_where = [ 't_bool is not null and ' ,'t_binary is not null and ' ,'t_nchar is not null and ' ,'t_ts is not null and ' ,]
+        t_nc_bi_bo_ts_where = [ 't_bool is not null and ' ,'t_binary is not null and ' ,'t_nchar is not null and ' ,
+        't_ts is not null and' ,  't_ts <= now +1h and ' , 't_ts >= 0 and ',]
 
         t_where = random.sample(t_int_where,4) + random.sample(t_fl_do_where,2) + random.sample(t_nc_bi_bo_ts_where,2)
         
@@ -134,17 +153,22 @@ class TDWhere:
         return(t_where,t_like_match,t_in)
 
     def t_where_null(self):   
-        t_int_where = ['t_bigint < -9223372036854775807 and ' , 't_bigint > 9223372036854775807 and ','t_smallint < -32767 and ', 't_smallint > 32767 and ',
-        't_tinyint < -127 and ' , 't_tinyint > 127 and ' , 't_int > 2147483647 and ' , 't_int < -2147483647 and ',
-        't_bigint between  9223372036854775807 and -9223372036854775807 and ',' t_int between 2147483647 and -2147483647 and ',
-        't_smallint between 32767 and -32767 and ', 't_tinyint between 127 and -127  and ',
+        t_int_where = ['t_bigint < -9223372036854775807 and ' , 't_bigint > 9223372036854775807 and ',
+        't_smallint < -32767 and ', 't_smallint > 32767 and ',
+        't_tinyint < -127 and ' , 't_tinyint > 127 and ' , 
+        't_int > 2147483647 and ' , 't_int < -2147483647 and ',
+        't_bigint between  9223372036854775807 and -9223372036854775807 and ','t_smallint between 32767 and -32767 and ',
+        't_int between 2147483647 and -2147483647 and ', 't_tinyint between 127 and -127  and ',
+        't_tinyint = 128 and ','t_smallint = 88888 and ','t_int = 8888888888 and ','t_bigint = 9999972036854775807 and ',
+        't_tinyint == 128 and ','t_smallint == 88888 and ','t_int == 8888888888 and ','t_bigint == 9999972036854775807 and ',
         't_bigint is null and ' , 't_int is null and ' , 't_smallint is null and ' , 't_tinyint is null and ' ,]
 
         t_fl_do_where = ['t_float < -3.4E38 and ','t_float > 3.4E38 and ', 't_double < -1.7E308 and ','t_double > 1.7E308 and ', 
         't_float between 3.4E38 and -3.4E38 and ','t_double between 1.7E308 and -1.7E308 and ' ,
         't_float is null and ' ,'t_double is null and ' ,]
 
-        t_nc_bi_bo_ts_where = [ 't_bool is null and ' ,'t_binary is null and ' ,'t_nchar is null and ' ,'t_ts is null and ' ,]
+        t_nc_bi_bo_ts_where = [ 't_bool is null and ' ,'t_binary is null and ' ,'t_nchar is null and ' ,
+        't_ts is null and' ,  't_ts >= now +100h and ' , 't_ts < 0 and ',]
 
         t_where_null = random.sample(t_int_where,4) + random.sample(t_fl_do_where,2) + random.sample(t_nc_bi_bo_ts_where,2)
         
@@ -259,6 +283,26 @@ class TDWhere:
             time_window = td_session
         
         return time_window
+
+    def groupby(self):    
+        int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
+        bia_column = ['(*)','(_c0)','(_C0)','(q_bool)','(q_binary)','(q_nchar)','(q_ts)','(q_bool_null)','(q_binary_null)','(q_nchar_null)','(q_ts_null)']
+        tag_column = ['(tbname)','(loc)','(t_int)','(t_bigint)','(t_smallint)','(t_tinyint)','(t_float)','(t_double)','(t_bool)','(t_binary)','(t_nchar)','(t_ts)']
+        columns = int_column + bia_column + tag_column
+        column = str(random.sample(columns,1)).replace("[","").replace("]","").replace("(","").replace(")","").replace("'","")
+
+        if self.NUM%10 == 4:
+            groupby = " group by %s " %column
+        elif self.NUM%10 == 5 :
+            groupby = " group by tbname , %s " %column
+        elif self.NUM%10 == 6 :
+            groupby = " group by tbname , %s order by %s " %(column,column)
+        elif self.NUM%10 == 7 :
+            groupby = " group by tbname , %s order by %s desc" %(column,column)
+        else:
+            groupby = " group by "
+        
+        return groupby
 
     def orderby_groupby(self):    
         int_column = ['(q_int)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_float)','(q_double)','(q_int_null)','(q_bigint_null)','(q_smallint_null)','(q_tinyint_null)','(q_float_null)','(q_double_null)']
