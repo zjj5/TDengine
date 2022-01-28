@@ -199,6 +199,8 @@ class TDTestCase:
                         qt_like_match = stable_where[3]
                         qt_in_where = stable_where[4]
                         time_window = stable_where[5]
+                        og_by = stable_where[6]
+                        groupby = tdWhere.groupby()
 
                         sql2 = "select * from %s where %s %s %s %s" %(table,qt_where,qt_like_match,qt_in_where,time_window)
                         tdSql.error(sql2)
@@ -210,6 +212,9 @@ class TDTestCase:
                         tdSql.error(sql2)
 
                         sql2 = "select distinct(*) from %s where %s %s %s" %(table,qt_where,qt_like_match,qt_in_where)
+                        tdSql.error(sql2)
+
+                        sql2 = "select * from %s where %s %s %s %s" %(table,qt_where,qt_like_match,qt_in_where,groupby)
                         tdSql.error(sql2)
 
 
