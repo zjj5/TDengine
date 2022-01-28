@@ -1,5 +1,5 @@
 ###################################################################
-#           Copyright (c) 2016 by TAOS Technologies, Inc.
+#           Copyright (c) 2021 by TAOS Technologies, Inc.
 #                     All rights reserved.
 #
 #  This file is proprietary and confidential to TAOS Technologies.
@@ -10,39 +10,42 @@
 ###################################################################
 
 # -*- coding: utf-8 -*-
-import os
-import time
+
+import sys
 from util.log import *
 from util.cases import *
 from util.sql import *
-from util.dnodes import *
 
 
 class TDTestCase:
     def caseDescription(self):
         '''
-        [TD-11510] taosBenchmark test cases
+        case1<ganlin zhao>: [TD-13246] Coredump when parentheses appear before the insert_sql
         '''
         return
 
     def init(self, conn, logSql):
         tdLog.debug("start to execute %s" % __file__)
         tdSql.init(conn.cursor(), logSql)
+        self._conn = conn
 
     def run(self):
-        cmd = "taosBenchmark -f ./5-taos-tools/taosbenchmark/json/sml_telnet_tcp.json"
-        tdLog.info("%s" % cmd)
-        os.system("%s" % cmd)
-        time.sleep(5)
-        tdSql.execute("reset query cache")
-        tdSql.query("select count(tbname) from opentsdb_telnet.stb1")
-        tdSql.checkData(0, 0, 8)
-        tdSql.query("select count(*) from opentsdb_telnet.stb1")
-        tdSql.checkData(0, 0, 160)
-        tdSql.query("select count(tbname) from opentsdb_telnet.stb2")
-        tdSql.checkData(0, 0, 8)
-        tdSql.query("select count(*) from opentsdb_telnet.stb2")
-        tdSql.checkData(0, 0, 160)
+        print("running {}".format(__file__))
+        tdSql.prepare()
+
+        tdSql.execute('create stable st(ts timestamp , value int) tags (ind int)')
+        tdSql.execute('create table  ctb using st tags(1)')
+        tdSql.execute('create table  tb (ts timestamp, value int)')
+        tdSql.query('insert into ctb values(now, 1)');
+        tdSql.query('insert into tb values(now, 1)');
+
+        tdSql.error('(insert into ctb values(now, 1)');
+        tdSql.error('(insert into tb values(now, 1)');
+        tdSql.error('(insert into ctb values');
+        tdSql.error('(insert into ctb');
+        tdSql.error('(insert into');
+        tdSql.error('(insert');
+        tdSql.error('(');
 
     def stop(self):
         tdSql.close()
