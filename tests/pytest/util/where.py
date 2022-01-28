@@ -64,14 +64,14 @@ class TDWhere:
         'q_float is not null and ' ,'q_double is not null and ' ,]
 
         q_nc_bi_bo_ts_where = [ 'q_bool is not null and ' ,'q_binary is not null and ' ,'q_nchar is not null and ' ,
-        'ts is not null and' ,  'ts <= now +1h and ' , 'ts >= 1600000000000 and ' ,
-        '_c0 is not null and ' ,  '_c0 <= now +1h and ' , '_c0 >= 1600000000000 and ' ,
-        '_C0 is not null and' ,  '_C0 <= now +1h and ' ,  '_C0 >= 1600000000000 and ',
-        'q_ts is not null and' ,  'q_ts <= now +1h and ' , 'q_ts >= 1600000000000 and ',]
+        'ts is not null and' ,  'ts <= now +1h and ' , 'ts >= 1600000000000 and ' , ' ts between 1600000000000 and now +1h  and ' ,
+        '_c0 is not null and ' ,  '_c0 <= now +1h and ' , '_c0 >= 1600000000000 and ' , ' _c0 between 1600000000000 and now +1h  and ' ,
+        '_C0 is not null and' ,  '_C0 <= now +1h and ' ,  '_C0 >= 1600000000000 and ', ' _C0 between 1600000000000 and now +1h  and ' ,
+        'q_ts is not null and' ,  'q_ts <= now +1h and ' , 'q_ts >= 1600000000000 and ', ' q_ts between 1600000000000 and now +1h  and ' ,]
         
         q_where = random.sample(q_int_where,4) + random.sample(q_fl_do_where,2) + random.sample(q_nc_bi_bo_ts_where,3)
 
-        q_like = ['q_binary like \'binary%\' and','q_binary like \'binary%\' and','q_nchar like \'nchar%\' and','q_nchar like \'nchar%\' and',]
+        q_like = ['q_binary like \'binary%\' and','(q_binary like \'binary%\'  or q_nchar = \'0\' ) and','q_nchar like \'nchar%\' and','(q_nchar like \'nchar%\' or q_binary = \'0\' ) and',]
         q_match = ['q_binary match \'binary\' and','q_binary nmatch \'binarynchar\' and','q_nchar match \'nchar\' and','q_nchar nmatch \'binarynchar\' and',]
         q_like_match = random.sample(q_like,1) + random.sample(q_match,1)
         q_like_match = random.sample(q_like_match,1)
@@ -91,17 +91,19 @@ class TDWhere:
         'q_int between 2147483647 and -2147483647 and ','q_tinyint between 127 and -127  and ',
         'q_tinyint = 128 and ','q_smallint = 88888 and ','q_int = 8888888888 and ','q_bigint = 9999972036854775807 and ',
         'q_tinyint == 128 and ','q_smallint == 88888 and ','q_int == 8888888888 and ','q_bigint == 9999972036854775807 and ',
-        'q_bigint is null and ' , 'q_int is null and ' , 'q_smallint is null and ' , 'q_tinyint is null and ' ,]
+        'q_bigint is null and ' , 'q_int is null and ' , 'q_smallint is null and ' , 'q_tinyint is null and ' ,
+        'q_bigint_null is not null and ' , 'q_int_null is not null and ' , 'q_smallint_null is not null and ' , 'q_tinyint_null is not null and ' ,]
 
         q_fl_do_where = ['q_float < -3.4E38 and ','q_float > 3.4E38 and ', 'q_double < -1.7E308 and ','q_double > 1.7E308 and ', 
         'q_float between 3.4E38 and -3.4E38 and ','q_double between 1.7E308 and -1.7E308 and ' ,
-        'q_float is null and ' ,'q_double is null and ' ,]
+        'q_float is not null and ' ,'q_double is not null and ' ,'q_float_null is not null and ' ,'q_double_null is not null and ' ,]
 
         q_nc_bi_bo_ts_where = [ 'q_bool is null and ' ,'q_binary is null and ' ,'q_nchar is null and ' ,
         'ts is null and' ,  'ts >= now +100h and ' , 'ts <= 1600000000000 and ' ,
         '_c0 is null and ' ,  '_c0 >= now +100h and ' , '_c0 <= 1600000000000 and ' ,
         '_C0 is null and' ,  '_C0 >= now +100h and ' ,  '_C0 <= 1600000000000 and ',
-        'q_ts is null and' ,  'q_ts >= now +100h and ' , 'q_ts <= 1600000000000 and ',]
+        'q_ts is null and' ,  'q_ts >= now +100h and ' , 'q_ts <= 1600000000000 and ',
+        'q_bool_null is not null and ' ,'q_binary_null is not null and ' ,'q_nchar_null is not null and ' ,]
         
         q_where_null = random.sample(q_int_where,4) + random.sample(q_fl_do_where,2) + random.sample(q_nc_bi_bo_ts_where,3)
 
@@ -130,7 +132,7 @@ class TDWhere:
         't_float is not null and ' ,'t_double is not null and ' ,]
 
         t_nc_bi_bo_ts_where = [ 't_bool is not null and ' ,'t_binary is not null and ' ,'t_nchar is not null and ' ,
-        't_ts is not null and' ,  't_ts <= now +1h and ' , 't_ts >= 0 and ',]
+        't_ts is not null and' ,  't_ts <= now +1h and ' , 't_ts >= 0 and ',' t_ts between 0 and now +1h  and ' ,]
 
         t_where = random.sample(t_int_where,4) + random.sample(t_fl_do_where,2) + random.sample(t_nc_bi_bo_ts_where,2)
         
@@ -165,7 +167,7 @@ class TDWhere:
 
         t_fl_do_where = ['t_float < -3.4E38 and ','t_float > 3.4E38 and ', 't_double < -1.7E308 and ','t_double > 1.7E308 and ', 
         't_float between 3.4E38 and -3.4E38 and ','t_double between 1.7E308 and -1.7E308 and ' ,
-        't_float is null and ' ,'t_double is null and ' ,]
+        't_float is not null and ' ,'t_double is not null and ' ,]
 
         t_nc_bi_bo_ts_where = [ 't_bool is null and ' ,'t_binary is null and ' ,'t_nchar is null and ' ,
         't_ts is null and' ,  't_ts >= now +100h and ' , 't_ts < 0 and ',]
