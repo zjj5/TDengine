@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-#include "tdataformat.h"
+#include "trow.h"
 
 typedef int32_t (*FCqWrite)(int32_t vgId, void *pHead, int32_t qtype, void *pMsg);
 

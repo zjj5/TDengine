@@ -38,17 +38,13 @@ extern "C" {
 #include "qUtil.h"
 #include "tcmdtype.h"
 
-typedef enum {
-  TAOS_REQ_FROM_SHELL,
-  TAOS_REQ_FROM_HTTP
-} SReqOrigin;
+typedef enum { TAOS_REQ_FROM_SHELL, TAOS_REQ_FROM_HTTP } SReqOrigin;
 
 // forward declaration
 struct SSqlInfo;
 
 typedef void (*__async_cb_func_t)(void *param, TAOS_RES *tres, int32_t numOfRows);
 typedef void (*_freeSqlSupporter)(void **);
-
 
 typedef struct SNewVgroupInfo {
   int32_t    vgId;
@@ -58,11 +54,11 @@ typedef struct SNewVgroupInfo {
 } SNewVgroupInfo;
 
 typedef struct CChildTableMeta {
-  int32_t        vgId;
-  STableId       id;
-  uint8_t        tableType;
-  char           sTableName[TSDB_TABLE_FNAME_LEN];  // TODO: refactor super table name, not full name
-  uint64_t       suid;                              // super table id
+  int32_t  vgId;
+  STableId id;
+  uint8_t  tableType;
+  char     sTableName[TSDB_TABLE_FNAME_LEN];  // TODO: refactor super table name, not full name
+  uint64_t suid;                              // super table id
 } CChildTableMeta;
 
 typedef struct SColumnIndex {
@@ -71,15 +67,15 @@ typedef struct SColumnIndex {
 } SColumnIndex;
 
 typedef struct SColumn {
-  uint64_t     tableUid;
-  int32_t      columnIndex;
-  SColumnInfo  info;
+  uint64_t    tableUid;
+  int32_t     columnIndex;
+  SColumnInfo info;
 } SColumn;
 
 typedef struct SInternalField {
-  TAOS_FIELD      field;
-  bool            visible;
-  SExprInfo      *pExpr;
+  TAOS_FIELD field;
+  bool       visible;
+  SExprInfo *pExpr;
 } SInternalField;
 
 typedef struct SParamInfo {
@@ -92,7 +88,7 @@ typedef struct SParamInfo {
 
 typedef struct SBoundColumn {
   int32_t offset;   // all column offset value
-  int32_t toffset;  // first part offset for SDataRow TODO: get offset from STSchema on future
+  int32_t toffset;  // first part offset for STpRow TODO: get offset from STSchema on future
   uint8_t valStat;  // denote if current column bound or not(0 means has val, 1 means no val)
 } SBoundColumn;
 typedef enum {
@@ -115,7 +111,7 @@ typedef struct SParsedDataColInfo {
   int16_t        numOfCols;
   int16_t        numOfBound;
   uint16_t       flen;        // TODO: get from STSchema
-  uint16_t       allNullLen;  // TODO: get from STSchema(base on SDataRow)
+  uint16_t       allNullLen;  // TODO: get from STSchema(base on STpRow)
   uint16_t       extendedVarLen;
   uint16_t       boundNullLen;    // bound column len with all NULL value(without VarDataOffsetT/SColIdx part)
   int32_t *      boundedColumns;  // bound column idx according to schema
@@ -127,11 +123,11 @@ typedef struct SParsedDataColInfo {
 #define IS_DATA_COL_ORDERED(spd) ((spd->orderStatus) == (int8_t)ORDER_STATUS_ORDERED)
 
 typedef struct {
-  int32_t dataLen;  // len of SDataRow
+  int32_t dataLen;  // len of STpRow
   int32_t kvLen;    // len of SKVRow
 } SMemRowInfo;
 typedef struct {
-  uint8_t      memRowType;   // default is 0, that is SDataRow 
+  uint8_t      memRowType;   // default is 0, that is STpRow
   uint8_t      compareStat;  // 0 no need, 1 need compare
   int32_t      rowSize;
   SMemRowInfo *rowInfo;
@@ -143,79 +139,51 @@ typedef enum {
 } ERowCompareStat;
 
 typedef struct {
-  void *vgroupMap;  
-  void *tableMetaMap;
-  void *vgroupListBuf; 
+  void *  vgroupMap;
+  void *  tableMetaMap;
+  void *  vgroupListBuf;
   int64_t ref;
 } SClusterInfo;
 
 int tsParseTime(SStrToken *pToken, int64_t *time, char **next, char *error, int16_t timePrec);
 
-int  initMemRowBuilder(SMemRowBuilder *pBuilder, uint32_t nRows, SParsedDataColInfo *pColInfo);
+int  initMemRowBuilder(SRowBuilder *pBuilder, int16_t schemaVer, SParsedDataColInfo *pColInfo);
 void destroyMemRowBuilder(SMemRowBuilder *pBuilder);
 
 /**
  * @brief
  *
- * @param memRowType
+ * @param rowType
  * @param spd
  * @param idx   the absolute bound index of columns
  * @return FORCE_INLINE
  */
-static FORCE_INLINE void tscGetMemRowAppendInfo(SSchema *pSchema, uint8_t memRowType, SParsedDataColInfo *spd,
-                                                int32_t idx, int32_t *toffset, int16_t *colId) {
+static FORCE_INLINE void tscGetMemRowAppendInfo(SSchema *pSchema, uint8_t rowType, SParsedDataColInfo *spd, int32_t idx,
+                                                int32_t *toffset, int16_t *colId, int32_t *colIdx) {
   int32_t schemaIdx = 0;
   if (IS_DATA_COL_ORDERED(spd)) {
     schemaIdx = spd->boundedColumns[idx];
-    if (isDataRowT(memRowType)) {
+    if (TD_IS_TP_ROW_T(rowType)) {
       *toffset = (spd->cols + schemaIdx)->toffset;  // the offset of firstPart
+      *colIdx = schemaIdx;
     } else {
       *toffset = idx * sizeof(SColIdx);  // the offset of SColIdx
+      *colIdx = idx;
     }
   } else {
     ASSERT(idx == (spd->colIdxInfo + idx)->boundIdx);
     schemaIdx = (spd->colIdxInfo + idx)->schemaColIdx;
-    if (isDataRowT(memRowType)) {
+    if (TD_IS_TP_ROW_T(rowType)) {
       *toffset = (spd->cols + schemaIdx)->toffset;
+      *colIdx = schemaIdx;
     } else {
       *toffset = ((spd->colIdxInfo + idx)->finalIdx) * sizeof(SColIdx);
+      *colIdx = (spd->colIdxInfo + idx)->finalIdx;
     }
   }
   *colId = pSchema[schemaIdx].colId;
 }
 
-/**
- * @brief Applicable to consume by multi-columns
- *
- * @param row
- * @param value
- * @param isCopyVarData In some scenario, the varVal is copied to row directly before calling tdAppend***ColVal()
- * @param colId
- * @param colType
- * @param idx index in SSchema
- * @param pBuilder
- * @param spd
- * @return FORCE_INLINE
- */
-static FORCE_INLINE void tscAppendMemRowColVal(SMemRow row, const void *value, bool isCopyVarData, int16_t colId,
-                                               int8_t colType, int32_t toffset, SMemRowBuilder *pBuilder,
-                                               int32_t rowNum) {
-  tdAppendMemRowColVal(row, value, isCopyVarData, colId, colType, toffset);
-  if (pBuilder->compareStat == ROW_COMPARE_NEED) {
-    SMemRowInfo *pRowInfo = pBuilder->rowInfo + rowNum;
-    tdGetColAppendDeltaLen(value, colType, &pRowInfo->dataLen, &pRowInfo->kvLen);
-  }
-}
-
-// Applicable to consume by one row
-static FORCE_INLINE void tscAppendMemRowColValEx(SMemRow row, const void *value, bool isCopyVarData, int16_t colId,
-                                                 int8_t colType, int32_t toffset, int32_t *dataLen, int32_t *kvLen,
-                                                 uint8_t compareStat) {
-  tdAppendMemRowColVal(row, value, isCopyVarData, colId, colType, toffset);
-  if (compareStat == ROW_COMPARE_NEED) {
-    tdGetColAppendDeltaLen(value, colType, dataLen, kvLen);
-  }
-}
 typedef struct STableDataBlocks {
   SName       tableName;
   int8_t      tsSource;     // where does the UNIX timestamp come from, server or client
@@ -225,42 +193,43 @@ typedef struct STableDataBlocks {
   int32_t     numOfTables;  // number of tables in current submit block
   int32_t     rowSize;      // row size for current table
   uint32_t    nAllocSize;
-  uint32_t    headerSize;   // header for table info (uid, tid, submit metadata)
+  uint32_t    headerSize;  // header for table info (uid, tid, submit metadata)
   uint32_t    size;
-  STableMeta *pTableMeta;   // the tableMeta of current table, the table meta will be used during submit, keep a ref to avoid to be removed from cache
-  char       *pData;
-  bool        cloned;
-  
+  STableMeta *pTableMeta;  // the tableMeta of current table, the table meta will be used during submit, keep a ref to
+                           // avoid to be removed from cache
+  char *pData;
+  bool  cloned;
+
   SParsedDataColInfo boundColumnInfo;
 
   // for parameter ('?') binding
-  uint32_t       numOfAllocedParams;
-  uint32_t       numOfParams;
-  SParamInfo *   params;
-  SMemRowBuilder rowBuilder;
+  uint32_t    numOfAllocedParams;
+  uint32_t    numOfParams;
+  SParamInfo *params;
+  SRowBuilder rowBuilder;
 } STableDataBlocks;
 
 typedef struct {
-  STableMeta   *pTableMeta;
-  SArray       *vgroupIdList;
+  STableMeta *pTableMeta;
+  SArray *    vgroupIdList;
 } STableMetaVgroupInfo;
 
 typedef struct SInsertStatementParam {
-  SName      **pTableNameList;          // all involved tableMeta list of current insert sql statement.
-  int32_t      numOfTables;             // number of tables in table name list
-  SHashObj    *pTableBlockHashList;     // data block for each table
-  SArray      *pDataBlocks;             // SArray<STableDataBlocks*>. Merged submit block for each vgroup
-  int8_t       schemaAttached;          // denote if submit block is built with table schema or not
-  uint8_t      payloadType;             // EPayloadType. 0: K-V payload for non-prepare insert, 1: rawPayload for prepare insert
-  STagData     tagData;                 // NOTE: pTagData->data is used as a variant length array
+  SName **  pTableNameList;       // all involved tableMeta list of current insert sql statement.
+  int32_t   numOfTables;          // number of tables in table name list
+  SHashObj *pTableBlockHashList;  // data block for each table
+  SArray *  pDataBlocks;          // SArray<STableDataBlocks*>. Merged submit block for each vgroup
+  int8_t    schemaAttached;       // denote if submit block is built with table schema or not
+  uint8_t   payloadType;  // EPayloadType. 0: K-V payload for non-prepare insert, 1: rawPayload for prepare insert
+  STagData  tagData;      // NOTE: pTagData->data is used as a variant length array
 
-  int32_t      batchSize;               // for parameter ('?') binding and batch processing
-  int32_t      numOfParams;
+  int32_t batchSize;  // for parameter ('?') binding and batch processing
+  int32_t numOfParams;
 
-  char         msg[512];                // error message
-  uint32_t     insertType;              // insert data from [file|sql statement| bound statement]
-  uint64_t     objectId;                // sql object id
-  char        *sql;                     // current sql statement position
+  char     msg[512];    // error message
+  uint32_t insertType;  // insert data from [file|sql statement| bound statement]
+  uint64_t objectId;    // sql object id
+  char *   sql;         // current sql statement position
 } SInsertStatementParam;
 
 typedef enum {
@@ -273,57 +242,57 @@ typedef enum {
 
 // TODO extract sql parser supporter
 typedef struct {
-  int     command;
-  uint8_t msgType;
+  int                   command;
+  uint8_t               msgType;
   SInsertStatementParam insertParam;
-  char    reserve1[3];        // fix bus error on arm32
-  int32_t count;   // todo remove it
-  bool    subCmd;
+  char                  reserve1[3];  // fix bus error on arm32
+  int32_t               count;        // todo remove it
+  bool                  subCmd;
 
-  char         reserve2[3];        // fix bus error on arm32
-  int16_t      numOfCols;
-  char         reserve3[2];        // fix bus error on arm32
-  uint32_t     allocSize;
-  char *       payload;
-  int32_t      payloadLen;
+  char     reserve2[3];  // fix bus error on arm32
+  int16_t  numOfCols;
+  char     reserve3[2];  // fix bus error on arm32
+  uint32_t allocSize;
+  char *   payload;
+  int32_t  payloadLen;
 
-  SHashObj    *pTableMetaMap;  // local buffer to keep the queried table meta, before validating the AST
-  SQueryInfo  *pQueryInfo;
-  SQueryInfo  *active;         // current active query info
-  int32_t      batchSize;      // for parameter ('?') binding and batch processing
-  int32_t      resColumnId;
+  SHashObj *  pTableMetaMap;  // local buffer to keep the queried table meta, before validating the AST
+  SQueryInfo *pQueryInfo;
+  SQueryInfo *active;     // current active query info
+  int32_t     batchSize;  // for parameter ('?') binding and batch processing
+  int32_t     resColumnId;
 } SSqlCmd;
 
 typedef struct {
-  int32_t        numOfRows;                  // num of results in current retrieval
-  int64_t        numOfTotal;                 // num of total results
-  int64_t        numOfClauseTotal;           // num of total result in current subclause
-  char *         pRsp;
-  int32_t        rspType;
-  int32_t        rspLen;
-  uint64_t       qId;     // query id of SQInfo
-  int64_t        useconds;
-  int64_t        offset;  // offset value from vnode during projection query of stable
-  int32_t        row;
-  int16_t        numOfCols;
-  int16_t        precision;
-  bool           completed;
-  int32_t        code;
-  char *         data;
-  TAOS_ROW       tsrow;
-  TAOS_ROW       urow;
-  bool           dataConverted;
-  int32_t*       length;  // length for each field for current row
-  char **        buffer;  // Buffer used to put multibytes encoded using unicode (wchar_t)
-  SColumnIndex*  pColumnIndex;
+  int32_t       numOfRows;         // num of results in current retrieval
+  int64_t       numOfTotal;        // num of total results
+  int64_t       numOfClauseTotal;  // num of total result in current subclause
+  char *        pRsp;
+  int32_t       rspType;
+  int32_t       rspLen;
+  uint64_t      qId;  // query id of SQInfo
+  int64_t       useconds;
+  int64_t       offset;  // offset value from vnode during projection query of stable
+  int32_t       row;
+  int16_t       numOfCols;
+  int16_t       precision;
+  bool          completed;
+  int32_t       code;
+  char *        data;
+  TAOS_ROW      tsrow;
+  TAOS_ROW      urow;
+  bool          dataConverted;
+  int32_t *     length;  // length for each field for current row
+  char **       buffer;  // Buffer used to put multibytes encoded using unicode (wchar_t)
+  SColumnIndex *pColumnIndex;
 
-  TAOS_FIELD*    final;
+  TAOS_FIELD *          final;
   struct SGlobalMerger *pMerger;
 } SSqlRes;
 
 typedef struct {
-  char         key[512]; 
-  void         *pDnodeConn; 
+  char  key[512];
+  void *pDnodeConn;
 } SRpcObj;
 
 typedef struct STscObj {
@@ -338,72 +307,72 @@ typedef struct STscObj {
   char               writeAuth : 1;
   char               superAuth : 1;
   uint32_t           connId;
-  uint64_t           rid;      // ref ID returned by taosAddRef
+  uint64_t           rid;  // ref ID returned by taosAddRef
   int64_t            hbrid;
   struct SSqlObj *   sqlList;
   struct SSqlStream *streamList;
-  SRpcObj           *pRpcObj;
-  SClusterInfo       *pClusterInfo;
-  SRpcCorEpSet      *tscCorMgmtEpSet;
+  SRpcObj *          pRpcObj;
+  SClusterInfo *     pClusterInfo;
+  SRpcCorEpSet *     tscCorMgmtEpSet;
   pthread_mutex_t    mutex;
-  int32_t            numOfObj; // number of sqlObj from this tscObj
-      
-  SReqOrigin         from;
+  int32_t            numOfObj;  // number of sqlObj from this tscObj
+
+  SReqOrigin from;
 } STscObj;
 
 typedef struct SSubqueryState {
   pthread_mutex_t mutex;
-  int8_t  *states;
-  int32_t  numOfSub;            // the number of total sub-queries
-  uint64_t numOfRetrievedRows;  // total number of points in this query
+  int8_t *        states;
+  int32_t         numOfSub;            // the number of total sub-queries
+  uint64_t        numOfRetrievedRows;  // total number of points in this query
 } SSubqueryState;
 
 typedef struct SSqlObj {
-  void            *signature;
-  int64_t          owner;        // owner of sql object, by which it is executed
-  STscObj         *pTscObj;
-  int64_t          rpcRid;
-  __async_cb_func_t  fp;
-  __async_cb_func_t  fetchFp;
-  void            *param;
-  _freeSqlSupporter  freeParam;
-  int64_t          stime;
-  uint32_t         queryId;
-  void *           pStream;
-  void *           pSubscription;
-  char *           sqlstr;
-  void *           pBuf;  // table meta buffer
-  char             parseRetry;
-  char             retry;
-  char             maxRetry;
-  SRpcEpSet        epSet;
-  char             listed;
-  tsem_t           rspSem;
-  SSqlCmd          cmd;
-  SSqlRes          res;
+  void *            signature;
+  int64_t           owner;  // owner of sql object, by which it is executed
+  STscObj *         pTscObj;
+  int64_t           rpcRid;
+  __async_cb_func_t fp;
+  __async_cb_func_t fetchFp;
+  void *            param;
+  _freeSqlSupporter freeParam;
+  int64_t           stime;
+  uint32_t          queryId;
+  void *            pStream;
+  void *            pSubscription;
+  char *            sqlstr;
+  void *            pBuf;  // table meta buffer
+  char              parseRetry;
+  char              retry;
+  char              maxRetry;
+  SRpcEpSet         epSet;
+  char              listed;
+  tsem_t            rspSem;
+  SSqlCmd           cmd;
+  SSqlRes           res;
 
   SSubqueryState   subState;
   struct SSqlObj **pSubs;
-  struct SSqlObj  *rootObj;
+  struct SSqlObj * rootObj;
 
-  int64_t          metaRid;
-  int64_t          svgroupRid;
+  int64_t metaRid;
+  int64_t svgroupRid;
 
-  int64_t          squeryLock;
-  int32_t          retryReason;  // previous error code
-  struct SSqlObj  *prev, *next;
-  int64_t          self;
+  int64_t         squeryLock;
+  int32_t         retryReason;  // previous error code
+  struct SSqlObj *prev, *next;
+  int64_t         self;
 } SSqlObj;
 
 typedef struct SSqlStream {
-  SSqlObj *pSql;
-  void *  cqhandle;  // stream belong to SCQContext handle
-  const char* dstTable;
-  uint32_t streamId;
-  char     listed;
-  bool     isProject;
-  int16_t  precision;
-  int64_t  num;  // number of computing count
+  SSqlObj *   pSql;
+  void *      cqhandle;  // stream belong to SCQContext handle
+  const char *dstTable;
+  uint32_t    streamId;
+  char        listed;
+  bool        isProject;
+  int16_t     precision;
+  int64_t     num;  // number of computing count
 
   /*
    * keep the number of current result in computing,
@@ -411,13 +380,13 @@ typedef struct SSqlStream {
    */
   int64_t numOfRes;
 
-  int64_t useconds;  // total  elapsed time
-  int64_t ctime;     // stream created time
-  int64_t stime;     // stream next executed time
-  int64_t etime;     // stream end query time, when time is larger then etime, the stream will be closed
-  int64_t ltime;     // stream last row time in stream table
+  int64_t   useconds;  // total  elapsed time
+  int64_t   ctime;     // stream created time
+  int64_t   stime;     // stream next executed time
+  int64_t   etime;     // stream end query time, when time is larger then etime, the stream will be closed
+  int64_t   ltime;     // stream last row time in stream table
   SInterval interval;
-  void *  pTimer;
+  void *    pTimer;
 
   void (*fp)();
   void *param;
@@ -426,19 +395,19 @@ typedef struct SSqlStream {
   struct SSqlStream *prev, *next;
 } SSqlStream;
 
-void tscSetStreamDestTable(SSqlStream* pStream, const char* dstTable);
+void tscSetStreamDestTable(SSqlStream *pStream, const char *dstTable);
 
-int  tscAcquireRpc(const char *key, const char *user, const char *secret,void **pRpcObj);
+int  tscAcquireRpc(const char *key, const char *user, const char *secret, void **pRpcObj);
 void tscReleaseRpc(void *param);
 void tscInitMsgsFp();
 
 void *tscAcquireClusterInfo(const char *clusterId);
-void tscReleaseClusterInfo(const char *clusterId);
+void  tscReleaseClusterInfo(const char *clusterId);
 
 int tsParseSql(SSqlObj *pSql, bool initial);
 
 void tscProcessMsgFromServer(SRpcMsg *rpcMsg, SRpcEpSet *pEpSet);
-int  tscBuildAndSendRequest(SSqlObj *pSql, SQueryInfo* pQueryInfo);
+int  tscBuildAndSendRequest(SSqlObj *pSql, SQueryInfo *pQueryInfo);
 
 int  tscRenewTableMeta(SSqlObj *pSql);
 void tscAsyncResultOnError(SSqlObj *pSql);
@@ -452,11 +421,11 @@ int32_t tscTansformFuncForSTableQuery(SQueryInfo *pQueryInfo);
 void    tscRestoreFuncForSTableQuery(SQueryInfo *pQueryInfo);
 
 int32_t tscCreateResPointerInfo(SSqlRes *pRes, SQueryInfo *pQueryInfo);
-void tscSetResRawPtr(SSqlRes* pRes, SQueryInfo* pQueryInfo, bool converted);
-void tscSetResRawPtrRv(SSqlRes* pRes, SQueryInfo* pQueryInfo, SSDataBlock* pBlock, bool convertNchar, bool convertJson);
+void    tscSetResRawPtr(SSqlRes *pRes, SQueryInfo *pQueryInfo, bool converted);
+void tscSetResRawPtrRv(SSqlRes *pRes, SQueryInfo *pQueryInfo, SSDataBlock *pBlock, bool convertNchar, bool convertJson);
 
-void handleDownstreamOperator(SSqlObj** pSqlList, int32_t numOfUpstream, SQueryInfo* px, SSqlObj* pParent);
-void destroyTableNameList(SInsertStatementParam* pInsertParam);
+void handleDownstreamOperator(SSqlObj **pSqlList, int32_t numOfUpstream, SQueryInfo *px, SSqlObj *pParent);
+void destroyTableNameList(SInsertStatementParam *pInsertParam);
 
 void tscResetSqlCmd(SSqlCmd *pCmd, bool removeMeta, uint64_t id);
 
@@ -466,52 +435,52 @@ void tscResetSqlCmd(SSqlCmd *pCmd, bool removeMeta, uint64_t id);
  */
 void tscFreeSqlResult(SSqlObj *pSql);
 
-void* tscCleanupTableMetaMap(SHashObj* pTableMetaMap);
+void *tscCleanupTableMetaMap(SHashObj *pTableMetaMap);
 
 /**
  * free sql object, release allocated resource
  * @param pObj
  */
 void tscFreeSqlObj(SSqlObj *pSql);
-void tscFreeSubobj(SSqlObj* pSql);
+void tscFreeSubobj(SSqlObj *pSql);
 
 void tscFreeRegisteredSqlObj(void *pSql);
 
 void tscCloseTscObj(void *pObj);
 
 // todo move to taos? or create a new file: taos_internal.h
-TAOS *taos_connect_a(char *ip, char *user, char *pass, char *db, uint16_t port, void (*fp)(void *, TAOS_RES *, int),
-                     void *param, TAOS **taos);
-TAOS_RES* taos_query_h(TAOS* taos, const char *sqlstr, int64_t* res);
-TAOS_RES * taos_query_ra(TAOS *taos, const char *sqlstr, __async_cb_func_t fp, void *param);
+TAOS *    taos_connect_a(char *ip, char *user, char *pass, char *db, uint16_t port, void (*fp)(void *, TAOS_RES *, int),
+                         void *param, TAOS **taos);
+TAOS_RES *taos_query_h(TAOS *taos, const char *sqlstr, int64_t *res);
+TAOS_RES *taos_query_ra(TAOS *taos, const char *sqlstr, __async_cb_func_t fp, void *param);
 
 void waitForQueryRsp(void *param, TAOS_RES *tres, int code);
 
 void doAsyncQuery(STscObj *pObj, SSqlObj *pSql, __async_cb_func_t fp, void *param, const char *sqlstr, size_t sqlLen);
 
-void tscImportDataFromFile(SSqlObj *pSql);
-struct SGlobalMerger* tscInitResObjForLocalQuery(int32_t numOfRes, int32_t rowLen, uint64_t id);
-bool tscIsUpdateQuery(SSqlObj* pSql);
-char* tscGetSqlStr(SSqlObj* pSql);
-bool tscIsQueryWithLimit(SSqlObj* pSql);
+void                  tscImportDataFromFile(SSqlObj *pSql);
+struct SGlobalMerger *tscInitResObjForLocalQuery(int32_t numOfRes, int32_t rowLen, uint64_t id);
+bool                  tscIsUpdateQuery(SSqlObj *pSql);
+char *                tscGetSqlStr(SSqlObj *pSql);
+bool                  tscIsQueryWithLimit(SSqlObj *pSql);
 
 bool tscHasReachLimitation(SQueryInfo *pQueryInfo, SSqlRes *pRes);
 void tscSetBoundColumnInfo(SParsedDataColInfo *pColInfo, SSchema *pSchema, int32_t numOfCols);
 
-char *tscGetErrorMsgPayload(SSqlCmd *pCmd);
-int32_t tscGetErrorMsgLength(SSqlCmd* pCmd);
+char *  tscGetErrorMsgPayload(SSqlCmd *pCmd);
+int32_t tscGetErrorMsgLength(SSqlCmd *pCmd);
 
-int32_t tscErrorMsgWithCode(int32_t code, char* dstBuffer, const char* errMsg, const char* sql);
+int32_t tscErrorMsgWithCode(int32_t code, char *dstBuffer, const char *errMsg, const char *sql);
 
 int32_t tscInvalidOperationMsg(char *msg, const char *additionalInfo, const char *sql);
-int32_t tscSQLSyntaxErrMsg(char* msg, const char* additionalInfo,  const char* sql);
+int32_t tscSQLSyntaxErrMsg(char *msg, const char *additionalInfo, const char *sql);
 
 int32_t tscValidateSqlInfo(SSqlObj *pSql, struct SSqlInfo *pInfo);
 
-int32_t tsSetBlockInfo(SSubmitBlk *pBlocks, const STableMeta *pTableMeta, int32_t numOfRows);
+int32_t           tsSetBlockInfo(SSubmitBlk *pBlocks, const STableMeta *pTableMeta, int32_t numOfRows);
 extern int32_t    sentinel;
-extern SHashObj  *tscVgroupMap;
-extern SHashObj  *tscTableMetaMap;
+extern SHashObj * tscVgroupMap;
+extern SHashObj * tscTableMetaMap;
 extern SCacheObj *tscVgroupListBuf;
 
 extern int   tscObjRef;
@@ -519,97 +488,34 @@ extern void *tscTmr;
 extern void *tscQhandle;
 extern int   tscKeepConn[];
 extern int   tscRefId;
-extern int   tscNumOfObj;     // number of existed sqlObj in current process.
+extern int   tscNumOfObj;  // number of existed sqlObj in current process.
 
 extern int (*tscBuildMsg[TSDB_SQL_MAX])(SSqlObj *pSql, SSqlInfo *pInfo);
- 
-void tscBuildVgroupTableInfo(SSqlObj* pSql, STableMetaInfo* pTableMetaInfo, SArray* tables);
-int16_t getNewResColId(SSqlCmd* pCmd);
 
-int32_t schemaIdxCompar(const void *lhs, const void *rhs);
-int32_t boundIdxCompar(const void *lhs, const void *rhs);
+void    tscBuildVgroupTableInfo(SSqlObj *pSql, STableMetaInfo *pTableMetaInfo, SArray *tables);
+int16_t getNewResColId(SSqlCmd *pCmd);
+
+int32_t                     schemaIdxCompar(const void *lhs, const void *rhs);
+int32_t                     boundIdxCompar(const void *lhs, const void *rhs);
 static FORCE_INLINE int32_t getExtendedRowSize(STableDataBlocks *pBlock) {
-  ASSERT(pBlock->rowSize == pBlock->pTableMeta->tableInfo.rowSize);
-  return pBlock->rowSize + TD_MEM_ROW_DATA_HEAD_SIZE + pBlock->boundColumnInfo.extendedVarLen;
+  STableComInfo *pTableInfo = &pBlock->pTableMeta->tableInfo;
+  ASSERT(pBlock->rowSize == pTableInfo->rowSize);
+  return pBlock->rowSize + TD_ROW_HEAD_LEN - sizeof(TSKEY) + pBlock->boundColumnInfo.extendedVarLen +
+         (int32_t)TD_BITMAP_BYTES(pTableInfo->numOfColumns - 1);
 }
 
-static FORCE_INLINE void initSMemRow(SMemRow row, uint8_t memRowType, STableDataBlocks *pBlock, int16_t nBoundCols) {
-  memRowSetType(row, memRowType);
-  if (isDataRowT(memRowType)) {
-    dataRowSetVersion(memRowDataBody(row), pBlock->pTableMeta->sversion);
-    dataRowSetLen(memRowDataBody(row), (TDRowLenT)(TD_DATA_ROW_HEAD_SIZE + pBlock->boundColumnInfo.flen));
-  } else {
-    ASSERT(nBoundCols > 0);
-    memRowSetKvVersion(row, pBlock->pTableMeta->sversion);
-    kvRowSetNCols(memRowKvBody(row), nBoundCols);
-    kvRowSetLen(memRowKvBody(row), (TDRowLenT)(TD_KV_ROW_HEAD_SIZE + sizeof(SColIdx) * nBoundCols));
-  }
-}
-/**
- * TODO: Move to tdataformat.h and refactor when STSchema available.
- *    - fetch flen and toffset from STSChema and remove param spd
- */
-static FORCE_INLINE void convertToSDataRow(SMemRow dest, SMemRow src, SSchema *pSchema, int nCols,
-                                           SParsedDataColInfo *spd) {
-  ASSERT(isKvRow(src));
-  SKVRow   kvRow = memRowKvBody(src);
-  SDataRow dataRow = memRowDataBody(dest);
-
-  memRowSetType(dest, SMEM_ROW_DATA);
-  dataRowSetVersion(dataRow, memRowKvVersion(src));
-  dataRowSetLen(dataRow, (TDRowLenT)(TD_DATA_ROW_HEAD_SIZE + spd->flen));
-
-  int32_t kvIdx = 0;
-  for (int i = 0; i < nCols; ++i) {
-    SSchema *schema = pSchema + i;
-    void *   val = tdGetKVRowValOfColEx(kvRow, schema->colId, &kvIdx);
-    tdAppendDataColVal(dataRow, val != NULL ? val : getNullValue(schema->type), true, schema->type,
-                       (spd->cols + i)->toffset);
-  }
-}
-
-// TODO: Move to tdataformat.h and refactor when STSchema available.
-static FORCE_INLINE void convertToSKVRow(SMemRow dest, SMemRow src, SSchema *pSchema, int nCols, int nBoundCols,
-                                         SParsedDataColInfo *spd) {
-  ASSERT(isDataRow(src));
-
-  SDataRow dataRow = memRowDataBody(src);
-  SKVRow   kvRow = memRowKvBody(dest);
-
-  memRowSetType(dest, SMEM_ROW_KV);
-  memRowSetKvVersion(dest, dataRowVersion(dataRow));
-  kvRowSetNCols(kvRow, nBoundCols);
-  kvRowSetLen(kvRow, (TDRowLenT)(TD_KV_ROW_HEAD_SIZE + sizeof(SColIdx) * nBoundCols));
-
-  int32_t toffset = 0, kvOffset = 0;
-  for (int i = 0; i < nCols; ++i) {
-    if ((spd->cols + i)->valStat == VAL_STAT_HAS) {
-      SSchema *schema = pSchema + i;
-      toffset = (spd->cols + i)->toffset;
-      void *val = tdGetRowDataOfCol(dataRow, schema->type, toffset + TD_DATA_ROW_HEAD_SIZE);
-      tdAppendKvColVal(kvRow, val, true, schema->colId, schema->type, kvOffset);
-      kvOffset += sizeof(SColIdx);
-    }
-  }
-}
-
-// TODO: Move to tdataformat.h and refactor when STSchema available.
-static FORCE_INLINE void convertSMemRow(SMemRow dest, SMemRow src, STableDataBlocks *pBlock) {
-  STableMeta *        pTableMeta = pBlock->pTableMeta;
-  STableComInfo       tinfo = tscGetTableInfo(pTableMeta);
-  SSchema *           pSchema = tscGetTableSchema(pTableMeta);
-  SParsedDataColInfo *spd = &pBlock->boundColumnInfo;
-
-  ASSERT(dest != src);
-
-  if (isDataRow(src)) {
-    // TODO: Can we use pBlock -> numOfParam directly?
-    ASSERT(spd->numOfBound > 0);
-    convertToSKVRow(dest, src, pSchema, tinfo.numOfColumns, spd->numOfBound, spd);
-  } else {
-    convertToSDataRow(dest, src, pSchema, tinfo.numOfColumns, spd);
-  }
-}
+// static FORCE_INLINE void initSMemRow(STSRow *row, uint8_t memRowType, STableDataBlocks *pBlock, int16_t nBoundCols) {
+//   memRowSetType(row, memRowType);
+//   if (isDataRowT(memRowType)) {
+//     dataRowSetVersion(memRowDataBody(row), pBlock->pTableMeta->sversion);
+//     dataRowSetLen(memRowDataBody(row), (TDRowLenT)(TD_DATA_ROW_HEAD_SIZE + pBlock->boundColumnInfo.flen));
+//   } else {
+//     ASSERT(nBoundCols > 0);
+//     memRowSetKvVersion(row, pBlock->pTableMeta->sversion);
+//     kvRowSetNCols(memRowKvBody(row), nBoundCols);
+//     kvRowSetLen(memRowKvBody(row), (TDRowLenT)(TD_KV_ROW_HEAD_SIZE + sizeof(SColIdx) * nBoundCols));
+//   }
+// }
 
 static bool isNullStr(SStrToken *pToken) {
   return (pToken->type == TK_NULL) || ((pToken->type == TK_STRING) && (pToken->n != 0) &&
@@ -631,8 +537,9 @@ static FORCE_INLINE int32_t tscToDouble(SStrToken *pToken, double *value, char *
 static uint8_t TRUE_VALUE = (uint8_t)TSDB_TRUE;
 static uint8_t FALSE_VALUE = (uint8_t)TSDB_FALSE;
 
-static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pToken, SMemRow row, char *msg, char **str,
-                                               bool primaryKey, int16_t timePrec, int32_t toffset, int16_t colId) {
+static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pToken, SRowBuilder *pBuilder, char *msg,
+                                               char **str, bool primaryKey, int16_t timePrec, int32_t toffset,
+                                               int16_t colId, int32_t colIdx) {
   int64_t iv;
   int32_t ret;
   char *  endptr = NULL;
@@ -644,22 +551,25 @@ static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pTok
   switch (pSchema->type) {
     case TSDB_DATA_TYPE_BOOL: {  // bool
       if (isNullStr(pToken)) {
-        tdAppendMemRowColVal(row, getNullValue(pSchema->type), true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NULL, getNullValue(pSchema->type), true, toffset,
+                            colIdx);
       } else {
         if ((pToken->type == TK_BOOL || pToken->type == TK_STRING) && (pToken->n != 0)) {
           if (strncmp(pToken->z, "true", pToken->n) == 0) {
-            tdAppendMemRowColVal(row, &TRUE_VALUE, true, colId, pSchema->type, toffset);
+            tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, &TRUE_VALUE, true, toffset, colIdx);
           } else if (strncmp(pToken->z, "false", pToken->n) == 0) {
-            tdAppendMemRowColVal(row, &FALSE_VALUE, true, colId, pSchema->type, toffset);
+            tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, &FALSE_VALUE, true, toffset, colIdx);
           } else {
             return tscSQLSyntaxErrMsg(msg, "invalid bool data", pToken->z);
           }
         } else if (pToken->type == TK_INTEGER) {
           iv = strtoll(pToken->z, NULL, 10);
-          tdAppendMemRowColVal(row, ((iv == 0) ? &FALSE_VALUE : &TRUE_VALUE), true, colId, pSchema->type, toffset);
+          tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, ((iv == 0) ? &FALSE_VALUE : &TRUE_VALUE), true, toffset,
+                              colIdx);
         } else if (pToken->type == TK_FLOAT) {
           double dv = strtod(pToken->z, NULL);
-          tdAppendMemRowColVal(row, ((dv == 0) ? &FALSE_VALUE : &TRUE_VALUE), true, colId, pSchema->type, toffset);
+          tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, ((dv == 0) ? &FALSE_VALUE : &TRUE_VALUE), true, toffset,
+                              colIdx);
         } else {
           return tscInvalidOperationMsg(msg, "invalid bool data", pToken->z);
         }
@@ -669,7 +579,7 @@ static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pTok
 
     case TSDB_DATA_TYPE_TINYINT:
       if (isNullStr(pToken)) {
-        tdAppendMemRowColVal(row, getNullValue(pSchema->type), true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NULL, getNullValue(pSchema->type), true, toffset, colIdx);
       } else {
         ret = tStrToInteger(pToken->z, pToken->type, pToken->n, &iv, true);
         if (ret != TSDB_CODE_SUCCESS) {
@@ -679,14 +589,14 @@ static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pTok
         }
 
         uint8_t tmpVal = (uint8_t)iv;
-        tdAppendMemRowColVal(row, &tmpVal, true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, &tmpVal, true, toffset, colIdx);
       }
 
       break;
 
     case TSDB_DATA_TYPE_UTINYINT:
       if (isNullStr(pToken)) {
-        tdAppendMemRowColVal(row, getNullValue(pSchema->type), true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NULL, getNullValue(pSchema->type), true, toffset, colIdx);
       } else {
         ret = tStrToInteger(pToken->z, pToken->type, pToken->n, &iv, false);
         if (ret != TSDB_CODE_SUCCESS) {
@@ -696,14 +606,14 @@ static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pTok
         }
 
         uint8_t tmpVal = (uint8_t)iv;
-        tdAppendMemRowColVal(row, &tmpVal, true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, &tmpVal, true, toffset, colIdx);
       }
 
       break;
 
     case TSDB_DATA_TYPE_SMALLINT:
       if (isNullStr(pToken)) {
-        tdAppendMemRowColVal(row, getNullValue(pSchema->type), true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NULL, getNullValue(pSchema->type), true, toffset, colIdx);
       } else {
         ret = tStrToInteger(pToken->z, pToken->type, pToken->n, &iv, true);
         if (ret != TSDB_CODE_SUCCESS) {
@@ -713,14 +623,14 @@ static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pTok
         }
 
         int16_t tmpVal = (int16_t)iv;
-        tdAppendMemRowColVal(row, &tmpVal, true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, &tmpVal, true, toffset, colIdx);
       }
 
       break;
 
     case TSDB_DATA_TYPE_USMALLINT:
       if (isNullStr(pToken)) {
-        tdAppendMemRowColVal(row, getNullValue(pSchema->type), true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NULL, getNullValue(pSchema->type), true, toffset, colIdx);
       } else {
         ret = tStrToInteger(pToken->z, pToken->type, pToken->n, &iv, false);
         if (ret != TSDB_CODE_SUCCESS) {
@@ -730,14 +640,14 @@ static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pTok
         }
 
         uint16_t tmpVal = (uint16_t)iv;
-        tdAppendMemRowColVal(row, &tmpVal, true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, &tmpVal, true, toffset, colIdx);
       }
 
       break;
 
     case TSDB_DATA_TYPE_INT:
       if (isNullStr(pToken)) {
-        tdAppendMemRowColVal(row, getNullValue(pSchema->type), true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NULL, getNullValue(pSchema->type), true, toffset, colIdx);
       } else {
         ret = tStrToInteger(pToken->z, pToken->type, pToken->n, &iv, true);
         if (ret != TSDB_CODE_SUCCESS) {
@@ -747,14 +657,14 @@ static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pTok
         }
 
         int32_t tmpVal = (int32_t)iv;
-        tdAppendMemRowColVal(row, &tmpVal, true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, &tmpVal, true, toffset, colIdx);
       }
 
       break;
 
     case TSDB_DATA_TYPE_UINT:
       if (isNullStr(pToken)) {
-        tdAppendMemRowColVal(row, getNullValue(pSchema->type), true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NULL, getNullValue(pSchema->type), true, toffset, colIdx);
       } else {
         ret = tStrToInteger(pToken->z, pToken->type, pToken->n, &iv, false);
         if (ret != TSDB_CODE_SUCCESS) {
@@ -764,14 +674,14 @@ static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pTok
         }
 
         uint32_t tmpVal = (uint32_t)iv;
-        tdAppendMemRowColVal(row, &tmpVal, true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, &tmpVal, true, toffset, colIdx);
       }
 
       break;
 
     case TSDB_DATA_TYPE_BIGINT:
       if (isNullStr(pToken)) {
-        tdAppendMemRowColVal(row, getNullValue(pSchema->type), true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NULL, getNullValue(pSchema->type), true, toffset, colIdx);
       } else {
         ret = tStrToInteger(pToken->z, pToken->type, pToken->n, &iv, true);
         if (ret != TSDB_CODE_SUCCESS) {
@@ -780,13 +690,13 @@ static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pTok
           return tscInvalidOperationMsg(msg, "bigint data overflow", pToken->z);
         }
 
-        tdAppendMemRowColVal(row, &iv, true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, &iv, true, toffset, colIdx);
       }
       break;
 
     case TSDB_DATA_TYPE_UBIGINT:
       if (isNullStr(pToken)) {
-        tdAppendMemRowColVal(row, getNullValue(pSchema->type), true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NULL, getNullValue(pSchema->type), true, toffset, colIdx);
       } else {
         ret = tStrToInteger(pToken->z, pToken->type, pToken->n, &iv, false);
         if (ret != TSDB_CODE_SUCCESS) {
@@ -796,13 +706,13 @@ static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pTok
         }
 
         uint64_t tmpVal = (uint64_t)iv;
-        tdAppendMemRowColVal(row, &tmpVal, true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, &tmpVal, true, toffset, colIdx);
       }
       break;
 
     case TSDB_DATA_TYPE_FLOAT:
       if (isNullStr(pToken)) {
-        tdAppendMemRowColVal(row, getNullValue(pSchema->type), true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NULL, getNullValue(pSchema->type), true, toffset, colIdx);
       } else {
         double dv;
         if (TK_ILLEGAL == tscToDouble(pToken, &dv, &endptr)) {
@@ -815,13 +725,13 @@ static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pTok
         }
 
         float tmpVal = (float)dv;
-        tdAppendMemRowColVal(row, &tmpVal, true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, &tmpVal, true, toffset, colIdx);
       }
       break;
 
     case TSDB_DATA_TYPE_DOUBLE:
       if (isNullStr(pToken)) {
-        tdAppendMemRowColVal(row, getNullValue(pSchema->type), true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NULL, getNullValue(pSchema->type), true, toffset, colIdx);
       } else {
         double dv;
         if (TK_ILLEGAL == tscToDouble(pToken, &dv, &endptr)) {
@@ -832,32 +742,32 @@ static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pTok
           return tscInvalidOperationMsg(msg, "illegal double data", pToken->z);
         }
 
-        tdAppendMemRowColVal(row, &dv, true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, &dv, true, toffset, colIdx);
       }
       break;
 
     case TSDB_DATA_TYPE_BINARY:
       // binary data cannot be null-terminated char string, otherwise the last char of the string is lost
       if (pToken->type == TK_NULL) {
-        tdAppendMemRowColVal(row, getNullValue(pSchema->type), true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NULL, getNullValue(pSchema->type), true, toffset, colIdx);
       } else {  // too long values will return invalid sql, not be truncated automatically
         if (pToken->n + VARSTR_HEADER_SIZE > pSchema->bytes) {  // todo refactor
           return tscInvalidOperationMsg(msg, "string data overflow", pToken->z);
         }
         // STR_WITH_SIZE_TO_VARSTR(payload, pToken->z, pToken->n);
-        char *rowEnd = memRowEnd(row);
+        const char *rowEnd = tdRowEnd(pBuilder->pBuf);
         STR_WITH_SIZE_TO_VARSTR(rowEnd, pToken->z, pToken->n);
-        tdAppendMemRowColVal(row, rowEnd, false, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, rowEnd, false, toffset, colIdx);
       }
       break;
 
     case TSDB_DATA_TYPE_NCHAR:
       if (pToken->type == TK_NULL) {
-        tdAppendMemRowColVal(row, getNullValue(pSchema->type), true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NULL, getNullValue(pSchema->type), true, toffset, colIdx);
       } else {
         // if the converted output len is over than pColumnModel->bytes, return error: 'Argument list too long'
         int32_t output = 0;
-        char *  rowEnd = memRowEnd(row);
+        const char *rowEnd = tdRowEnd(pBuilder->pBuf);
         if (!taosMbsToUcs4(pToken->z, pToken->n, (char *)varDataVal(rowEnd), pSchema->bytes - VARSTR_HEADER_SIZE,
                            &output)) {
           char buf[512] = {0};
@@ -865,7 +775,7 @@ static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pTok
           return tscInvalidOperationMsg(msg, buf, pToken->z);
         }
         varDataSetLen(rowEnd, output);
-        tdAppendMemRowColVal(row, rowEnd, false, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, rowEnd, false, toffset, colIdx);
       }
       break;
 
@@ -874,16 +784,16 @@ static FORCE_INLINE int32_t tsParseOneColumnKV(SSchema *pSchema, SStrToken *pTok
         if (primaryKey) {
           // When building SKVRow primaryKey, we should not skip even with NULL value.
           int64_t tmpVal = 0;
-          tdAppendMemRowColVal(row, &tmpVal, true, colId, pSchema->type, toffset);
+          tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, &tmpVal, true, toffset, colIdx);
         } else {
-          tdAppendMemRowColVal(row, getNullValue(pSchema->type), true, colId, pSchema->type, toffset);
+          tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NULL, getNullValue(pSchema->type), true, toffset, colIdx);
         }
       } else {
         int64_t tmpVal;
         if (tsParseTime(pToken, &tmpVal, str, msg, timePrec) != TSDB_CODE_SUCCESS) {
           return tscInvalidOperationMsg(msg, "invalid timestamp", pToken->z);
         }
-        tdAppendMemRowColVal(row, &tmpVal, true, colId, pSchema->type, toffset);
+        tdAppendColValToRow(pBuilder, colId, pSchema->type, TD_VTYPE_NORM, &tmpVal, true, toffset, colIdx);
       }
 
       break;

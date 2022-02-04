@@ -73,6 +73,8 @@ int32_t* taosGetErrno();
 #define TSDB_CODE_REF_INVALID_ID                TAOS_DEF_ERROR_CODE(0, 0x0108)  //"Invalid Ref ID"
 #define TSDB_CODE_REF_ALREADY_EXIST             TAOS_DEF_ERROR_CODE(0, 0x0109)  //"Ref is already there"
 #define TSDB_CODE_REF_NOT_EXIST                 TAOS_DEF_ERROR_CODE(0, 0x010A)  //"Ref is not there"
+#define TSDB_CODE_INVALID_PARA                  TAOS_DEF_ERROR_CODE(0, 0x010B)  
+#define TSDB_CODE_INVALID_PTR                   TAOS_DEF_ERROR_CODE(0, 0x010C)
 
 //client
 #define TSDB_CODE_TSC_INVALID_OPERATION         TAOS_DEF_ERROR_CODE(0, 0x0200)  //"Invalid Operation")

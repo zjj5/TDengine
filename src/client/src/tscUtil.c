@@ -2036,7 +2036,7 @@ static int trimDataBlock(void* pDataBlock, STableDataBlocks* pTableDataBlock, SI
 
   // schema needs to be included into the submit data block
   if (insertParam->schemaAttached) {
-    int32_t numOfCols = tscGetNumOfColumns(pTableDataBlock->pTableMeta);
+    int32_t numOfCols = tscGetNumOfColumns(pTableMeta);
     for(int32_t j = 0; j < numOfCols; ++j) {
       STColumn* pCol = (STColumn*) pDataBlock;
       pCol->colId = htons(pSchema[j].colId);
@@ -2064,27 +2064,30 @@ static int trimDataBlock(void* pDataBlock, STableDataBlocks* pTableDataBlock, SI
   int32_t numOfRows = htons(pBlock->numOfRows);
 
   if (IS_RAW_PAYLOAD(insertParam->payloadType)) {
-    for (int32_t i = 0; i < numOfRows; ++i) {
-      SMemRow memRow = (SMemRow)pDataBlock;
-      memRowSetType(memRow, SMEM_ROW_DATA);
-      SDataRow trow = memRowDataBody(memRow);
-      dataRowSetLen(trow, (uint16_t)(TD_DATA_ROW_HEAD_SIZE + flen));
-      dataRowSetVersion(trow, pTableMeta->sversion);
+    
+    SRowBuilder builder = {0};
+    
+    tdSRowInit(&builder, pTableMeta->sversion);
+    tdSRowSetInfo(&builder, tscGetNumOfColumns(pTableMeta), -1, flen);
 
+    for (int32_t i = 0; i < numOfRows; ++i) {
+      tdSRowResetBuf(&builder, pDataBlock);
       int toffset = 0;
-      for (int32_t j = 0; j < tinfo.numOfColumns; j++) {
-        tdAppendColVal(trow, p, pSchema[j].type, toffset);
-        toffset += TYPE_BYTES[pSchema[j].type];
+      for (int32_t j = 0; j < tinfo.numOfColumns; ++j) {
+        int8_t  colType = pSchema[j].type;
+        uint8_t valType = isNull(p, colType) ? TD_VTYPE_NULL : TD_VTYPE_NORM;
+        tdAppendColValToRow(&builder, pSchema[j].colId, colType, valType, p, true, toffset, j);
+        toffset += TYPE_BYTES[colType];
         p += pSchema[j].bytes;
       }
-
-      pDataBlock = (char*)pDataBlock + memRowTLen(memRow);
-      pBlock->dataLen += memRowTLen(memRow);
+      int32_t rowLen = TD_ROW_LEN((STSRow*)pDataBlock);
+      pDataBlock = (char*)pDataBlock + rowLen;
+      pBlock->dataLen += rowLen;
     }
   } else {
     for (int32_t i = 0; i < numOfRows; ++i) {
       char*      payload = (blkKeyTuple + i)->payloadAddr;
-      TDRowTLenT rowTLen = memRowTLen(payload);
+      TDRowTLenT rowTLen = TD_ROW_LEN((STSRow*)payload);
       memcpy(pDataBlock, payload, rowTLen);
       pDataBlock = POINTER_SHIFT(pDataBlock, rowTLen);
       pBlock->dataLen += rowTLen;
@@ -2099,14 +2102,15 @@ static int trimDataBlock(void* pDataBlock, STableDataBlocks* pTableDataBlock, SI
 }
 
 static int32_t getRowExpandSize(STableMeta* pTableMeta) {
-  int32_t  result = TD_MEM_ROW_DATA_HEAD_SIZE;
+  int32_t  result = TD_ROW_HEAD_LEN;
   int32_t  columns = tscGetNumOfColumns(pTableMeta);
   SSchema* pSchema = tscGetTableSchema(pTableMeta);
-  for (int32_t i = 0; i < columns; i++) {
+  for (int32_t i = 0; i < columns; ++i) {
     if (IS_VAR_DATA_TYPE((pSchema + i)->type)) {
       result += TYPE_BYTES[TSDB_DATA_TYPE_BINARY];
     }
   }
+  result += (int32_t)TD_BITMAP_BYTES(columns - 1);
   return result;
 }
 
@@ -2147,7 +2151,7 @@ int32_t tscMergeTableDataBlocks(SSqlObj *pSql, SInsertStatementParam *pInsertPar
   while(pOneTableBlock) {
     SSubmitBlk* pBlocks = (SSubmitBlk*) pOneTableBlock->pData;
     if (pBlocks->numOfRows > 0) {
-      // the maximum expanded size in byte when a row-wise data is converted to SDataRow format
+      // the maximum expanded size in byte when a row-wise data is converted to STpRow format
       int32_t           expandSize = isRawPayload ? getRowExpandSize(pOneTableBlock->pTableMeta) : 0;
       STableDataBlocks* dataBuf = NULL;
 

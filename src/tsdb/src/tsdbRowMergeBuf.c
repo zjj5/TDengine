@@ -14,17 +14,17 @@
  */
 
 #include "tsdbRowMergeBuf.h"
-#include "tdataformat.h"
+#include "trow.h"
 
 // row1 has higher priority
-SMemRow tsdbMergeTwoRows(SMergeBuf *pBuf, SMemRow row1, SMemRow row2, STSchema *pSchema1, STSchema *pSchema2) {
+STSRow *tsdbMergeTwoRows(SMergeBuf *pBuf, STSRow *row1, STSRow *row2, STSchema *pSchema1, STSchema *pSchema2) {
   if(row2 == NULL) return row1;
   if(row1 == NULL) return row2;
-  ASSERT(pSchema1->version == memRowVersion(row1)); 
-  ASSERT(pSchema2->version == memRowVersion(row2));
+  ASSERT(pSchema1->version == TD_ROW_SVER(row1));
+  ASSERT(pSchema2->version == TD_ROW_SVER(row2));
 
   if(tsdbMergeBufMakeSureRoom(pBuf, pSchema1, pSchema2) < 0) {
     return NULL;
   }
-  return mergeTwoMemRows(*pBuf, row1, row2, pSchema1, pSchema2);
+  return mergeTwoRows(*pBuf, row1, row2, pSchema1, pSchema2);
 }

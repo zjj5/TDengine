@@ -71,27 +71,27 @@ int   tsdbLoadDataFromCache(STable* pTable, SSkipListIterator* pIter, TSKEY maxK
                             TKEY* filterKeys, int nFilterKeys, bool keepDup, SMergeInfo* pMergeInfo);
 void* tsdbCommitData(STsdbRepo* pRepo);
 
-static FORCE_INLINE SMemRow tsdbNextIterRow(SSkipListIterator* pIter) {
+static FORCE_INLINE STSRow* tsdbNextIterRow(SSkipListIterator* pIter) {
   if (pIter == NULL) return NULL;
 
   SSkipListNode* node = tSkipListIterGet(pIter);
   if (node == NULL) return NULL;
 
-  return (SMemRow)SL_GET_NODE_DATA(node);
+  return (STSRow*)SL_GET_NODE_DATA(node);
 }
 
 static FORCE_INLINE TSKEY tsdbNextIterKey(SSkipListIterator* pIter) {
-  SMemRow row = tsdbNextIterRow(pIter);
+  STSRow* row = tsdbNextIterRow(pIter);
   if (row == NULL) return TSDB_DATA_TIMESTAMP_NULL;
 
-  return memRowKey(row);
+  return TD_ROW_TSKEY(row);
 }
 
 static FORCE_INLINE TKEY tsdbNextIterTKey(SSkipListIterator* pIter) {
-  SMemRow row = tsdbNextIterRow(pIter);
+  STSRow* row = tsdbNextIterRow(pIter);
   if (row == NULL) return TKEY_NULL;
 
-  return memRowTKey(row);
+  return TD_ROW_TSKEY(row);
 }
 
 #endif /* _TD_TSDB_MEMTABLE_H_ */

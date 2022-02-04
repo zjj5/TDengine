@@ -40,7 +40,7 @@ typedef struct STable {
   void*          eventHandler;   // TODO
   void*          streamHandler;  // TODO
   TSKEY          lastKey;
-  SMemRow        lastRow;
+  STSRow*        lastRow;
   char*          sql;
   void*          cqhandle;
   SRWLatch       latch;  // TODO: implementa latch functions
@@ -122,7 +122,7 @@ static FORCE_INLINE STSchema* tsdbGetTableSchemaImpl(STable* pTable, bool lock, 
   } else {  // get the schema with version
     void* ptr = taosArraySearch(pDTable->schema, &_version, tsdbCompareSchemaVersion, TD_EQ);
     if (ptr == NULL) {
-      if (rowType == SMEM_ROW_KV) {
+      if (rowType == TD_ROW_KV) {
         ptr = taosArrayGetLast(pDTable->schema);
       } else {
         terrno = TSDB_CODE_TDB_IVD_TB_SCHEMA_VERSION;
@@ -162,7 +162,7 @@ static FORCE_INLINE STSchema *tsdbGetTableTagSchema(STable *pTable) {
 }
 
 static FORCE_INLINE TSKEY tsdbGetTableLastKeyImpl(STable* pTable) {
-  ASSERT((pTable->lastRow == NULL) || (pTable->lastKey == memRowKey(pTable->lastRow)));
+  ASSERT((pTable->lastRow == NULL) || (pTable->lastKey == TD_ROW_TSKEY(pTable->lastRow)));
   return pTable->lastKey;
 }
 

@@ -13,13 +13,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "exception.h"
 #include "os.h"
-#include "tdataformat.h"
-#include "tskiplist.h"
-#include "tulog.h"
 #include "talgo.h"
 #include "tcompare.h"
-#include "exception.h"
+#include "trow.h"
+#include "tskiplist.h"
+#include "tulog.h"
 
 #include "taosdef.h"
 #include "tlosertree.h"
@@ -170,7 +170,7 @@ static STimeWindow updateLastrowForEachGroup(STableGroupInfo *groupList);
 static int32_t checkForCachedLastRow(STsdbQueryHandle* pQueryHandle, STableGroupInfo *groupList);
 static int32_t checkForCachedLast(STsdbQueryHandle* pQueryHandle);
 static int32_t lazyLoadCacheLast(STsdbQueryHandle* pQueryHandle);
-static int32_t tsdbGetCachedLastRow(STable* pTable, SMemRow* pRes, TSKEY* lastKey);
+static int32_t     tsdbGetCachedLastRow(STable* pTable, STSRow** pRes, TSKEY* lastKey);
 
 static void    changeQueryHandleForInterpQuery(TsdbQueryHandleT pHandle);
 static void    doMergeTwoLevelData(STsdbQueryHandle* pQueryHandle, STableCheckInfo* pCheckInfo, SBlock* pBlock);
@@ -774,8 +774,8 @@ static bool initTableMemIterator(STsdbQueryHandle* pHandle, STableCheckInfo* pCh
     SSkipListNode* node = tSkipListIterGet(pCheckInfo->iter);
     assert(node != NULL);
 
-    SMemRow row = (SMemRow)SL_GET_NODE_DATA(node);
-    TSKEY   key = memRowKey(row);  // first timestamp in buffer
+    STSRow* row = (STSRow*)SL_GET_NODE_DATA(node);
+    TSKEY   key = TD_ROW_TSKEY(row);  // first timestamp in buffer
     tsdbDebug("%p uid:%" PRId64 ", tid:%d check data in mem from skey:%" PRId64 ", order:%d, ts range in buf:%" PRId64
               "-%" PRId64 ", lastKey:%" PRId64 ", numOfRows:%"PRId64", 0x%"PRIx64,
               pHandle, pCheckInfo->tableId.uid, pCheckInfo->tableId.tid, key, order, pMem->keyFirst, pMem->keyLast,
@@ -796,8 +796,8 @@ static bool initTableMemIterator(STsdbQueryHandle* pHandle, STableCheckInfo* pCh
     SSkipListNode* node = tSkipListIterGet(pCheckInfo->iiter);
     assert(node != NULL);
 
-    SMemRow row = (SMemRow)SL_GET_NODE_DATA(node);
-    TSKEY   key = memRowKey(row);  // first timestamp in buffer
+    STSRow* row = (STSRow*)SL_GET_NODE_DATA(node);
+    TSKEY   key = TD_ROW_TSKEY(row);  // first timestamp in buffer
     tsdbDebug("%p uid:%" PRId64 ", tid:%d check data in imem from skey:%" PRId64 ", order:%d, ts range in buf:%" PRId64
               "-%" PRId64 ", lastKey:%" PRId64 ", numOfRows:%"PRId64", 0x%"PRIx64,
               pHandle, pCheckInfo->tableId.uid, pCheckInfo->tableId.tid, key, order, pIMem->keyFirst, pIMem->keyLast,
@@ -822,18 +822,18 @@ static void destroyTableMemIterator(STableCheckInfo* pCheckInfo) {
 }
 
 static TSKEY extractFirstTraverseKey(STableCheckInfo* pCheckInfo, int32_t order, int32_t update) {
-  SMemRow rmem = NULL, rimem = NULL;
+  STSRow* rmem = NULL, *rimem = NULL;
   if (pCheckInfo->iter) {
     SSkipListNode* node = tSkipListIterGet(pCheckInfo->iter);
     if (node != NULL) {
-      rmem = (SMemRow)SL_GET_NODE_DATA(node);
+      rmem = (STSRow*)SL_GET_NODE_DATA(node);
     }
   }
 
   if (pCheckInfo->iiter) {
     SSkipListNode* node = tSkipListIterGet(pCheckInfo->iiter);
     if (node != NULL) {
-      rimem = (SMemRow)SL_GET_NODE_DATA(node);
+      rimem = (STSRow*)SL_GET_NODE_DATA(node);
     }
   }
 
@@ -843,16 +843,16 @@ static TSKEY extractFirstTraverseKey(STableCheckInfo* pCheckInfo, int32_t order,
 
   if (rmem != NULL && rimem == NULL) {
     pCheckInfo->chosen = CHECKINFO_CHOSEN_MEM;
-    return memRowKey(rmem);
+    return TD_ROW_TSKEY(rmem);
   }
 
   if (rmem == NULL && rimem != NULL) {
     pCheckInfo->chosen = CHECKINFO_CHOSEN_IMEM;
-    return memRowKey(rimem);
+    return TD_ROW_TSKEY(rimem);
   }
 
-  TSKEY r1 = memRowKey(rmem);
-  TSKEY r2 = memRowKey(rimem);
+  TSKEY r1 = TD_ROW_TSKEY(rmem);
+  TSKEY r2 = TD_ROW_TSKEY(rimem);
 
   if (r1 == r2) {
     if(update == TD_ROW_DISCARD_UPDATE){
@@ -889,19 +889,19 @@ static TSKEY extractFirstTraverseKey(STableCheckInfo* pCheckInfo, int32_t order,
   }
 }
 
-static SMemRow getSMemRowInTableMem(STableCheckInfo* pCheckInfo, int32_t order, int32_t update, SMemRow* extraRow) {
-  SMemRow rmem = NULL, rimem = NULL;
+static STSRow* getSMemRowInTableMem(STableCheckInfo* pCheckInfo, int32_t order, int32_t update, STSRow** extraRow) {
+  STSRow* rmem = NULL, *rimem = NULL;
   if (pCheckInfo->iter) {
     SSkipListNode* node = tSkipListIterGet(pCheckInfo->iter);
     if (node != NULL) {
-      rmem = (SMemRow)SL_GET_NODE_DATA(node);
+      rmem = (STSRow*)SL_GET_NODE_DATA(node);
     }
   }
 
   if (pCheckInfo->iiter) {
     SSkipListNode* node = tSkipListIterGet(pCheckInfo->iiter);
     if (node != NULL) {
-      rimem = (SMemRow)SL_GET_NODE_DATA(node);
+      rimem = (STSRow*)SL_GET_NODE_DATA(node);
     }
   }
 
@@ -919,8 +919,8 @@ static SMemRow getSMemRowInTableMem(STableCheckInfo* pCheckInfo, int32_t order, 
     return rimem;
   }
 
-  TSKEY r1 = memRowKey(rmem);
-  TSKEY r2 = memRowKey(rimem);
+  TSKEY r1 = TD_ROW_TSKEY(rmem);
+  TSKEY r2 = TD_ROW_TSKEY(rimem);
 
   if (r1 == r2) {
     if (update == TD_ROW_DISCARD_UPDATE) {
@@ -933,7 +933,7 @@ static SMemRow getSMemRowInTableMem(STableCheckInfo* pCheckInfo, int32_t order, 
       return rmem;
     } else {
       pCheckInfo->chosen = CHECKINFO_CHOSEN_BOTH;
-      extraRow = rimem;
+      *extraRow = rimem;
       return rmem;
     }
   } else {
@@ -1010,12 +1010,12 @@ static bool hasMoreDataInCache(STsdbQueryHandle* pHandle) {
     initTableMemIterator(pHandle, pCheckInfo);
   }
 
-  SMemRow row = getSMemRowInTableMem(pCheckInfo, pHandle->order, pCfg->update, NULL);
+  STSRow* row = getSMemRowInTableMem(pCheckInfo, pHandle->order, pCfg->update, NULL);
   if (row == NULL) {
     return false;
   }
 
-  pCheckInfo->lastKey = memRowKey(row);  // first timestamp in buffer
+  pCheckInfo->lastKey = TD_ROW_TSKEY(row);  // first timestamp in buffer
   tsdbDebug("%p uid:%" PRId64", tid:%d check data in buffer from skey:%" PRId64 ", order:%d, 0x%"PRIx64, pHandle,
       pCheckInfo->tableId.uid, pCheckInfo->tableId.tid, pCheckInfo->lastKey, pHandle->order, pHandle->qId);
 
@@ -1746,8 +1746,11 @@ static int32_t doCopyRowsFromFileBlock(STsdbQueryHandle* pQueryHandle, int32_t c
 
         // todo refactor, only copy one-by-one
         for (int32_t k = start; k < num + start; ++k) {
-          const char* p = tdGetColDataOfRow(src, k);
-          memcpy(dst, p, varDataTLen(p));
+          SCellVal    val = {0};
+          if(tdGetColDataOfRow(&val, src, k) < 0){
+            TASSERT(0);
+          }
+          memcpy(dst, val.val, varDataTLen(val.val));
           dst += bytes;
         }
       }
@@ -1798,12 +1801,13 @@ static int32_t doCopyRowsFromFileBlock(STsdbQueryHandle* pQueryHandle, int32_t c
 }
 
 // Note: row1 always has high priority
-static void mergeTwoRowFromMem(STsdbQueryHandle* pQueryHandle, int32_t capacity, int32_t numOfRows,
-                               SMemRow row1, SMemRow row2, int32_t numOfCols, STable* pTable,
-                               STSchema* pSchema1, STSchema* pSchema2, bool forceSetNull) {
+static void mergeTwoRowFromMem(STsdbQueryHandle* pQueryHandle, int32_t capacity, int32_t numOfRows, STSRow* row1,
+                               STSRow* row2, int32_t numOfCols, STable* pTable, STSchema* pSchema1, STSchema* pSchema2,
+                               bool forceSetNull) {
+#if 0
   char* pData = NULL;
   STSchema* pSchema;
-  SMemRow row;
+  STSRow*   row;
   int16_t colId;
   int16_t offset;
 
@@ -1813,11 +1817,11 @@ static void mergeTwoRowFromMem(STsdbQueryHandle* pQueryHandle, int32_t capacity,
   int32_t chosen_itr;
   void *value;
 
-  // the schema version info is embeded in SDataRow
+  // the schema version info is embeded in STpRow
   int32_t numOfColsOfRow1 = 0;
 
   if (pSchema1 == NULL) {
-    pSchema1 = tsdbGetTableSchemaByVersion(pTable, memRowVersion(row1), (int8_t)memRowType(row1));
+    pSchema1 = tsdbGetTableSchemaByVersion(pTable, TD_ROW_SVER(row1), (int8_t)TD_ROW_TYPE(row1));
   }
   if(isRow1DataRow) {
     numOfColsOfRow1 = schemaNCols(pSchema1);
@@ -1829,7 +1833,7 @@ static void mergeTwoRowFromMem(STsdbQueryHandle* pQueryHandle, int32_t capacity,
   if(row2) {
     isRow2DataRow = isDataRow(row2);
     if (pSchema2 == NULL) {
-      pSchema2 = tsdbGetTableSchemaByVersion(pTable, memRowVersion(row2), (int8_t)memRowType(row2));
+      pSchema2 = tsdbGetTableSchemaByVersion(pTable, TD_ROW_SVER(row2), (int8_t)TD_ROW_TYPE(row2));
     }
     if(isRow2DataRow) {
       numOfColsOfRow2 = schemaNCols(pSchema2);
@@ -1993,6 +1997,7 @@ static void mergeTwoRowFromMem(STsdbQueryHandle* pQueryHandle, int32_t capacity,
       i++;
     }
   }
+#endif
 }
 
 static void moveDataToFront(STsdbQueryHandle* pQueryHandle, int32_t numOfRows, int32_t numOfCols) {
@@ -2177,13 +2182,13 @@ static void doMergeTwoLevelData(STsdbQueryHandle* pQueryHandle, STableCheckInfo*
   } else if (pCheckInfo->iter != NULL || pCheckInfo->iiter != NULL) {
     SSkipListNode* node = NULL;
     do {
-      SMemRow row2 = NULL;
-      SMemRow row1 = getSMemRowInTableMem(pCheckInfo, pQueryHandle->order, pCfg->update, &row2);
+      STSRow* row2 = NULL;
+      STSRow* row1 = getSMemRowInTableMem(pCheckInfo, pQueryHandle->order, pCfg->update, &row2);
       if (row1 == NULL) {
         break;
       }
 
-      TSKEY keyMem = memRowKey(row1);
+      TSKEY keyMem = TD_ROW_TSKEY(row1);
       if ((keyMem > pQueryHandle->window.ekey && ASCENDING_TRAVERSE(pQueryHandle->order)) ||
           (keyMem < pQueryHandle->window.ekey && !ASCENDING_TRAVERSE(pQueryHandle->order))) {
         break;
@@ -2200,15 +2205,15 @@ static void doMergeTwoLevelData(STsdbQueryHandle* pQueryHandle, STableCheckInfo*
 
       if ((keyMem < keyFile[pos] && ASCENDING_TRAVERSE(pQueryHandle->order)) ||
           (keyMem > keyFile[pos] && !ASCENDING_TRAVERSE(pQueryHandle->order))) {
-        if (rv1 != memRowVersion(row1)) {
-          pSchema1 = tsdbGetTableSchemaByVersion(pTable, memRowVersion(row1), (int8_t)memRowType(row1));
-          rv1 = memRowVersion(row1);
+        if (rv1 != TD_ROW_SVER(row1)) {
+          pSchema1 = tsdbGetTableSchemaByVersion(pTable, TD_ROW_SVER(row1), (int8_t)TD_ROW_TYPE(row1));
+          rv1 = TD_ROW_SVER(row1);
         }
-        if(row2 && rv2 != memRowVersion(row2)) {
-          pSchema2 = tsdbGetTableSchemaByVersion(pTable, memRowVersion(row2), (int8_t)memRowType(row2));
-          rv2 = memRowVersion(row2);
+        if (row2 && rv2 != TD_ROW_SVER(row2)) {
+          pSchema2 = tsdbGetTableSchemaByVersion(pTable, TD_ROW_SVER(row2), (int8_t)TD_ROW_TYPE(row2));
+          rv2 = TD_ROW_SVER(row2);
         }
-        
+
         mergeTwoRowFromMem(pQueryHandle, pQueryHandle->outputCapacity, numOfRows, row1, row2, numOfCols, pTable, pSchema1, pSchema2, true);
         numOfRows += 1;
         // record start key with memory key if not
@@ -2227,15 +2232,15 @@ static void doMergeTwoLevelData(STsdbQueryHandle* pQueryHandle, STableCheckInfo*
           if(pCfg->update == TD_ROW_PARTIAL_UPDATE) {
             doCopyRowsFromFileBlock(pQueryHandle, pQueryHandle->outputCapacity, numOfRows, pos, pos);
           }
-          if (rv1 != memRowVersion(row1)) {
-            pSchema1 = tsdbGetTableSchemaByVersion(pTable, memRowVersion(row1), (int8_t)memRowType(row1));
-            rv1 = memRowVersion(row1);
+          if (rv1 != TD_ROW_SVER(row1)) {
+            pSchema1 = tsdbGetTableSchemaByVersion(pTable, TD_ROW_SVER(row1), (int8_t)TD_ROW_TYPE(row1));
+            rv1 = TD_ROW_SVER(row1);
           }
-          if(row2 && rv2 != memRowVersion(row2)) {
-            pSchema2 = tsdbGetTableSchemaByVersion(pTable, memRowVersion(row2), (int8_t)memRowType(row2));
-            rv2 = memRowVersion(row2);
+          if (row2 && rv2 != TD_ROW_SVER(row2)) {
+            pSchema2 = tsdbGetTableSchemaByVersion(pTable, TD_ROW_SVER(row2), (int8_t)TD_ROW_TYPE(row2));
+            rv2 = TD_ROW_SVER(row2);
           }
-          
+
           bool forceSetNull = pCfg->update != TD_ROW_PARTIAL_UPDATE;
           mergeTwoRowFromMem(pQueryHandle, pQueryHandle->outputCapacity, numOfRows, row1, row2, numOfCols, pTable, pSchema1, pSchema2, forceSetNull);
           numOfRows += 1;
@@ -2298,9 +2303,9 @@ static void doMergeTwoLevelData(STsdbQueryHandle* pQueryHandle, STableCheckInfo*
        * copy them all to result buffer, since it may be overlapped with file data block.
        */
       if (node == NULL ||
-          ((memRowKey((SMemRow)SL_GET_NODE_DATA(node)) > pQueryHandle->window.ekey) &&
+          ((TD_ROW_TSKEY((STSRow*)SL_GET_NODE_DATA(node)) > pQueryHandle->window.ekey) &&
            ASCENDING_TRAVERSE(pQueryHandle->order)) ||
-          ((memRowKey((SMemRow)SL_GET_NODE_DATA(node)) < pQueryHandle->window.ekey) &&
+          ((TD_ROW_TSKEY((STSRow*)SL_GET_NODE_DATA(node)) < pQueryHandle->window.ekey) &&
            !ASCENDING_TRAVERSE(pQueryHandle->order))) {
         // no data in cache or data in cache is greater than the ekey of time window, load data from file block
         if (cur->win.skey == TSKEY_INITIAL_VAL) {
@@ -2889,12 +2894,12 @@ static int tsdbReadRowsFromCache(STableCheckInfo* pCheckInfo, TSKEY maxKey, int 
   STSchema* pSchema = NULL;
 
   do {
-    SMemRow row = getSMemRowInTableMem(pCheckInfo, pQueryHandle->order, pCfg->update, NULL);
+    STSRow* row = getSMemRowInTableMem(pCheckInfo, pQueryHandle->order, pCfg->update, NULL);
     if (row == NULL) {
       break;
     }
 
-    TSKEY key = memRowKey(row);
+    TSKEY key = TD_ROW_TSKEY(row);
     if ((key > maxKey && ASCENDING_TRAVERSE(pQueryHandle->order)) || (key < maxKey && !ASCENDING_TRAVERSE(pQueryHandle->order))) {
       tsdbDebug("%p key:%"PRIu64" beyond qrange:%"PRId64" - %"PRId64", no more data in buffer", pQueryHandle, key, pQueryHandle->window.skey,
                 pQueryHandle->window.ekey);
@@ -2907,9 +2912,9 @@ static int tsdbReadRowsFromCache(STableCheckInfo* pCheckInfo, TSKEY maxKey, int 
     }
 
     win->ekey = key;
-    if (rv != memRowVersion(row)) {
-      pSchema = tsdbGetTableSchemaByVersion(pTable, memRowVersion(row), (int8_t)memRowType(row));
-      rv = memRowVersion(row);
+    if (rv != TD_ROW_SVER(row)) {
+      pSchema = tsdbGetTableSchemaByVersion(pTable, TD_ROW_SVER(row), (int8_t)TD_ROW_TYPE(row));
+      rv = TD_ROW_SVER(row);
     }
     mergeTwoRowFromMem(pQueryHandle, maxRowsToRead, numOfRows, row, NULL, numOfCols, pTable, pSchema, NULL, true);
 
@@ -3026,9 +3031,9 @@ static bool loadCachedLastRow(STsdbQueryHandle* pQueryHandle) {
 
   SQueryFilePos* cur = &pQueryHandle->cur;
 
-  SMemRow  pRow = NULL;
-  TSKEY    key  = TSKEY_INITIAL_VAL;
-  int32_t  step = ASCENDING_TRAVERSE(pQueryHandle->order)? 1:-1;
+  STSRow* pRow = NULL;
+  TSKEY   key = TSKEY_INITIAL_VAL;
+  int32_t step = ASCENDING_TRAVERSE(pQueryHandle->order) ? 1 : -1;
 
   if (++pQueryHandle->activeIndex < numOfTables) {
     STableCheckInfo* pCheckInfo = taosArrayGet(pQueryHandle->pTableCheckInfo, pQueryHandle->activeIndex);
@@ -3462,7 +3467,7 @@ bool tsdbGetExternalRow(TsdbQueryHandleT pHandle) {
  * if lastRow == NULL, return TSDB_CODE_TDB_NO_CACHE_LAST_ROW
  * else set pRes and return TSDB_CODE_SUCCESS and save lastKey
  */
-int32_t tsdbGetCachedLastRow(STable* pTable, SMemRow* pRes, TSKEY* lastKey) {
+int32_t tsdbGetCachedLastRow(STable* pTable, STSRow** pRes, TSKEY* lastKey) {
   int32_t code = TSDB_CODE_SUCCESS;
 
   TSDB_RLOCK_TABLE(pTable);
@@ -3473,7 +3478,7 @@ int32_t tsdbGetCachedLastRow(STable* pTable, SMemRow* pRes, TSKEY* lastKey) {
   }
 
   if (pRes) {
-    *pRes = tdMemRowDup(pTable->lastRow);
+    *pRes = tdRowDup(pTable->lastRow);
     if (*pRes == NULL) {
       code = TSDB_CODE_TDB_OUT_OF_MEMORY;
     }

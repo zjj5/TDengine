@@ -12,8 +12,11 @@ extern "C" {
 // ----------------- For variable data types such as TSDB_DATA_TYPE_BINARY and TSDB_DATA_TYPE_NCHAR
 typedef int32_t  VarDataOffsetT;
 typedef int16_t  VarDataLenT;  // maxVarDataLen: 32767
-typedef uint16_t TDRowLenT;    // not including overhead: 0 ~ 65535
+typedef uint32_t TDRowLenT; 
 typedef uint32_t TDRowTLenT;   // total length, including overhead
+typedef uint8_t  TDRowValT;   // not including overhead: 0 ~ 65535
+typedef uint16_t col_id_t;
+typedef int8_t   col_type_t;
 
 typedef struct tstr {
   VarDataLenT len;

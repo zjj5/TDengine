@@ -211,7 +211,7 @@ do { \
 
   /**
    *  In some scenarios uint16_t (0~65535) is used to store the row len.
-   *  - Firstly, we use 65531(65535 - 4), as the SDataRow/SKVRow contains 4 bits header.
+   *  - Firstly, we use 65531(65535 - 4), as the STpRow/SKVRow contains 4 bits header.
    *  - Secondly, if all cols are VarDataT type except primary key, we need 4 bits to store the offset, thus
    *    the final value is 65531-(4096-1)*4 = 49151.
    */
@@ -356,6 +356,14 @@ do { \
 #define TSDB_MAX_BINARY_LEN            (TSDB_MAX_FIELD_LEN-TSDB_KEYSIZE) // keep 16384
 #define TSDB_MAX_NCHAR_LEN             (TSDB_MAX_FIELD_LEN-TSDB_KEYSIZE) // keep 16384
 #define PRIMARYKEY_TIMESTAMP_COL_INDEX  0
+
+#ifndef TD_SUPPORT_BITMAP
+#define PRIMARYKEY_TIMESTAMP_COL_ID 0
+#define COL_REACH_END(colId, maxColId) ((colId) >= (maxColId))
+#else
+#define PRIMARYKEY_TIMESTAMP_COL_ID 1
+#define COL_REACH_END(colId, maxColId) ((colId) > (maxColId))
+#endif
 
 #define TSDB_MAX_RPC_THREADS            5
 

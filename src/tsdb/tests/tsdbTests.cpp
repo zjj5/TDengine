@@ -49,7 +49,7 @@ static int insertData(SInsertInfo *pInfo) {
       } else {
         start_time -= pInfo->interval;
       }
-      SDataRow row = (SDataRow)(pBlock->data + pBlock->dataLen);
+      STpRow *row = (STpRow)(pBlock->data + pBlock->dataLen);
       tdInitDataRow(row, pInfo->pSchema);
 
       for (int j = 0; j < schemaNCols(pInfo->pSchema); j++) {

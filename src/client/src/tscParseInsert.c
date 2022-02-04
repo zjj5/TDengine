@@ -31,7 +31,7 @@
 #include "tscLog.h"
 #include "ttoken.h"
 
-#include "tdataformat.h"
+#include "trow.h"
 
 enum {
   TSDB_USE_SERVER_TS = 0,
@@ -41,23 +41,11 @@ enum {
 static int32_t tscAllocateMemIfNeed(STableDataBlocks *pDataBlock, int32_t rowSize, int32_t *numOfRows);
 static int32_t parseBoundColumns(SInsertStatementParam *pInsertParam, SParsedDataColInfo *pColInfo, SSchema *pSchema,
                                  char *str, char **end);
-int initMemRowBuilder(SMemRowBuilder *pBuilder, uint32_t nRows, SParsedDataColInfo *pColInfo) {
-  ASSERT(nRows >= 0 && pColInfo->numOfCols > 0 && (pColInfo->numOfBound <= pColInfo->numOfCols));
-  if (nRows > 0) {
-    // already init(bind multiple rows by single column)
-    if (pBuilder->compareStat == ROW_COMPARE_NEED && (pBuilder->rowInfo != NULL)) {
-      return TSDB_CODE_SUCCESS;
-    }
-  }
-
-  uint32_t dataLen = TD_MEM_ROW_DATA_HEAD_SIZE + pColInfo->allNullLen;
-  uint32_t kvLen = TD_MEM_ROW_KV_HEAD_SIZE + pColInfo->numOfBound * sizeof(SColIdx) + pColInfo->boundNullLen;
-  if (isUtilizeKVRow(kvLen, dataLen)) {
-    pBuilder->memRowType = SMEM_ROW_KV;
-  } else {
-    pBuilder->memRowType = SMEM_ROW_DATA;
-  }
-
+int initMemRowBuilder(SRowBuilder *pBuilder, int16_t schemaVer, SParsedDataColInfo *pColInfo) {
+  ASSERT(pColInfo->numOfCols > 0 && (pColInfo->numOfBound <= pColInfo->numOfCols));
+  tdSRowInit(pBuilder, schemaVer);
+  tdSRowSetExtendedInfo(pBuilder, pColInfo->numOfCols, pColInfo->numOfBound, pColInfo->flen, pColInfo->allNullLen,
+                        pColInfo->boundNullLen);
   return TSDB_CODE_SUCCESS;
 }
 
@@ -437,10 +425,11 @@ int tsParseOneRow(char **str, STableDataBlocks *pDataBlocks, int16_t timePrec, i
   SParsedDataColInfo *spd = &pDataBlocks->boundColumnInfo;
   STableMeta *        pTableMeta = pDataBlocks->pTableMeta;
   SSchema *           schema = tscGetTableSchema(pTableMeta);
-  SMemRowBuilder *    pBuilder = &pDataBlocks->rowBuilder;
+  SRowBuilder *       pBuilder = &pDataBlocks->rowBuilder;
   bool                isParseBindParam = false;
 
-  initSMemRow(row, pBuilder->memRowType, pDataBlocks, spd->numOfBound);
+  // initSMemRow(row, pBuilder->memRowType, pDataBlocks, spd->numOfBound);
+  tdSRowResetBuf(pBuilder, row);
 
   // 1. set the parsed value from sql string
   for (int i = 0; i < spd->numOfBound; ++i) {
@@ -492,16 +481,17 @@ int tsParseOneRow(char **str, STableDataBlocks *pDataBlocks, int16_t timePrec, i
     bool    isPrimaryKey = (colIndex == PRIMARYKEY_TIMESTAMP_COL_INDEX);
     int32_t toffset = -1;
     int16_t colId = -1;
-    tscGetMemRowAppendInfo(schema, pBuilder->memRowType, spd, i, &toffset, &colId);
+    int32_t colIdx = -1;
+    tscGetMemRowAppendInfo(schema, pBuilder->rowType, spd, i, &toffset, &colId, &colIdx);
 
     int32_t ret =
-        tsParseOneColumnKV(pSchema, &sToken, row, pInsertParam->msg, str, isPrimaryKey, timePrec, toffset, colId);
+        tsParseOneColumnKV(pSchema, &sToken, pBuilder, pInsertParam->msg, str, isPrimaryKey, timePrec, toffset, colId, colIdx);
     if (ret != TSDB_CODE_SUCCESS) {
       return ret;
     }
 
     if (isPrimaryKey) {
-      TSKEY tsKey = memRowKey(row);
+      TSKEY tsKey = TD_ROW_TSKEY((STSRow*)row);
       if (tsCheckTimestamp(pDataBlocks, (const char *)&tsKey) != TSDB_CODE_SUCCESS) {
         tscInvalidOperationMsg(pInsertParam->msg, "client time/server time can not be mixed up", sToken.z);
         return TSDB_CODE_TSC_INVALID_TIME_STAMP;
@@ -511,17 +501,16 @@ int tsParseOneRow(char **str, STableDataBlocks *pDataBlocks, int16_t timePrec, i
 
   if (!isParseBindParam) {
     // set the null value for the columns that do not assign values
-    if ((spd->numOfBound < spd->numOfCols) && isDataRow(row)) {
-      SDataRow dataRow = memRowDataBody(row);
+    if ((spd->numOfBound < spd->numOfCols) && TD_IS_TP_ROW((STSRow*)row)) {
       for (int32_t i = 0; i < spd->numOfCols; ++i) {
-        if (spd->cols[i].valStat == VAL_STAT_NONE) {
-          tdAppendDataColVal(dataRow, getNullValue(schema[i].type), true, schema[i].type, spd->cols[i].toffset);
+        if (spd->cols[i].valStat == VAL_STAT_NONE) { // the primary TS key is not VAL_STAT_NONE
+          tdAppendColValToTpRow(pBuilder, TD_VTYPE_NONE, getNullValue(schema[i].type), true, schema[i].type, i, spd->cols[i].toffset);
         }
       }
     }
   }
 
-  *len = pBuilder->rowSize;
+  *len = pBuilder->extendedRowSize;
 
   return TSDB_CODE_SUCCESS;
 }
@@ -574,10 +563,10 @@ int32_t tsParseValues(char **str, STableDataBlocks *pDataBlock, int maxRows, SIn
 
   int32_t extendedRowSize = getExtendedRowSize(pDataBlock);
 
-  if (TSDB_CODE_SUCCESS != (code = initMemRowBuilder(&pDataBlock->rowBuilder, 0, &pDataBlock->boundColumnInfo))) {
+  if (TSDB_CODE_SUCCESS != (code = initMemRowBuilder(&pDataBlock->rowBuilder, pDataBlock->pTableMeta->sversion, &pDataBlock->boundColumnInfo))) {
     return code;
   }
-  pDataBlock->rowBuilder.rowSize = extendedRowSize;
+  pDataBlock->rowBuilder.extendedRowSize = extendedRowSize;
 
   while (1) {
     index = 0;
@@ -776,7 +765,7 @@ int tscSortRemoveDataBlockDupRows(STableDataBlocks *dataBuf, SBlockKeyInfo *pBlk
   char *          pBlockData = pBlocks->data;
   int             n = 0;
   while (n < nRows) {
-    pBlkKeyTuple->skey = memRowKey(pBlockData);
+    pBlkKeyTuple->skey = TD_ROW_TSKEY((STSRow*)pBlockData);
     pBlkKeyTuple->payloadAddr = pBlockData;
 
     // next loop
@@ -1758,9 +1747,9 @@ static void parseFileSendDataBlock(void *param, TAOS_RES *tres, int32_t numOfRow
     goto _error;
   }
 
-  // insert from .csv means full and ordered columns, thus use SDataRow all the time
-  ASSERT(SMEM_ROW_DATA == pTableDataBlock->rowBuilder.memRowType);
-  pTableDataBlock->rowBuilder.rowSize = extendedRowSize;
+  // insert from .csv means full and ordered columns, thus use STpRow all the time
+  ASSERT(TD_ROW_TP == pTableDataBlock->rowBuilder.rowType);
+  pTableDataBlock->rowBuilder.extendedRowSize = extendedRowSize;
   
   while ((readLen = tgetline(&line, &n, fp)) != -1) {
     if (('\r' == line[readLen - 1]) || ('\n' == line[readLen - 1])) {

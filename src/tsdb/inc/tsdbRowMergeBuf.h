@@ -26,11 +26,11 @@ extern "C" {
 
 typedef void* SMergeBuf;
 
-SDataRow tsdbMergeTwoRows(SMergeBuf *pBuf, SMemRow row1, SMemRow row2, STSchema *pSchema1, STSchema *pSchema2);
+STSRow* tsdbMergeTwoRows(SMergeBuf* pBuf, STSRow* row1, STSRow* row2, STSchema* pSchema1, STSchema* pSchema2);
 
 static FORCE_INLINE int tsdbMergeBufMakeSureRoom(SMergeBuf *pBuf, STSchema* pSchema1, STSchema* pSchema2) {
-  size_t len1 = dataRowMaxBytesFromSchema(pSchema1);
-  size_t len2 = dataRowMaxBytesFromSchema(pSchema2);
+  size_t len1 = TD_ROW_MAX_BYTES_FROM_SCHEMA(pSchema1);
+  size_t len2 = TD_ROW_MAX_BYTES_FROM_SCHEMA(pSchema2);
   return tsdbMakeRoom(pBuf, MAX(len1, len2));
 }
 
