@@ -775,7 +775,7 @@ static bool initTableMemIterator(STsdbQueryHandle* pHandle, STableCheckInfo* pCh
     assert(node != NULL);
 
     STSRow* row = (STSRow*)SL_GET_NODE_DATA(node);
-    TSKEY   key = TD_ROW_TSKEY(row);  // first timestamp in buffer
+    TSKEY   key = TD_ROW_KEY(row);  // first timestamp in buffer
     tsdbDebug("%p uid:%" PRId64 ", tid:%d check data in mem from skey:%" PRId64 ", order:%d, ts range in buf:%" PRId64
               "-%" PRId64 ", lastKey:%" PRId64 ", numOfRows:%"PRId64", 0x%"PRIx64,
               pHandle, pCheckInfo->tableId.uid, pCheckInfo->tableId.tid, key, order, pMem->keyFirst, pMem->keyLast,
@@ -797,7 +797,7 @@ static bool initTableMemIterator(STsdbQueryHandle* pHandle, STableCheckInfo* pCh
     assert(node != NULL);
 
     STSRow* row = (STSRow*)SL_GET_NODE_DATA(node);
-    TSKEY   key = TD_ROW_TSKEY(row);  // first timestamp in buffer
+    TSKEY   key = TD_ROW_KEY(row);  // first timestamp in buffer
     tsdbDebug("%p uid:%" PRId64 ", tid:%d check data in imem from skey:%" PRId64 ", order:%d, ts range in buf:%" PRId64
               "-%" PRId64 ", lastKey:%" PRId64 ", numOfRows:%"PRId64", 0x%"PRIx64,
               pHandle, pCheckInfo->tableId.uid, pCheckInfo->tableId.tid, key, order, pIMem->keyFirst, pIMem->keyLast,
@@ -843,16 +843,16 @@ static TSKEY extractFirstTraverseKey(STableCheckInfo* pCheckInfo, int32_t order,
 
   if (rmem != NULL && rimem == NULL) {
     pCheckInfo->chosen = CHECKINFO_CHOSEN_MEM;
-    return TD_ROW_TSKEY(rmem);
+    return TD_ROW_KEY(rmem);
   }
 
   if (rmem == NULL && rimem != NULL) {
     pCheckInfo->chosen = CHECKINFO_CHOSEN_IMEM;
-    return TD_ROW_TSKEY(rimem);
+    return TD_ROW_KEY(rimem);
   }
 
-  TSKEY r1 = TD_ROW_TSKEY(rmem);
-  TSKEY r2 = TD_ROW_TSKEY(rimem);
+  TSKEY r1 = TD_ROW_KEY(rmem);
+  TSKEY r2 = TD_ROW_KEY(rimem);
 
   if (r1 == r2) {
     if(update == TD_ROW_DISCARD_UPDATE){
@@ -919,8 +919,8 @@ static STSRow* getSMemRowInTableMem(STableCheckInfo* pCheckInfo, int32_t order, 
     return rimem;
   }
 
-  TSKEY r1 = TD_ROW_TSKEY(rmem);
-  TSKEY r2 = TD_ROW_TSKEY(rimem);
+  TSKEY r1 = TD_ROW_KEY(rmem);
+  TSKEY r2 = TD_ROW_KEY(rimem);
 
   if (r1 == r2) {
     if (update == TD_ROW_DISCARD_UPDATE) {
@@ -1015,7 +1015,7 @@ static bool hasMoreDataInCache(STsdbQueryHandle* pHandle) {
     return false;
   }
 
-  pCheckInfo->lastKey = TD_ROW_TSKEY(row);  // first timestamp in buffer
+  pCheckInfo->lastKey = TD_ROW_KEY(row);  // first timestamp in buffer
   tsdbDebug("%p uid:%" PRId64", tid:%d check data in buffer from skey:%" PRId64 ", order:%d, 0x%"PRIx64, pHandle,
       pCheckInfo->tableId.uid, pCheckInfo->tableId.tid, pCheckInfo->lastKey, pHandle->order, pHandle->qId);
 
@@ -2188,7 +2188,7 @@ static void doMergeTwoLevelData(STsdbQueryHandle* pQueryHandle, STableCheckInfo*
         break;
       }
 
-      TSKEY keyMem = TD_ROW_TSKEY(row1);
+      TSKEY keyMem = TD_ROW_KEY(row1);
       if ((keyMem > pQueryHandle->window.ekey && ASCENDING_TRAVERSE(pQueryHandle->order)) ||
           (keyMem < pQueryHandle->window.ekey && !ASCENDING_TRAVERSE(pQueryHandle->order))) {
         break;
@@ -2303,9 +2303,9 @@ static void doMergeTwoLevelData(STsdbQueryHandle* pQueryHandle, STableCheckInfo*
        * copy them all to result buffer, since it may be overlapped with file data block.
        */
       if (node == NULL ||
-          ((TD_ROW_TSKEY((STSRow*)SL_GET_NODE_DATA(node)) > pQueryHandle->window.ekey) &&
+          ((TD_ROW_KEY((STSRow*)SL_GET_NODE_DATA(node)) > pQueryHandle->window.ekey) &&
            ASCENDING_TRAVERSE(pQueryHandle->order)) ||
-          ((TD_ROW_TSKEY((STSRow*)SL_GET_NODE_DATA(node)) < pQueryHandle->window.ekey) &&
+          ((TD_ROW_KEY((STSRow*)SL_GET_NODE_DATA(node)) < pQueryHandle->window.ekey) &&
            !ASCENDING_TRAVERSE(pQueryHandle->order))) {
         // no data in cache or data in cache is greater than the ekey of time window, load data from file block
         if (cur->win.skey == TSKEY_INITIAL_VAL) {
@@ -2899,7 +2899,7 @@ static int tsdbReadRowsFromCache(STableCheckInfo* pCheckInfo, TSKEY maxKey, int 
       break;
     }
 
-    TSKEY key = TD_ROW_TSKEY(row);
+    TSKEY key = TD_ROW_KEY(row);
     if ((key > maxKey && ASCENDING_TRAVERSE(pQueryHandle->order)) || (key < maxKey && !ASCENDING_TRAVERSE(pQueryHandle->order))) {
       tsdbDebug("%p key:%"PRIu64" beyond qrange:%"PRId64" - %"PRId64", no more data in buffer", pQueryHandle, key, pQueryHandle->window.skey,
                 pQueryHandle->window.ekey);

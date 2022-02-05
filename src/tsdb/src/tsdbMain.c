@@ -836,7 +836,7 @@ static int tsdbRestoreLastRow(STsdbRepo *pRepo, STable *pTable, SReadH* pReadh, 
     tdAppendColValToRow(&builder, pCol->bytes, pCol->type, val.valType, val.val, true, pCol->offset, icol);
   }
 
-  TSKEY lastKey = TD_ROW_TSKEY(lastRow);
+  TSKEY lastKey = TD_ROW_KEY(lastRow);
 
   // during the load data in file, new data would be inserted and last row has been updated
   TSDB_WLOCK_TABLE(pTable);

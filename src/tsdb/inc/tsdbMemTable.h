@@ -84,14 +84,14 @@ static FORCE_INLINE TSKEY tsdbNextIterKey(SSkipListIterator* pIter) {
   STSRow* row = tsdbNextIterRow(pIter);
   if (row == NULL) return TSDB_DATA_TIMESTAMP_NULL;
 
-  return TD_ROW_TSKEY(row);
+  return TD_ROW_KEY(row);
 }
 
 static FORCE_INLINE TKEY tsdbNextIterTKey(SSkipListIterator* pIter) {
   STSRow* row = tsdbNextIterRow(pIter);
   if (row == NULL) return TKEY_NULL;
 
-  return TD_ROW_TSKEY(row);
+  return TD_ROW_KEY(row);
 }
 
 #endif /* _TD_TSDB_MEMTABLE_H_ */

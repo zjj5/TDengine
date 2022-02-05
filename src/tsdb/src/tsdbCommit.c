@@ -1463,10 +1463,10 @@ static void tsdbLoadAndMergeFromCache(SDataCols *pDataCols, int *iter, SCommitIt
   while (true) {
     key1 = (*iter >= pDataCols->numOfRows) ? INT64_MAX : dataColsKeyAt(pDataCols, *iter);
     STSRow *row = tsdbNextIterRow(pCommitIter->pIter);
-    if (row == NULL || TD_ROW_TSKEY(row) > maxKey) {
+    if (row == NULL || TD_ROW_KEY(row) > maxKey) {
       key2 = INT64_MAX;
     } else {
-      key2 = TD_ROW_TSKEY(row);
+      key2 = TD_ROW_KEY(row);
     }
 
     if (key1 == INT64_MAX && key2 == INT64_MAX) break;

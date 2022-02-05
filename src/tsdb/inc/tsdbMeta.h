@@ -162,7 +162,7 @@ static FORCE_INLINE STSchema *tsdbGetTableTagSchema(STable *pTable) {
 }
 
 static FORCE_INLINE TSKEY tsdbGetTableLastKeyImpl(STable* pTable) {
-  ASSERT((pTable->lastRow == NULL) || (pTable->lastKey == TD_ROW_TSKEY(pTable->lastRow)));
+  ASSERT((pTable->lastRow == NULL) || (pTable->lastKey == TD_ROW_KEY(pTable->lastRow)));
   return pTable->lastKey;
 }
 

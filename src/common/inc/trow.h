@@ -166,7 +166,8 @@ typedef struct {
 #define TD_ROW_NCOLS(r) ((r)->ncols)
 #define TD_ROW_DATA(r) ((r)->data)
 #define TD_ROW_LEN(r) ((r)->len)
-#define TD_ROW_TSKEY(r) ((r)->ts)
+#define TD_ROW_KEY(r) ((r)->ts)
+#define TD_ROW_KEY_ADDR(r) POINTER_SHIFT((r), 16)
 
 // N.B. If without STSchema, getExtendedRowSize() is used to get the rowMaxBytes and
 // (int)ceil((double)nCols/TD_VTYPE_PARTS) should be added if TD_SUPPORT_BITMAP defined.
@@ -222,7 +223,7 @@ int32_t tdAppendSTSRowToDataCol(STSRow *pRow, STSchema *pSchema, SDataCols *pCol
  */
 static FORCE_INLINE void *tdGetBitmapAddrTp(STSRow *pRow, uint32_t flen) {
   // The primary TS key is stored separatedly.
-  return POINTER_SHIFT(pRow->data, flen - sizeof(TSDB_DATA_TYPE_TIMESTAMP));
+  return POINTER_SHIFT(pRow->data, flen - sizeof(TSKEY));
   // return POINTER_SHIFT(pRow->ts, flen);
 }
 
@@ -446,7 +447,7 @@ static FORCE_INLINE int32_t tdSRowSetExtendedInfo(SRowBuilder *pBuilder, int32_t
  * @param pBuilder
  * @param pBuf Output buffer of STSRow
  */
-static FORCE_INLINE int32_t tdSRowResetBuf(SRowBuilder *pBuilder, void *pBuf) {
+static int32_t tdSRowResetBuf(SRowBuilder *pBuilder, void *pBuf) {
   pBuilder->pBuf = (STSRow *)pBuf;
   if (!pBuilder->pBuf) {
     TASSERT(0);
@@ -460,7 +461,7 @@ static FORCE_INLINE int32_t tdSRowResetBuf(SRowBuilder *pBuilder, void *pBuf) {
       pBuilder->pBitmap = tdGetBitmapAddrTp(pBuilder->pBuf, pBuilder->flen);
 #endif
       // the primary TS key is stored separatedly
-      len = TD_ROW_HEAD_LEN + pBuilder->flen - sizeof(TSDB_DATA_TYPE_TIMESTAMP) + pBuilder->nBitmaps;
+      len = TD_ROW_HEAD_LEN + pBuilder->flen - sizeof(TSKEY) + pBuilder->nBitmaps;
       TD_ROW_SET_LEN(pBuilder->pBuf, len);
       TD_ROW_SET_SVER(pBuilder->pBuf, pBuilder->sver);
       break;
@@ -661,7 +662,7 @@ static FORCE_INLINE int32_t tdAppendColValToRow(SRowBuilder *pBuilder, int16_t c
   }
   // TS KEY is stored in STSRow.ts and not included in STSRow.data field.
   if (colId == PRIMARYKEY_TIMESTAMP_COL_ID) {
-    TD_ROW_TSKEY(pRow) = *(TSKEY *)val;
+    TD_ROW_KEY(pRow) = *(TSKEY *)val;
     // The primary TS key is Norm all the time, thus its valType is not stored in bitmap.
     // #ifdef TD_SUPPORT_BITMAP
     //     pBitmap = tdGetBitmapAddr(pRow, pRow->type, pBuilder->flen, pRow->ncols);

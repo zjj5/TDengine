@@ -168,7 +168,7 @@ int tdAppendValToDataCol(SDataCol *pCol, TDRowValT valType, const void *val, int
 
 // internal
 static int32_t tdAppendTpRowToDataCol(STSRow *pRow, STSchema *pSchema, SDataCols *pCols) {
-  ASSERT(pCols->numOfRows == 0 || dataColsKeyLast(pCols) < TD_ROW_TSKEY(pRow));
+  ASSERT(pCols->numOfRows == 0 || dataColsKeyLast(pCols) < TD_ROW_KEY(pRow));
 
   int   rcol = 1;
   int   dcol = 1;
@@ -209,7 +209,7 @@ static int32_t tdAppendTpRowToDataCol(STSRow *pRow, STSchema *pSchema, SDataCols
 }
 // internal
 static int32_t tdAppendKvRowToDataCol(STSRow *pRow, STSchema *pSchema, SDataCols *pCols) {
-  ASSERT(pCols->numOfRows == 0 || dataColsKeyLast(pCols) < TD_ROW_TSKEY(pRow));
+  ASSERT(pCols->numOfRows == 0 || dataColsKeyLast(pCols) < TD_ROW_KEY(pRow));
 
   int   rcol = 0;
   int   dcol = 1;
@@ -382,7 +382,7 @@ static void tdMergeTwoDataCols(SDataCols *target, SDataCols *src1, int *iter1, i
 
 STSRow* mergeTwoRows(void *buffer, STSRow* row1, STSRow *row2, STSchema *pSchema1, STSchema *pSchema2) {
 #if 0
-  ASSERT(TD_ROW_TSKEY(row1) == TD_ROW_TSKEY(row2));
+  ASSERT(TD_ROW_KEY(row1) == TD_ROW_KEY(row2));
   ASSERT(schemaVersion(pSchema1) == TD_ROW_SVER(row1));
   ASSERT(schemaVersion(pSchema2) == TD_ROW_SVER(row2));
   ASSERT(schemaVersion(pSchema1) >= schemaVersion(pSchema2));

@@ -740,7 +740,7 @@ SKVRow tdGetKVRowFromBuilder(SKVRowBuilder *pBuilder) {
 #if 0
 STSRow mergeTwoRows(void *buffer, STSRow row1, STSRow row2, STSchema *pSchema1, STSchema *pSchema2) {
 
-  ASSERT(TD_ROW_TSKEY(row1) == TD_ROW_TSKEY(row2));
+  ASSERT(TD_ROW_KEY(row1) == TD_ROW_KEY(row2));
   ASSERT(schemaVersion(pSchema1) == memRowVersion(row1));
   ASSERT(schemaVersion(pSchema2) == memRowVersion(row2));
   ASSERT(schemaVersion(pSchema1) >= schemaVersion(pSchema2));

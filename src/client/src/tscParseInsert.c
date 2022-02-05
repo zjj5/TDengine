@@ -491,7 +491,7 @@ int tsParseOneRow(char **str, STableDataBlocks *pDataBlocks, int16_t timePrec, i
     }
 
     if (isPrimaryKey) {
-      TSKEY tsKey = TD_ROW_TSKEY((STSRow*)row);
+      TSKEY tsKey = TD_ROW_KEY((STSRow *)row);
       if (tsCheckTimestamp(pDataBlocks, (const char *)&tsKey) != TSDB_CODE_SUCCESS) {
         tscInvalidOperationMsg(pInsertParam->msg, "client time/server time can not be mixed up", sToken.z);
         return TSDB_CODE_TSC_INVALID_TIME_STAMP;
@@ -765,7 +765,7 @@ int tscSortRemoveDataBlockDupRows(STableDataBlocks *dataBuf, SBlockKeyInfo *pBlk
   char *          pBlockData = pBlocks->data;
   int             n = 0;
   while (n < nRows) {
-    pBlkKeyTuple->skey = TD_ROW_TSKEY((STSRow*)pBlockData);
+    pBlkKeyTuple->skey = TD_ROW_KEY((STSRow *)pBlockData);
     pBlkKeyTuple->payloadAddr = pBlockData;
 
     // next loop
