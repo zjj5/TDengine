@@ -192,8 +192,8 @@ int tsdbCheckWal(STsdbRepo *pRepo, uint32_t walSize) {  // MB
   }
   return 0;
 }
-
-int tsdbCheckCommit(STsdbRepo *pRepo) {
+int32_t nCheckCommit = 0;
+int     tsdbCheckCommit(STsdbRepo *pRepo) {
   // ASSERT(pRepo->mem != NULL);
   // STsdbCfg *pCfg = &(pRepo->config);
 
@@ -202,7 +202,10 @@ int tsdbCheckCommit(STsdbRepo *pRepo) {
   // if ((pRepo->mem->extraBuffList != NULL) ||
   //     ((listNEles(pRepo->mem->bufBlockList) >= pCfg->totalBlocks / 3) && (pBufBlock->remain < TSDB_BUFFER_RESERVE))) {
     // trigger commit
+  if (((++nCheckCommit) & 3) == 0) {
     if (tsdbAsyncCommit(pRepo) < 0) return -1;
+  }
+
   // }
   return 0;
 }

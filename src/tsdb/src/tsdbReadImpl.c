@@ -742,16 +742,19 @@ static int tsdbCheckAndDecodeColumnData(SDataCol *pDataCol, void *content, int32
       terrno = TSDB_CODE_TDB_FILE_CORRUPTED;
       return -1;
     }
-    pDataCol->len = tlen;
+    pDataCol->lenXYZ = tlen;
   } else {
     // No need to decompress, just memcpy it
-    pDataCol->len = len - sizeof(TSCKSUM);
-    memcpy(pDataCol->pData, content, pDataCol->len);
+    pDataCol->lenXYZ = len - sizeof(TSCKSUM);
+    memcpy(pDataCol->pData, content, pDataCol->lenXYZ);
   }
 
   if (IS_VAR_DATA_TYPE(pDataCol->type)) {
     dataColSetOffset(pDataCol, numOfRows);
+  } else {
+
   }
+  
   return 0;
 }
 

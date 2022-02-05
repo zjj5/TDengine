@@ -1059,7 +1059,7 @@ static int tsdbComparKeyBlock(const void *arg1, const void *arg2) {
 int tsdbWriteBlockImpl(STsdbRepo *pRepo, STable *pTable, SDFile *pDFile, SDFile *pDFileAggr, SDataCols *pDataCols,
                        SBlock *pBlock, bool isLast, bool isSuper, void **ppBuf, void **ppCBuf, void **ppExBuf) {
   STsdbCfg *  pCfg = REPO_CFG(pRepo);
-  SBlockData *pBlockData;
+  SBlockData *  pBlockData = NULL;
   SAggrBlkData *pAggrBlkData = NULL;
   int64_t     offset = 0, offsetAggr = 0;
   int         rowsToWrite = pDataCols->numOfRows;
@@ -1106,7 +1106,7 @@ int tsdbWriteBlockImpl(STsdbRepo *pRepo, STable *pTable, SDFile *pDFile, SDFile 
                                                &(pAggrBlkCol->sum), &(pAggrBlkCol->minIndex), &(pAggrBlkCol->maxIndex),
                                                &(pAggrBlkCol->numOfNull));
     }
-    nColsNotAllNull++;
+    ++nColsNotAllNull;
   }
 
   ASSERT(nColsNotAllNull >= 0 && nColsNotAllNull <= pDataCols->numOfCols);
@@ -1129,9 +1129,9 @@ int tsdbWriteBlockImpl(STsdbRepo *pRepo, STable *pTable, SDFile *pDFile, SDFile 
 
     if (ncol != 0 && (pDataCol->colId != pBlockCol->colId)) continue;
 
-    int32_t flen;  // final length
+    int32_t flen = 0;  // final length
     int32_t tlen = dataColGetNEleLen(pDataCol, rowsToWrite);
-    void *  tptr;
+    void *  tptr = NULL;
 
     // Make room
     if (tsdbMakeRoom(ppBuf, lsize + tlen + COMP_OVERFLOW_BYTES + sizeof(TSCKSUM)) < 0) {
@@ -1144,6 +1144,13 @@ int tsdbWriteBlockImpl(STsdbRepo *pRepo, STable *pTable, SDFile *pDFile, SDFile 
     if (pCfg->compression == TWO_STAGE_COMP &&
         tsdbMakeRoom(ppCBuf, tlen + COMP_OVERFLOW_BYTES) < 0) {
       return -1;
+    }
+
+    // For VarDataType, move bitmap parts ahead
+    // TODO: put bitmap part to the 1st location(pBitmap points to pData) to avoid the memmove
+    if (IS_VAR_DATA_TYPE(pDataCol->type)) {
+      memmove(POINTER_SHIFT(pDataCol->pData, pDataCol->lenXYZ), pDataCol->pBitmap,
+              (size_t)TD_BITMAP_BYTES(rowsToWrite));
     }
 
     // Compress or just copy

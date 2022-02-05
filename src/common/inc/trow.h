@@ -977,16 +977,23 @@ static FORCE_INLINE int32_t dataColGetNEleLen(SDataCol *pDataCol, int rows) {
 
   if (IS_VAR_DATA_TYPE(pDataCol->type)) {
     result += pDataCol->dataOff[rows - 1];
-    SCellVal val;
+    SCellVal val = {0};
     if (tdGetColDataOfRow(&val, pDataCol, rows - 1) < 0) {
       TASSERT(0);
     }
-    if (tdValTypeIsNorm(val.valType)) {
-      result += varDataTLen(val.val);
-    }
+
+    // Currently, count the varDataTLen in of Null/None cols considering back compatibility test for 2.4
+    result += varDataTLen(val.val);
+    // TODO: later on, don't save Null/None for VarDataT for 3.0
+    // if (tdValTypeIsNorm(val.valType)) {
+    //   result += varDataTLen(val.val);
+    // }
   } else {
     result += TYPE_BYTES[pDataCol->type] * rows;
   }
+
+  ASSERT(pDataCol->lenXYZ == result);
+
   result += (int32_t)TD_BITMAP_BYTES(rows);
   return result;
 }
