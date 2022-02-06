@@ -189,10 +189,10 @@ typedef struct {
 
 #define TD_KV_ROW_COL_IDX(r) TD_ROW_DATA(r)
 
-static FORCE_INLINE void tdRowCpy(void *dst, const STSRow *pRow) { memcpy(dst, pRow, TD_ROW_LEN(pRow)); }
-static FORCE_INLINE const char *tdRowEnd(STSRow *pRow) { return (const char*)POINTER_SHIFT(pRow, TD_ROW_LEN(pRow)); }
+static FORCE_INLINE void        tdRowCpy(void *dst, const STSRow *pRow) { memcpy(dst, pRow, TD_ROW_LEN(pRow)); }
+static FORCE_INLINE const char *tdRowEnd(STSRow *pRow) { return (const char *)POINTER_SHIFT(pRow, TD_ROW_LEN(pRow)); }
 
-STSRow* tdRowDup(STSRow *row);
+STSRow *tdRowDup(STSRow *row);
 
 static FORCE_INLINE SKvRowIdx *tdKvRowColIdxAt(STSRow *pRow, uint16_t idx) {
   return (SKvRowIdx *)TD_KV_ROW_COL_IDX(pRow) + idx;
@@ -212,7 +212,6 @@ static FORCE_INLINE int32_t tdAppendColValToKvRow(SRowBuilder *pBuilder, TDRowVa
                                                   bool isCopyVarData, int8_t colType, int16_t colIdx, int32_t offset,
                                                   col_id_t colId);
 int32_t tdAppendSTSRowToDataCol(STSRow *pRow, STSchema *pSchema, SDataCols *pCols, bool forceSetNull);
-
 
 /**
  * @brief
@@ -995,7 +994,6 @@ static FORCE_INLINE int32_t dataColGetNEleLen(SDataCol *pDataCol, int rows) {
 
   ASSERT(pDataCol->lenXYZ == result);
 
-  result += (int32_t)TD_BITMAP_BYTES(rows);
   return result;
 }
 

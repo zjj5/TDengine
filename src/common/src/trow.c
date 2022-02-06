@@ -297,7 +297,7 @@ int tdMergeDataCols(SDataCols *target, SDataCols *source, int rowsToMerge, int *
           tdAppendValToDataCol(target->cols + j, sVal.valType, sVal.val, target->numOfRows, target->maxPoints);
         }
       }
-      target->numOfRows++;
+      ++target->numOfRows;
     }
     (*pOffset) += rowsToMerge;
   } else {

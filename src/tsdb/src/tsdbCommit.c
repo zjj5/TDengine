@@ -1117,6 +1117,8 @@ int tsdbWriteBlockImpl(STsdbRepo *pRepo, STable *pTable, SDFile *pDFile, SDFile 
   int32_t  tsize = (int32_t)tsdbBlockStatisSize(nColsNotAllNull, SBlockVerLatest);
   int32_t  lsize = tsize;
   int32_t  keyLen = 0;
+  int32_t  nBitmaps = (int32_t)TD_BITMAP_BYTES(rowsToWrite);
+  int32_t  tBitmaps = 0;
 
   uint32_t tsizeAggr = (uint32_t)tsdbBlockAggrSize(nColsNotAllNull, SBlockVerLatest);
 
@@ -1131,6 +1133,15 @@ int tsdbWriteBlockImpl(STsdbRepo *pRepo, STable *pTable, SDFile *pDFile, SDFile 
 
     int32_t flen = 0;  // final length
     int32_t tlen = dataColGetNEleLen(pDataCol, rowsToWrite);
+
+    if (IS_VAR_DATA_TYPE(pDataCol->type)) {
+      tBitmaps = nBitmaps;
+      tlen += tBitmaps;
+    } else {
+      tBitmaps = (int32_t)ceil((double)nBitmaps / TYPE_BYTES[pDataCol->type]);
+      tlen += tBitmaps * TYPE_BYTES[pDataCol->type];
+    }
+
     void *  tptr = NULL;
 
     // Make room
@@ -1146,16 +1157,13 @@ int tsdbWriteBlockImpl(STsdbRepo *pRepo, STable *pTable, SDFile *pDFile, SDFile 
       return -1;
     }
 
-    // For VarDataType, move bitmap parts ahead
+    // move bitmap parts ahead
     // TODO: put bitmap part to the 1st location(pBitmap points to pData) to avoid the memmove
-    if (IS_VAR_DATA_TYPE(pDataCol->type)) {
-      memmove(POINTER_SHIFT(pDataCol->pData, pDataCol->lenXYZ), pDataCol->pBitmap,
-              (size_t)TD_BITMAP_BYTES(rowsToWrite));
-    }
+    memcpy(POINTER_SHIFT(pDataCol->pData, pDataCol->lenXYZ), pDataCol->pBitmap, nBitmaps);
 
     // Compress or just copy
     if (pCfg->compression) {
-      flen = (*(tDataTypes[pDataCol->type].compFunc))((char *)pDataCol->pData, tlen, rowsToWrite, tptr,
+      flen = (*(tDataTypes[pDataCol->type].compFunc))((char *)pDataCol->pData, tlen, rowsToWrite + tBitmaps, tptr,
                                                       tlen + COMP_OVERFLOW_BYTES, pCfg->compression, *ppCBuf,
                                                       tlen + COMP_OVERFLOW_BYTES);
     } else {

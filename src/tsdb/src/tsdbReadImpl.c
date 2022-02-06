@@ -21,7 +21,8 @@ static void tsdbResetReadTable(SReadH *pReadh);
 static void tsdbResetReadFile(SReadH *pReadh);
 static int  tsdbLoadBlockDataImpl(SReadH *pReadh, SBlock *pBlock, SDataCols *pDataCols);
 static int  tsdbCheckAndDecodeColumnData(SDataCol *pDataCol, void *content, int32_t len, int8_t comp, int numOfRows,
-                                         int maxPoints, char *buffer, int bufferSize);
+                                         int numOfBitmaps, int lenOfBitmaps, int maxPoints, char *buffer,
+                                         int bufferSize);
 static int  tsdbLoadBlockDataColsImpl(SReadH *pReadh, SBlock *pBlock, SDataCols *pDataCols, int16_t *colIds,
                                       int numOfColIds);
 static int  tsdbLoadColData(SReadH *pReadh, SDFile *pDFile, SBlock *pBlock, SBlockCol *pBlockCol, SDataCol *pDataCol);
@@ -669,6 +670,9 @@ static int tsdbLoadBlockDataImpl(SReadH *pReadh, SBlock *pBlock, SDataCols *pDat
   int dcol = 0;  // loop iter for SDataCols object
   SBlockCol blockCol = {0};
   SBlockCol *pBlockCol = &blockCol;
+  int        nBitmaps = (int)TD_BITMAP_BYTES(pBlock->numOfRows);
+  int32_t    tBitmaps = 0;
+  int32_t    tLenBitmap = 0;
   while (dcol < pDataCols->numOfCols) {
     SDataCol *pDataCol = &(pDataCols->cols[dcol]);
     if (dcol != 0 && ccol >= pBlockData->numOfCols) {
@@ -682,6 +686,13 @@ static int tsdbLoadBlockDataImpl(SReadH *pReadh, SBlock *pBlock, SDataCols *pDat
     uint32_t toffset = TSDB_KEY_COL_OFFSET;
     int32_t  tlen = pBlock->keyLen;
 
+    if (IS_VAR_DATA_TYPE(pDataCol->type)) {
+      tBitmaps = nBitmaps;
+      tLenBitmap = tBitmaps;
+    } else {
+      tBitmaps = (int32_t)ceil((double)nBitmaps / TYPE_BYTES[pDataCol->type]);
+      tLenBitmap = tBitmaps * TYPE_BYTES[pDataCol->type];
+    }
 
     if (dcol != 0) {
       tsdbGetSBlockCol(pBlock, &pBlockCol, pBlockData->cols, ccol);
@@ -694,13 +705,13 @@ static int tsdbLoadBlockDataImpl(SReadH *pReadh, SBlock *pBlock, SDataCols *pDat
 
     if (tcolId == pDataCol->colId) {
       if (pBlock->algorithm == TWO_STAGE_COMP) {
-        int zsize = pDataCol->bytes * pBlock->numOfRows + COMP_OVERFLOW_BYTES;
+        int zsize = pDataCol->bytes * pBlock->numOfRows + tLenBitmap + COMP_OVERFLOW_BYTES;
         if (tsdbMakeRoom((void **)(&TSDB_READ_COMP_BUF(pReadh)), zsize) < 0) return -1;
       }
 
       if (tsdbCheckAndDecodeColumnData(pDataCol, POINTER_SHIFT(pBlockData, tsize + toffset), tlen, pBlock->algorithm,
-                                       pBlock->numOfRows, pDataCols->maxPoints, TSDB_READ_COMP_BUF(pReadh),
-                                       (int)taosTSizeof(TSDB_READ_COMP_BUF(pReadh))) < 0) {
+                                       pBlock->numOfRows, tBitmaps, tLenBitmap, pDataCols->maxPoints,
+                                       TSDB_READ_COMP_BUF(pReadh), (int)taosTSizeof(TSDB_READ_COMP_BUF(pReadh))) < 0) {
         tsdbError("vgId:%d file %s is broken at column %d block offset %" PRId64 " column offset %u",
                   TSDB_READ_REPO_ID(pReadh), TSDB_FILE_FULL_NAME(pDFile), tcolId, (int64_t)pBlock->offset, toffset);
         return -1;
@@ -722,7 +733,7 @@ static int tsdbLoadBlockDataImpl(SReadH *pReadh, SBlock *pBlock, SDataCols *pDat
   return 0;
 }
 
-static int tsdbCheckAndDecodeColumnData(SDataCol *pDataCol, void *content, int32_t len, int8_t comp, int numOfRows,
+static int tsdbCheckAndDecodeColumnData(SDataCol *pDataCol, void *content, int32_t len, int8_t comp, int numOfRows, int numOfBitmaps, int lenOfBitmaps,
                                         int maxPoints, char *buffer, int bufferSize) {
   if (!taosCheckChecksumWhole((uint8_t *)content, len)) {
     terrno = TSDB_CODE_TDB_FILE_CORRUPTED;
@@ -734,8 +745,9 @@ static int tsdbCheckAndDecodeColumnData(SDataCol *pDataCol, void *content, int32
   // Decode the data
   if (comp) {
     // Need to decompress
-    int tlen = (*(tDataTypes[pDataCol->type].decompFunc))(content, len - sizeof(TSCKSUM), numOfRows, pDataCol->pData,
-                                                             pDataCol->spaceSize, comp, buffer, bufferSize);
+    int tlen =
+        (*(tDataTypes[pDataCol->type].decompFunc))(content, len - sizeof(TSCKSUM), numOfRows + numOfBitmaps,
+                                                   pDataCol->pData, pDataCol->spaceSize, comp, buffer, bufferSize);
     if (tlen <= 0) {
       tsdbError("Failed to decompress column, file corrupted, len:%d comp:%d numOfRows:%d maxPoints:%d bufferSize:%d",
                 len, comp, numOfRows, maxPoints, bufferSize);
@@ -749,10 +761,13 @@ static int tsdbCheckAndDecodeColumnData(SDataCol *pDataCol, void *content, int32
     memcpy(pDataCol->pData, content, pDataCol->lenXYZ);
   }
 
+  pDataCol->lenXYZ -= lenOfBitmaps;
+
   if (IS_VAR_DATA_TYPE(pDataCol->type)) {
     dataColSetOffset(pDataCol, numOfRows);
   } else {
-
+    // set bitmap pointer
+    pDataCol->pBitmap = POINTER_SHIFT(pDataCol->pData, numOfRows * TYPE_BYTES[pDataCol->type]);
   }
   
   return 0;
@@ -842,7 +857,20 @@ static int tsdbLoadColData(SReadH *pReadh, SDFile *pDFile, SBlock *pBlock, SBloc
 
   STsdbRepo *pRepo = TSDB_READ_REPO(pReadh);
   STsdbCfg * pCfg = REPO_CFG(pRepo);
-  int        tsize = pDataCol->bytes * pBlock->numOfRows + COMP_OVERFLOW_BYTES;
+
+  int     nBitmaps = (int)TD_BITMAP_BYTES(pBlock->numOfRows);
+  int32_t tBitmaps = 0;
+  int32_t tLenBitmap = 0;
+
+  if (IS_VAR_DATA_TYPE(pDataCol->type)) {
+    tBitmaps = nBitmaps;
+    tLenBitmap = tBitmaps;
+  } else {
+    tBitmaps = (int32_t)ceil((double)nBitmaps / TYPE_BYTES[pDataCol->type]);
+    tLenBitmap = tBitmaps * TYPE_BYTES[pDataCol->type];
+  }
+
+  int tsize = pDataCol->bytes * pBlock->numOfRows + tLenBitmap + COMP_OVERFLOW_BYTES;
 
   if (tsdbMakeRoom((void **)(&TSDB_READ_BUF(pReadh)), pBlockCol->len) < 0) return -1;
   if (tsdbMakeRoom((void **)(&TSDB_READ_COMP_BUF(pReadh)), tsize) < 0) return -1;
@@ -871,7 +899,8 @@ static int tsdbLoadColData(SReadH *pReadh, SDFile *pDFile, SBlock *pBlock, SBloc
   }
 
   if (tsdbCheckAndDecodeColumnData(pDataCol, pReadh->pBuf, pBlockCol->len, pBlock->algorithm, pBlock->numOfRows,
-                                   pCfg->maxRowsPerFileBlock, pReadh->pCBuf, (int32_t)taosTSizeof(pReadh->pCBuf)) < 0) {
+                                   tBitmaps, tLenBitmap, pCfg->maxRowsPerFileBlock, pReadh->pCBuf,
+                                   (int32_t)taosTSizeof(pReadh->pCBuf)) < 0) {
     tsdbError("vgId:%d file %s is broken at column %d offset %" PRId64, REPO_ID(pRepo), TSDB_FILE_FULL_NAME(pDFile),
               pBlockCol->colId, offset);
     return -1;

@@ -34,7 +34,11 @@ int tdAllocMemForCol(SDataCol *pCol, int maxPoints) {
 #ifdef TD_SUPPORT_BITMAP
   int32_t nBitmapBytes = (int32_t)TD_BITMAP_BYTES(maxPoints);
   spaceNeeded += (int)nBitmapBytes;
+  // TODO: Currently, the compression of bitmap parts is affiliated to the column data parts, thus allocate 1 more
+  // TYPE_BYTES as to comprise complete TYPE_BYTES. Otherwise, invalid read/write would be triggered.
+  spaceNeeded += TYPE_BYTES[pCol->type];
 #endif
+
   if (pCol->spaceSize < spaceNeeded) {
     void *ptr = realloc(pCol->pData, spaceNeeded);
     if (ptr == NULL) {
