@@ -216,16 +216,16 @@ class TDCreateData:
         self.sql1 = sql1
         list1 =[]
         tdSql.query(sql1)
-        for i1 in range(row1 - 1):
-            for j1 in range(col1 - 1):
+        for i1 in range(row1):
+            for j1 in range(col1):
                 list1.append(tdSql.getData(i1,j1))
         
         tdSql.execute("reset query cache;")
         self.sql2 = sql2  
         list2 =[]
         tdSql.query(sql2)
-        for i2 in range(row2 - 1):
-            for j2 in range(col2 - 1):
+        for i2 in range(row2):
+            for j2 in range(col2):
                 list2.append(tdSql.getData(i2,j2))
        
         if  (list1 == list2) and len(list2)>0:
