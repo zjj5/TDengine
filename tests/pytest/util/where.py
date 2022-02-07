@@ -99,7 +99,7 @@ class TDWhere:
 
         q_fl_do_where = ['q_float < -3.4E38 and ','q_float > 3.4E38 and ', 'q_double < -1.7E308 and ','q_double > 1.7E308 and ', 
         'q_float between 3.4E38 and -3.4E38 and ','q_double between 1.7E308 and -1.7E308 and ' ,
-        'q_float is not null and ' ,'q_double is not null and ' ,'q_float_null is not null and ' ,'q_double_null is not null and ' ,]
+        'q_float_null is not null and ' ,'q_double_null is not null and ' ,]
 
         q_nc_bi_bo_ts_where = [ 'q_bool is null and ' ,'q_binary is null and ' ,'q_nchar is null and ' ,
         'ts is null and' ,  'ts >= now +100h and ' , 'ts <= 1600000000000 and ' ,
@@ -180,7 +180,7 @@ class TDWhere:
 
         t_fl_do_where = ['t_float < -3.4E38 and ','t_float > 3.4E38 and ', 't_double < -1.7E308 and ','t_double > 1.7E308 and ', 
         't_float between 3.4E38 and -3.4E38 and ','t_double between 1.7E308 and -1.7E308 and ' ,
-        't_float is not null and ' ,'t_double is not null and ' ,]
+        't_float is null and ' ,'t_double is null and ' ,]
 
         t_nc_bi_bo_ts_where = [ 't_bool is null and ' ,'t_binary is null and ' ,'t_nchar is null and ' ,
         't_ts is null and' ,  't_ts >= now +100h and ' , 't_ts < 0 and ',]
