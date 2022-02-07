@@ -350,7 +350,7 @@ static void dataColSetNEleNull(SDataCol *pCol, int nEle) {
   }
 }
 
-void dataColSetOffset(SDataCol *pCol, int nEle) {
+void* dataColSetOffset(SDataCol *pCol, int nEle) {
   ASSERT(((pCol->type == TSDB_DATA_TYPE_BINARY) || (pCol->type == TSDB_DATA_TYPE_NCHAR)));
 
   void *tptr = pCol->pData;
@@ -362,9 +362,7 @@ void dataColSetOffset(SDataCol *pCol, int nEle) {
     offset += varDataTLen(tptr);
     tptr = POINTER_SHIFT(tptr, varDataTLen(tptr));
   }
-
-  // set bitmap pointer
-  pCol->pBitmap = POINTER_SHIFT(tptr, varDataTLen(tptr));
+  return POINTER_SHIFT(tptr, varDataTLen(tptr));
 }
 
 SDataCols *tdNewDataCols(int maxCols, int maxRows) {

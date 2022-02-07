@@ -384,7 +384,7 @@ void dataColInit(SDataCol *pDataCol, STColumn *pCol, int maxPoints);
 
 int dataColAppendVal(SDataCol *pCol, const void *value, int numOfRows, int maxPoints, int rowOffset);
 
-void dataColSetOffset(SDataCol *pCol, int nEle);
+void* dataColSetOffset(SDataCol *pCol, int nEle);
 
 bool isNEleNull(SDataCol *pCol, int nEle);
 

@@ -763,13 +763,16 @@ static int tsdbCheckAndDecodeColumnData(SDataCol *pDataCol, void *content, int32
 
   pDataCol->lenXYZ -= lenOfBitmaps;
 
+  void *pSrcBitmap = NULL;
   if (IS_VAR_DATA_TYPE(pDataCol->type)) {
-    dataColSetOffset(pDataCol, numOfRows);
+    pSrcBitmap = dataColSetOffset(pDataCol, numOfRows);
   } else {
-    // set bitmap pointer
-    pDataCol->pBitmap = POINTER_SHIFT(pDataCol->pData, numOfRows * TYPE_BYTES[pDataCol->type]);
+    pSrcBitmap = POINTER_SHIFT(pDataCol->pData, numOfRows * TYPE_BYTES[pDataCol->type]);
   }
-  
+  void *pDestBitmap = POINTER_SHIFT(pDataCol->pData, pDataCol->bytes * maxPoints);
+  // restore the bitmap parts
+  memcpy(pDestBitmap, pSrcBitmap, lenOfBitmaps);
+
   return 0;
 }
 
