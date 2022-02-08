@@ -37,21 +37,24 @@ class TDFunction:
         tdLog.debug("start to execute %s" % __file__)
         tdSql.init(conn.cursor(), logSql)
 
-    def all_column(self):       
+    def all_column(self):  
+        # support all table, support all data type     
         hanshu = ['COUNT','FIRST','LAST','LAST_ROW']
-        column = ['(*)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_int)','(q_float)','(q_double)','(_c0)','(_C0)','(q_bool)','(q_binary)','(q_nchar)','(q_ts)'] 
+        column = ['(*)','(q_bigint)','(q_smallint)','(q_tinyint)','(q_int)','(q_float)','(q_double)','(_c0)','(_C0)','(q_ts)','(q_bool)','(q_binary)','(q_nchar)'] 
         hanshu_column = random.sample(hanshu,1)+random.sample(column,1)
         all_column = str(hanshu_column).replace("[","").replace("]","").replace("'","").replace(", ","")
         return all_column
     
-    def int_ts_cloumn(self):       
+    def int_ts_cloumn(self):  
+        # support all int type \ double type \ ts type        
         hanshu = ['SPREAD']       
         column = ['(q_bigint)','(q_smallint)','(q_tinyint)','(q_int)','(q_float)','(q_double)','(_c0)','(_C0)','(q_ts)'] 
         hanshu_column = random.sample(hanshu,1)+random.sample(column,1)
         int_ts_cloumn = str(hanshu_column).replace("[","").replace("]","").replace("'","").replace(", ","")
         return int_ts_cloumn
     
-    def int_cloumn_all(self):       
+    def int_cloumn(self):  
+        # support all int type \ double type      
         hanshu = ['STDDEV','']
         hanshu = ['AVG','SUM','MIN','MAX','SPREAD','CEIL','FLOOR','ROUND']        
         column = ['(q_bigint)','(q_smallint)','(q_tinyint)','(q_int)','(q_float)','(q_double)'] 
@@ -59,21 +62,24 @@ class TDFunction:
         int_cloumn = str(hanshu_column).replace("[","").replace("]","").replace("'","").replace(", ","")
         return int_cloumn
 
-    def int_cloumn_regular_only(self):       
+    def int_cloumn_regular_only(self):  
+        # diff 不能和order by使用   'DIFF',  
+        # not support stable, if support should together with groupby tbname.  support all int type \ double type \ 
+        hanshu = ['TWA','IRATE','SPREAD','CEIL','FLOOR','ROUND']        
+        column = ['(q_bigint)','(q_smallint)','(q_tinyint)','(q_int)','(q_float)','(q_double)'] 
+        hanshu_column = random.sample(hanshu,1)+random.sample(column,1)
+        int_cloumn_regular_only = str(hanshu_column).replace("[","").replace("]","").replace("'","").replace(", ","")
+        return int_cloumn_regular_only
+
+    def int_cloumn_stable_groupby(self):    
+        # not support stable, if support should together with groupby tbname.  support all int type \ double type \    
         hanshu = ['TWA','IRATE','DIFF','SPREAD','CEIL','FLOOR','ROUND']        
         column = ['(q_bigint)','(q_smallint)','(q_tinyint)','(q_int)','(q_float)','(q_double)'] 
         hanshu_column = random.sample(hanshu,1)+random.sample(column,1)
-        int_cloumn = str(hanshu_column).replace("[","").replace("]","").replace("'","").replace(", ","")
-        return int_cloumn
+        int_cloumn_stable_groupby = str(hanshu_column).replace("[","").replace("]","").replace("'","").replace(", ","")
+        return int_cloumn_stable_groupby    
 
-    def int_cloumn_stable_groupby(self):       
-        hanshu = ['TWA','IRATE','DIFF','SPREAD','CEIL','FLOOR','ROUND']        
-        column = ['(q_bigint)','(q_smallint)','(q_tinyint)','(q_int)','(q_float)','(q_double)'] 
-        hanshu_column = random.sample(hanshu,1)+random.sample(column,1)
-        int_cloumn = str(hanshu_column).replace("[","").replace("]","").replace("'","").replace(", ","")
-        return int_cloumn    
-
-    def int1_cloumn(self):   
+    def int1_cloumn_other(self):   
         #   not support stddev/percentile/interp in the outer query 
         # # order by not supported in nested interp query   ,'INTERP'
         hanshu = ['LEASTSQUARES','STDDEV','INTERP','DERIVATIVE','top-bottom',' PERCENTILE- APERCENTILE']
@@ -82,20 +88,28 @@ class TDFunction:
         int_cloumn = str(hanshu_column).replace("[","").replace("]","").replace("'","").replace(", ","")
         return int_cloumn  
 
-    def int_cloumn_error(self):       
-        hanshu = ['MAX','MIN','FIRST','LAST','LAST_ROW','SPREAD','CEIL','FLOOR','ROUND']   
-        hanshu = ['AVG','TWA','IRATE','SUM','STDDEV']      
-        column = ['(*)','(_c0)','(_C0)','(q_bool)','(q_binary)','(q_nchar)','(q_ts)'] 
+    def int_cloumn_error(self):  
+        # not support all int type \ double type \        
+        hanshu = ['AVG','SUM','MIN','MAX','CEIL','FLOOR','ROUND']      
+        column = ['(*)','(_c0)','(_C0)','(q_ts)','(q_bool)','(q_binary)','(q_nchar)'] 
         hanshu_column = random.sample(hanshu,1)+random.sample(column,1)
-        int_cloumn = str(hanshu_column).replace("[","").replace("]","").replace("'","").replace(", ","")
-        return int_cloumn  
+        int_cloumn_error = str(hanshu_column).replace("[","").replace("]","").replace("'","").replace(", ","")
+        return int_cloumn_error  
+
+    def int_ts_cloumn_error(self):  
+        # not support all int type \ double type \ ts type        
+        hanshu = ['SPREAD']       
+        column = ['(*)','(q_bool)','(q_binary)','(q_nchar)'] 
+        hanshu_column = random.sample(hanshu,1)+random.sample(column,1)
+        int_ts_cloumn = str(hanshu_column).replace("[","").replace("]","").replace("'","").replace(", ","")
+        return int_ts_cloumn
 
     def func_regular_all(self,i):   
         func_regular_all = ''
         if i == 1:    
             func_regular_all = self.all_column()
         elif i == 2:
-            func_regular_all = self.int_cloumn_all()
+            func_regular_all = self.int_cloumn()
         elif i == 3:
             func_regular_all = self.int_cloumn_regular_only()
         elif i == 4:
@@ -108,7 +122,7 @@ class TDFunction:
         if i == 1:    
             func_regular_error_all = self.int_cloumn_error()
         elif i == 2:
-            func_regular_error_all = self.int_cloumn_error()
+            func_regular_error_all = self.int_ts_cloumn_error()
 
         return func_regular_error_all
 
@@ -117,7 +131,7 @@ class TDFunction:
         if i == 1:    
             func_stable_all = self.all_column()
         elif i == 2:
-            func_stable_all = self.int_cloumn_all()
+            func_stable_all = self.int_cloumn()
         elif i == 3:
             func_stable_all = self.int_cloumn_regular_only()
         elif i == 4:
