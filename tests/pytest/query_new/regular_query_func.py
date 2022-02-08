@@ -67,7 +67,6 @@ class TDTestCase:
         table_null = str(random.sample(table_null_list,1)).replace("[","").replace("]","").replace("'","")
 
         conn1 = taos.connect(host="127.0.0.1", user="root", password="taosdata", config="/etc/taos/")
-        print(conn1)
         cur1 = conn1.cursor()
         tdSql.init(cur1, True)        
         cur1.execute('use "%s";' %db)
@@ -200,33 +199,71 @@ class TDTestCase:
                         # sql2 = "select * from (select * from %s) where %s %s %s order by ts limit 10 offset 5" %(table,q_where,q_like_match,q_in_where)
                         # tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         # cur1.execute(sql2)
+            
 
-                # print("\n\n\n=======================================error case=======================================\n\n\n")
-                # print("case1:select * from regular_table where condition interval | sliding | Fill && select * from ( select front )")
-                # print("\n\n\n=========================================case1=========================================\n\n\n")
+            except Exception as e:
+                raise e   
 
-                # regular_where = tdWhere.regular_where()
-                # sql1 = 'select * from %s interval(3s) sliding(3n) Fill(NEXT);'  % table
-                # for i in range(2,len(regular_where[2])+1):
-                #     q_where = list(combinations(regular_where[2],i))
-                #     for q_where in q_where:
-                #         q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
-                #         q_like_match = regular_where[3]
-                #         q_in_where = regular_where[4]
-                #         time_window = regular_where[5]
 
-                #         sql2 = "select * from %s where %s %s %s %s" %(table,q_where,q_like_match,q_in_where,time_window)
-                #         tdSql.error(sql2)
+        #error
+        os.system("rm -rf query_new/%s.sql" % testcaseFilename )
+        for hanshu in range(1,3):
+            func = tdFunction.func_regular_error_all(hanshu)
 
-                #         sql2 = "select * from (select * from %s where %s %s %s %s)" %(table,q_where,q_like_match,q_in_where,time_window)
-                #         tdSql.error(sql2)
+            try:
+                testcaseFilename = os.path.split(__file__)[-1]
+                taos_cmd1 = "taos -f query_new/%s.sql" % testcaseFilename
+                _ = subprocess.check_output(taos_cmd1, shell=True).decode("utf-8")
+                print(conn1)
+                cur1.execute('use "%s";' %db)                
 
-                #         sql2 = "select * from (select * from %s) where %s %s %s %s" %(table,q_where,q_like_match,q_in_where,time_window)
-                #         tdSql.error(sql2)
+                print("\n\n\n=======================================error case=======================================\n\n\n")
+                print("case1:select * from regular_table where condition && select * from ( select front )")
+                print("\n\n\n=========================================case1=========================================\n\n\n")
 
-                #         sql2 = "select distinct(*) from %s where %s %s %s" %(table,q_where,q_like_match,q_in_where)
-                #         tdSql.error(sql2)
-                            
+                regular_where = tdWhere.regular_where()
+                sql1 = 'select %s from %s;'  % (func,table)
+                for i in range(2,len(regular_where[2])+1):
+                    q_where = list(combinations(regular_where[2],i))
+                    for q_where in q_where:
+                        q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_like_match = regular_where[3]
+                        q_in_where = regular_where[4]
+
+                        sql2 = "select %s from %s where %s %s %s" %(func,table,q_where,q_like_match,q_in_where)
+                        tdSql.error(sql2)
+
+                        sql2 = "select * from (select %s from %s where %s %s %s)" %(func,table,q_where,q_like_match,q_in_where)
+                        tdSql.error(sql2)
+
+                        sql2 = "select %s from (select * from %s) where %s %s %s" %(func,table,q_where,q_like_match,q_in_where)
+                        tdSql.error(sql2)
+
+                print("case2:select * from regular_table where condition interval | sliding | Fill && select * from ( select front )")
+                print("\n\n\n=========================================case2=========================================\n\n\n")
+
+                regular_where = tdWhere.regular_where()
+                sql1 = 'select * from %s interval(3s) sliding(3n) Fill(NEXT);'  % table
+                for i in range(2,len(regular_where[2])+1):
+                    q_where = list(combinations(regular_where[2],i))
+                    for q_where in q_where:
+                        q_where = str(q_where).replace("(","").replace(")","").replace("'","").replace("\"","").replace(",","")
+                        q_like_match = regular_where[3]
+                        q_in_where = regular_where[4]
+                        time_window = regular_where[5]
+
+                        sql2 = "select %s from %s where %s %s %s %s" %(func,table,q_where,q_like_match,q_in_where,time_window)
+                        tdSql.error(sql2)
+
+                        sql2 = "select * from (select %s from %s where %s %s %s %s)" %(func,table,q_where,q_like_match,q_in_where,time_window)
+                        tdSql.error(sql2)
+
+                        sql2 = "select * from (select %s from %s) where %s %s %s %s" %(func,table,q_where,q_like_match,q_in_where,time_window)
+                        tdSql.error(sql2)
+
+                        sql2 = "select distinct(*) from %s where %s %s %s" %(table,q_where,q_like_match,q_in_where)
+                        tdSql.error(sql2)
+
 
             except Exception as e:
                 raise e   
