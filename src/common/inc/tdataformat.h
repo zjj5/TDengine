@@ -794,7 +794,7 @@ static FORCE_INLINE void tdGetColAppendDeltaLen(const void *value, int8_t colTyp
     }
   }
 }
-#endif
+
 typedef struct {
   int16_t colId;
   uint8_t colType;
@@ -809,7 +809,7 @@ static FORCE_INLINE void setSColInfo(SColInfo* colInfo, int16_t colId, uint8_t c
 
 // STSRow mergeTwoRows(void *buffer, STSRow row1, STSRow row2, STSchema *pSchema1, STSchema *pSchema2);
 
-#if 1
+
 // ----------------- Raw payload structure for row:
 /* |<------------ Head ------------->|<----------- body of column data tuple ------------------->|
  * |                                 |<----------------- flen ------------->|<--- value part --->|

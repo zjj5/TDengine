@@ -910,12 +910,12 @@ static STSRow* getSMemRowInTableMem(STableCheckInfo* pCheckInfo, int32_t order, 
   }
 
   if (rmem != NULL && rimem == NULL) {
-    pCheckInfo->chosen = 0;
+    pCheckInfo->chosen = CHECKINFO_CHOSEN_MEM;
     return rmem;
   }
 
   if (rmem == NULL && rimem != NULL) {
-    pCheckInfo->chosen = 1;
+    pCheckInfo->chosen = CHECKINFO_CHOSEN_IMEM;
     return rimem;
   }
 
@@ -1811,34 +1811,35 @@ static void mergeTwoRowFromMem(STsdbQueryHandle* pQueryHandle, int32_t capacity,
   int16_t colId;
   int16_t offset;
 
-  bool isRow1DataRow = isDataRow(row1);
+  bool isRow1DataRow = TD_IS_TP_ROW(row1);
   bool isRow2DataRow = false;
   bool isChosenRowDataRow;
   int32_t chosen_itr;
   void *value;
 
-  // the schema version info is embeded in STpRow
+  // the schema version info is embbeded in STpRow
   int32_t numOfColsOfRow1 = 0;
 
   if (pSchema1 == NULL) {
     pSchema1 = tsdbGetTableSchemaByVersion(pTable, TD_ROW_SVER(row1), (int8_t)TD_ROW_TYPE(row1));
   }
+  
   if(isRow1DataRow) {
     numOfColsOfRow1 = schemaNCols(pSchema1);
   } else {
-    numOfColsOfRow1 = kvRowNCols(memRowKvBody(row1));
+    numOfColsOfRow1 = TD_ROW_NCOLS(row1);
   }
 
   int32_t numOfColsOfRow2 = 0;
   if(row2) {
-    isRow2DataRow = isDataRow(row2);
+    isRow2DataRow = TD_IS_TP_ROW(row2);
     if (pSchema2 == NULL) {
       pSchema2 = tsdbGetTableSchemaByVersion(pTable, TD_ROW_SVER(row2), (int8_t)TD_ROW_TYPE(row2));
     }
     if(isRow2DataRow) {
       numOfColsOfRow2 = schemaNCols(pSchema2);
     } else {
-      numOfColsOfRow2 = kvRowNCols(memRowKvBody(row2));
+      numOfColsOfRow2 = TD_ROW_NCOLS(row2);
     }
   }
 
@@ -1859,8 +1860,7 @@ static void mergeTwoRowFromMem(STsdbQueryHandle* pQueryHandle, int32_t capacity,
     } else if(isRow1DataRow) {
       colIdOfRow1 = pSchema1->columns[j].colId;
     } else {
-      void *rowBody = memRowKvBody(row1);
-      SColIdx *pColIdx = kvRowColIdxAt(rowBody, j);
+      SKvRowIdx *pColIdx = tdKvRowColIdxAt(row1, j);
       colIdOfRow1 = pColIdx->colId;
     }
 
@@ -1870,8 +1870,7 @@ static void mergeTwoRowFromMem(STsdbQueryHandle* pQueryHandle, int32_t capacity,
     } else if(isRow2DataRow) {
       colIdOfRow2 = pSchema2->columns[k].colId;
     } else {
-      void *rowBody = memRowKvBody(row2);
-      SColIdx *pColIdx = kvRowColIdxAt(rowBody, k);
+      SKvRowIdx *pColIdx = tdKvRowColIdxAt(row2, k);
       colIdOfRow2 = pColIdx->colId;
     }
 

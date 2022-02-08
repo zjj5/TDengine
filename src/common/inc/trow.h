@@ -37,8 +37,8 @@ extern "C" {
 // 2. The basic definition in dataformat.h is shared with tdataformat.h of 3.0.
 
 // row type
-#define TD_ROW_TP 0x0  // default
-#define TD_ROW_KV 0x01
+#define TD_ROW_TP 0x0U  // default
+#define TD_ROW_KV 0x01U
 
 /**
  * @brief val type
@@ -178,7 +178,7 @@ typedef struct {
 #define TD_ROW_SET_SVER(r, v) (TD_ROW_SVER(r) = (v))
 #define TD_ROW_SET_LEN(r, l) (TD_ROW_LEN(r) = (l))
 
-#define TD_ROW_IS_DELETED(r) (TD_ROW_DELETE(r))
+#define TD_ROW_IS_DELETED(r) (TD_ROW_DELETE(r) == 1)
 #define TD_IS_TP_ROW(r) (TD_ROW_TYPE(r) == TD_ROW_TP)
 #define TD_IS_KV_ROW(r) (TD_ROW_TYPE(r) == TD_ROW_KV)
 #define TD_IS_TP_ROW_T(t) ((t) == TD_ROW_TP)
