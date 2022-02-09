@@ -50,9 +50,9 @@ extern "C" {
 #define TD_VTYPE_NORM 0x02U  // normal val: not none, not null
 #define TD_VTYPE_MAX 0x03U   //
 
-#define TD_VTYPE_NORM_BYTE 0x0U
-#define TD_VTYPE_NONE_BYTE 0x55U
-#define TD_VTYPE_NULL_BYTE 0xAAU
+#define TD_VTYPE_NONE_BYTE 0x0U
+#define TD_VTYPE_NULL_BYTE 0x55U
+#define TD_VTYPE_NORM_BYTE 0xAAU
 
 #define KvConvertRatio (0.9f)
 #define isSelectKVRow(klen, tlen) ((klen) < ((tlen)*KvConvertRatio))
@@ -111,6 +111,8 @@ typedef struct {
 } SKvRow;
 
 typedef struct {
+  /// timestamp
+  TSKEY ts;
   union {
     /// union field for encode and decode
     uint32_t info;
@@ -133,8 +135,6 @@ typedef struct {
   uint64_t ncols : 16;
   /// row version
   uint64_t ver : 48;
-  /// timestamp
-  TSKEY ts;
   /// the inline data, maybe a tuple or a k-v tuple
   char data[];
 } STSRow;
@@ -167,7 +167,7 @@ typedef struct {
 #define TD_ROW_DATA(r) ((r)->data)
 #define TD_ROW_LEN(r) ((r)->len)
 #define TD_ROW_KEY(r) ((r)->ts)
-#define TD_ROW_KEY_ADDR(r) POINTER_SHIFT((r), 16)
+#define TD_ROW_KEY_ADDR(r) (r)
 
 // N.B. If without STSchema, getExtendedRowSize() is used to get the rowMaxBytes and
 // (int)ceil((double)nCols/TD_VTYPE_PARTS) should be added if TD_SUPPORT_BITMAP defined.
@@ -453,11 +453,16 @@ static int32_t tdSRowResetBuf(SRowBuilder *pBuilder, void *pBuf) {
     terrno = TSDB_CODE_INVALID_PARA;
     return terrno;
   }
+
+  TD_ROW_SET_TYPE(pBuilder->pBuf, pBuilder->rowType);
+  
   uint32_t len = 0;
   switch (pBuilder->rowType) {
     case TD_ROW_TP:
 #ifdef TD_SUPPORT_BITMAP
       pBuilder->pBitmap = tdGetBitmapAddrTp(pBuilder->pBuf, pBuilder->flen);
+
+      memset(pBuilder->pBitmap, TD_VTYPE_NORM_BYTE, pBuilder->nBitmaps);
 #endif
       // the primary TS key is stored separatedly
       len = TD_ROW_HEAD_LEN + pBuilder->flen - sizeof(TSKEY) + pBuilder->nBitmaps;
@@ -467,6 +472,7 @@ static int32_t tdSRowResetBuf(SRowBuilder *pBuilder, void *pBuf) {
     case TD_ROW_KV:
 #ifdef TD_SUPPORT_BITMAP
       pBuilder->pBitmap = tdGetBitmapAddrKv(pBuilder->pBuf, pBuilder->nBoundCols);
+      // memset(pBuilder->pBitmap, TD_VTYPE_NORM_BYTE, pBuilder->nBoundBitmaps);
 #endif
       len = TD_ROW_HEAD_LEN + (pBuilder->nBoundCols - 1) * sizeof(SKvRowIdx) + pBuilder->nBoundBitmaps;
       TD_ROW_SET_LEN(pBuilder->pBuf, len);
@@ -992,7 +998,7 @@ static FORCE_INLINE int32_t dataColGetNEleLen(SDataCol *pDataCol, int rows) {
     result += TYPE_BYTES[pDataCol->type] * rows;
   }
 
-  ASSERT(pDataCol->lenXYZ == result);
+  ASSERT(pDataCol->len == result);
 
   return result;
 }

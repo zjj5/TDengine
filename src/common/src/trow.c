@@ -28,13 +28,13 @@ static void tdMergeTwoDataCols(SDataCols *target, SDataCols *src1, int *iter1, i
 
 static FORCE_INLINE void dataColSetNullAt(SDataCol *pCol, int index, bool setBitmap) {
   if (IS_VAR_DATA_TYPE(pCol->type)) {
-    pCol->dataOff[index] = pCol->lenXYZ;
-    char *ptr = POINTER_SHIFT(pCol->pData, pCol->lenXYZ);
+    pCol->dataOff[index] = pCol->len;
+    char *ptr = POINTER_SHIFT(pCol->pData, pCol->len);
     setVardataNull(ptr, pCol->type);
-    pCol->lenXYZ += varDataTLen(ptr);
+    pCol->len += varDataTLen(ptr);
   } else {
     setNull(POINTER_SHIFT(pCol->pData, TYPE_BYTES[pCol->type] * index), pCol->type, pCol->bytes);
-    pCol->lenXYZ += TYPE_BYTES[pCol->type];
+    pCol->len += TYPE_BYTES[pCol->type];
   }
   if (setBitmap) {
     tdSetBitmapValType(pCol->pBitmap, index, TD_VTYPE_NONE);
@@ -70,13 +70,13 @@ int32_t tdSetBitmapValTypeN(void *pBitmap, int16_t nEle, TDRowValT valType) {
 
 static FORCE_INLINE void dataColSetNoneAt(SDataCol *pCol, int index, bool setBitmap) {
   if (IS_VAR_DATA_TYPE(pCol->type)) {
-    pCol->dataOff[index] = pCol->lenXYZ;
-    char *ptr = POINTER_SHIFT(pCol->pData, pCol->lenXYZ);
+    pCol->dataOff[index] = pCol->len;
+    char *ptr = POINTER_SHIFT(pCol->pData, pCol->len);
     setVardataNull(ptr, pCol->type);
-    pCol->lenXYZ += varDataTLen(ptr);
+    pCol->len += varDataTLen(ptr);
   } else {
     setNull(POINTER_SHIFT(pCol->pData, TYPE_BYTES[pCol->type] * index), pCol->type, pCol->bytes);
-    pCol->lenXYZ += TYPE_BYTES[pCol->type];
+    pCol->len += TYPE_BYTES[pCol->type];
   }
   if(setBitmap) {
     tdSetBitmapValType(pCol->pBitmap, index, TD_VTYPE_NONE);
@@ -85,13 +85,13 @@ static FORCE_INLINE void dataColSetNoneAt(SDataCol *pCol, int index, bool setBit
 
 static void dataColSetNEleNone(SDataCol *pCol, int nEle) {
   if (IS_VAR_DATA_TYPE(pCol->type)) {
-    pCol->lenXYZ = 0;
+    pCol->len = 0;
     for (int i = 0; i < nEle; ++i) {
       dataColSetNoneAt(pCol, i, false);
     }
   } else {
     setNullN(pCol->pData, pCol->type, pCol->bytes, nEle);
-    pCol->lenXYZ = TYPE_BYTES[pCol->type] * nEle;
+    pCol->len = TYPE_BYTES[pCol->type] * nEle;
   }
 #ifdef TD_SUPPORT_BITMAP
   tdSetBitmapValTypeN(pCol->pBitmap, nEle, TD_VTYPE_NONE);
@@ -150,15 +150,15 @@ int tdAppendValToDataCol(SDataCol *pCol, TDRowValT valType, const void *val, int
   }
   if (IS_VAR_DATA_TYPE(pCol->type)) {
     // set offset
-    pCol->dataOff[numOfRows] = pCol->lenXYZ;
+    pCol->dataOff[numOfRows] = pCol->len;
     // Copy data
-    memcpy(POINTER_SHIFT(pCol->pData, pCol->lenXYZ), val, varDataTLen(val));
+    memcpy(POINTER_SHIFT(pCol->pData, pCol->len), val, varDataTLen(val));
     // Update the length
-    pCol->lenXYZ += varDataTLen(val);
+    pCol->len += varDataTLen(val);
   } else {
-    ASSERT(pCol->lenXYZ == TYPE_BYTES[pCol->type] * numOfRows);
-    memcpy(POINTER_SHIFT(pCol->pData, pCol->lenXYZ), val, pCol->bytes);
-    pCol->lenXYZ += pCol->bytes;
+    ASSERT(pCol->len == TYPE_BYTES[pCol->type] * numOfRows);
+    memcpy(POINTER_SHIFT(pCol->pData, pCol->len), val, pCol->bytes);
+    pCol->len += pCol->bytes;
   }
 #ifdef TD_SUPPORT_BITMAP
   tdSetBitmapValType(pCol->pBitmap, numOfRows, valType);
@@ -289,7 +289,7 @@ int tdMergeDataCols(SDataCols *target, SDataCols *source, int rowsToMerge, int *
     ASSERT(target->numOfRows + rowsToMerge <= target->maxPoints);
     for (int i = 0; i < rowsToMerge; i++) {
       for (int j = 0; j < source->numOfCols; j++) {
-        if (source->cols[j].lenXYZ > 0 || target->cols[j].lenXYZ > 0) {
+        if (source->cols[j].len > 0 || target->cols[j].len > 0) {
           SCellVal sVal = {0};
           if (tdGetColDataOfRow(&sVal, source->cols + j, i + (*pOffset)) < 0) {
             TASSERT(0);
@@ -336,7 +336,7 @@ static void tdMergeTwoDataCols(SDataCols *target, SDataCols *src1, int *iter1, i
     if (key1 < key2) {
       for (int i = 0; i < src1->numOfCols; i++) {
         ASSERT(target->cols[i].type == src1->cols[i].type);
-        if (src1->cols[i].lenXYZ > 0 || target->cols[i].lenXYZ > 0) {
+        if (src1->cols[i].len > 0 || target->cols[i].len > 0) {
           SCellVal sVal = {0};
           if (tdGetColDataOfRow(&sVal, src1->cols + i, *iter1) < 0) {
             TASSERT(0);
@@ -353,17 +353,17 @@ static void tdMergeTwoDataCols(SDataCols *target, SDataCols *src1, int *iter1, i
         for (int i = 0; i < src2->numOfCols; i++) {
           SCellVal sVal = {0};
           ASSERT(target->cols[i].type == src2->cols[i].type);
-          if (src2->cols[i].lenXYZ > 0 && !isNull(src2->cols[i].pData, src2->cols[i].type)) {
+          if (src2->cols[i].len > 0 && !isNull(src2->cols[i].pData, src2->cols[i].type)) {
             if (tdGetColDataOfRow(&sVal, src1->cols + i, *iter1) < 0) {
               TASSERT(0);
             }
             tdAppendValToDataCol(&(target->cols[i]), sVal.valType, sVal.val, target->numOfRows, target->maxPoints);
-          } else if (!forceSetNull && key1 == key2 && src1->cols[i].lenXYZ > 0) {
+          } else if (!forceSetNull && key1 == key2 && src1->cols[i].len > 0) {
             if (tdGetColDataOfRow(&sVal, src1->cols + i, *iter1) < 0) {
               TASSERT(0);
             }
             tdAppendValToDataCol(&(target->cols[i]), sVal.valType, sVal.val, target->numOfRows, target->maxPoints);
-          } else if (target->cols[i].lenXYZ > 0) {
+          } else if (target->cols[i].len > 0) {
             dataColSetNullAt(&target->cols[i], target->numOfRows, true);
           }
         }

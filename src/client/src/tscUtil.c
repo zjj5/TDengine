@@ -2090,6 +2090,7 @@ static int trimDataBlock(void* pDataBlock, STableDataBlocks* pTableDataBlock, SI
       TDRowTLenT rowTLen = TD_ROW_LEN((STSRow*)payload);
       memcpy(pDataBlock, payload, rowTLen);
       pDataBlock = POINTER_SHIFT(pDataBlock, rowTLen);
+
       pBlock->dataLen += rowTLen;
     }
   }
@@ -2102,7 +2103,7 @@ static int trimDataBlock(void* pDataBlock, STableDataBlocks* pTableDataBlock, SI
 }
 
 static int32_t getRowExpandSize(STableMeta* pTableMeta) {
-  int32_t  result = TD_ROW_HEAD_LEN;
+  int32_t  result = TD_ROW_HEAD_LEN - sizeof(TSKEY);
   int32_t  columns = tscGetNumOfColumns(pTableMeta);
   SSchema* pSchema = tscGetTableSchema(pTableMeta);
   for (int32_t i = 0; i < columns; ++i) {
@@ -2210,9 +2211,10 @@ int32_t tscMergeTableDataBlocks(SSqlObj *pSql, SInsertStatementParam *pInsertPar
                  pBlocks->numOfRows, pBlocks->sversion, blkKeyInfo.pKeyTuple->skey, pLastKeyTuple->skey);
       }
 
-      int32_t len = pBlocks->numOfRows *
-                        (isRawPayload ? (pOneTableBlock->rowSize + expandSize) : getExtendedRowSize(pOneTableBlock)) +
-                    sizeof(STColumn) * tscGetNumOfColumns(pOneTableBlock->pTableMeta);
+      int32_t extendedRowSize = getExtendedRowSize(pOneTableBlock);
+      int32_t stColumnSize = sizeof(STColumn) * tscGetNumOfColumns(pOneTableBlock->pTableMeta);
+      int32_t len =
+          pBlocks->numOfRows * (isRawPayload ? (pOneTableBlock->rowSize + expandSize) : extendedRowSize) + stColumnSize;
 
       pBlocks->tid = htonl(pBlocks->tid);
       pBlocks->uid = htobe64(pBlocks->uid);

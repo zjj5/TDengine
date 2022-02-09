@@ -257,9 +257,9 @@ void dataColInit(SDataCol *pDataCol, STColumn *pCol, int maxPoints) {
   pDataCol->type = colType(pCol);
   pDataCol->colId = colColId(pCol);
   pDataCol->bytes = colBytes(pCol);
-  pDataCol->Xoffset = colOffset(pCol) + 0;  // TD_DATA_ROW_HEAD_SIZE;
+  pDataCol->offset = colOffset(pCol);  // TD_DATA_ROW_HEAD_SIZE;
 
-  pDataCol->lenXYZ = 0;
+  pDataCol->len = 0;
 }
 /**
  *  value from timestamp should be TKEY here instead of TSKEY.
@@ -285,26 +285,26 @@ int dataColAppendVal(SDataCol *pCol, const void *value, int numOfRows, int maxPo
   if (IS_VAR_DATA_TYPE(pCol->type)) {
     if (rowOffset == 0) {
       // set offset
-      pCol->dataOff[numOfRows] = pCol->lenXYZ;
+      pCol->dataOff[numOfRows] = pCol->len;
       // Copy data
-        memcpy(POINTER_SHIFT(pCol->pData, pCol->lenXYZ), value, varDataTLen(value));
-        // Update the length
-        pCol->lenXYZ += varDataTLen(value);
+      memcpy(POINTER_SHIFT(pCol->pData, pCol->len), value, varDataTLen(value));
+      // Update the length
+      pCol->len += varDataTLen(value);
     } else {
       // Copy data
       void *lastValue = POINTER_SHIFT(pCol->pData, pCol->dataOff[numOfRows]);
       int   lastValLen = varDataTLen(lastValue);
       memcpy(lastValue, value, varDataTLen(value));
       // Update the length
-      pCol->lenXYZ -= lastValLen;
-      pCol->lenXYZ += varDataTLen(value);
+      pCol->len -= lastValLen;
+      pCol->len += varDataTLen(value);
     }
   } else {
     // update the value of last row with increasing the pCol->len and keeping the numOfRows for partial update
-    ASSERT(pCol->lenXYZ == (TYPE_BYTES[pCol->type] * (numOfRows - rowOffset)));
-    memcpy(POINTER_SHIFT(pCol->pData, (pCol->lenXYZ + rowOffset * TYPE_BYTES[pCol->type])), value, pCol->bytes);
+    ASSERT(pCol->len == (TYPE_BYTES[pCol->type] * (numOfRows - rowOffset)));
+    memcpy(POINTER_SHIFT(pCol->pData, (pCol->len + rowOffset * TYPE_BYTES[pCol->type])), value, pCol->bytes);
     if (rowOffset == 0) {
-      pCol->lenXYZ += pCol->bytes;
+      pCol->len += pCol->bytes;
     }
   }
   return 0;
@@ -328,25 +328,25 @@ bool isNEleNull(SDataCol *pCol, int nEle) {
 
 static FORCE_INLINE void dataColSetNullAt(SDataCol *pCol, int index) {
   if (IS_VAR_DATA_TYPE(pCol->type)) {
-    pCol->dataOff[index] = pCol->lenXYZ;
-    char *ptr = POINTER_SHIFT(pCol->pData, pCol->lenXYZ);
+    pCol->dataOff[index] = pCol->len;
+    char *ptr = POINTER_SHIFT(pCol->pData, pCol->len);
     setVardataNull(ptr, pCol->type);
-    pCol->lenXYZ += varDataTLen(ptr);
+    pCol->len += varDataTLen(ptr);
   } else {
     setNull(POINTER_SHIFT(pCol->pData, TYPE_BYTES[pCol->type] * index), pCol->type, pCol->bytes);
-    pCol->lenXYZ += TYPE_BYTES[pCol->type];
+    pCol->len += TYPE_BYTES[pCol->type];
   }
 }
 
 static void dataColSetNEleNull(SDataCol *pCol, int nEle) {
   if (IS_VAR_DATA_TYPE(pCol->type)) {
-    pCol->lenXYZ = 0;
+    pCol->len = 0;
     for (int i = 0; i < nEle; i++) {
       dataColSetNullAt(pCol, i);
     }
   } else {
     setNullN(pCol->pData, pCol->type, pCol->bytes, nEle);
-    pCol->lenXYZ = TYPE_BYTES[pCol->type] * nEle;
+    pCol->len = TYPE_BYTES[pCol->type] * nEle;
   }
 }
 
@@ -388,7 +388,7 @@ SDataCols *tdNewDataCols(int maxCols, int maxRows) {
     int i;
     for(i = 0; i < maxCols; i++) {
       pCols->cols[i].spaceSize = 0;
-      pCols->cols[i].lenXYZ = 0;
+      pCols->cols[i].len = 0;
       pCols->cols[i].pData = NULL;
       pCols->cols[i].dataOff = NULL;
       pCols->cols[i].pBitmap = NULL;
@@ -452,16 +452,16 @@ SDataCols *tdDupDataCols(SDataCols *pDataCols, bool keepData) {
     pRet->cols[i].type = pDataCols->cols[i].type;
     pRet->cols[i].colId = pDataCols->cols[i].colId;
     pRet->cols[i].bytes = pDataCols->cols[i].bytes;
-    pRet->cols[i].Xoffset = pDataCols->cols[i].Xoffset;
+    pRet->cols[i].offset = pDataCols->cols[i].offset;
 
     if (keepData) {
-      if (pDataCols->cols[i].lenXYZ > 0) {
+      if (pDataCols->cols[i].len > 0) {
         if(tdAllocMemForCol(&pRet->cols[i], pRet->maxPoints) < 0) {
           tdFreeDataCols(pRet);
           return NULL;
         }
-        pRet->cols[i].lenXYZ = pDataCols->cols[i].lenXYZ;
-        memcpy(pRet->cols[i].pData, pDataCols->cols[i].pData, pDataCols->cols[i].lenXYZ);
+        pRet->cols[i].len = pDataCols->cols[i].len;
+        memcpy(pRet->cols[i].pData, pDataCols->cols[i].pData, pDataCols->cols[i].len);
         if (IS_VAR_DATA_TYPE(pRet->cols[i].type)) {
           int dataOffSize = sizeof(VarDataOffsetT) * pDataCols->maxPoints;
           memcpy(pRet->cols[i].dataOff, pDataCols->cols[i].dataOff, dataOffSize);

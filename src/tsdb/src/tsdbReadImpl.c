@@ -671,8 +671,6 @@ static int tsdbLoadBlockDataImpl(SReadH *pReadh, SBlock *pBlock, SDataCols *pDat
   SBlockCol blockCol = {0};
   SBlockCol *pBlockCol = &blockCol;
   int        nBitmaps = (int)TD_BITMAP_BYTES(pBlock->numOfRows);
-  int32_t    tBitmaps = 0;
-  int32_t    tLenBitmap = 0;
   while (dcol < pDataCols->numOfCols) {
     SDataCol *pDataCol = &(pDataCols->cols[dcol]);
     if (dcol != 0 && ccol >= pBlockData->numOfCols) {
@@ -686,13 +684,6 @@ static int tsdbLoadBlockDataImpl(SReadH *pReadh, SBlock *pBlock, SDataCols *pDat
     uint32_t toffset = TSDB_KEY_COL_OFFSET;
     int32_t  tlen = pBlock->keyLen;
 
-    if (IS_VAR_DATA_TYPE(pDataCol->type)) {
-      tBitmaps = nBitmaps;
-      tLenBitmap = tBitmaps;
-    } else {
-      tBitmaps = (int32_t)ceil((double)nBitmaps / TYPE_BYTES[pDataCol->type]);
-      tLenBitmap = tBitmaps * TYPE_BYTES[pDataCol->type];
-    }
 
     if (dcol != 0) {
       tsdbGetSBlockCol(pBlock, &pBlockCol, pBlockData->cols, ccol);
@@ -701,6 +692,18 @@ static int tsdbLoadBlockDataImpl(SReadH *pReadh, SBlock *pBlock, SDataCols *pDat
       tlen = pBlockCol->len;
     } else {
       ASSERT(pDataCol->colId == tcolId);
+    }
+
+    int32_t tBitmaps = 0;
+    int32_t tLenBitmap = 0;
+    if ((dcol != 0) && (pBlockCol->bitmap == 1)) {
+      if (IS_VAR_DATA_TYPE(pDataCol->type)) {
+        tBitmaps = nBitmaps;
+        tLenBitmap = tBitmaps;
+      } else {
+        tBitmaps = (int32_t)ceil((double)nBitmaps / TYPE_BYTES[pDataCol->type]);
+        tLenBitmap = tBitmaps * TYPE_BYTES[pDataCol->type];
+      }
     }
 
     if (tcolId == pDataCol->colId) {
@@ -754,25 +757,26 @@ static int tsdbCheckAndDecodeColumnData(SDataCol *pDataCol, void *content, int32
       terrno = TSDB_CODE_TDB_FILE_CORRUPTED;
       return -1;
     }
-    pDataCol->lenXYZ = tlen;
+    pDataCol->len = tlen;
   } else {
     // No need to decompress, just memcpy it
-    pDataCol->lenXYZ = len - sizeof(TSCKSUM);
-    memcpy(pDataCol->pData, content, pDataCol->lenXYZ);
+    pDataCol->len = len - sizeof(TSCKSUM);
+    memcpy(pDataCol->pData, content, pDataCol->len);
   }
 
-  pDataCol->lenXYZ -= lenOfBitmaps;
+  if (lenOfBitmaps > 0) {
+    pDataCol->len -= lenOfBitmaps;
 
-  void *pSrcBitmap = NULL;
-  if (IS_VAR_DATA_TYPE(pDataCol->type)) {
-    pSrcBitmap = dataColSetOffset(pDataCol, numOfRows);
-  } else {
-    pSrcBitmap = POINTER_SHIFT(pDataCol->pData, numOfRows * TYPE_BYTES[pDataCol->type]);
+    void *pSrcBitmap = NULL;
+    if (IS_VAR_DATA_TYPE(pDataCol->type)) {
+      pSrcBitmap = dataColSetOffset(pDataCol, numOfRows);
+    } else {
+      pSrcBitmap = POINTER_SHIFT(pDataCol->pData, numOfRows * TYPE_BYTES[pDataCol->type]);
+    }
+    void *pDestBitmap = POINTER_SHIFT(pDataCol->pData, pDataCol->bytes * maxPoints);
+    // restore the bitmap parts
+    memcpy(pDestBitmap, pSrcBitmap, lenOfBitmaps);
   }
-  void *pDestBitmap = POINTER_SHIFT(pDataCol->pData, pDataCol->bytes * maxPoints);
-  // restore the bitmap parts
-  memcpy(pDestBitmap, pSrcBitmap, lenOfBitmaps);
-
   return 0;
 }
 

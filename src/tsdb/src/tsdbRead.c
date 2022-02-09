@@ -1746,11 +1746,11 @@ static int32_t doCopyRowsFromFileBlock(STsdbQueryHandle* pQueryHandle, int32_t c
 
         // todo refactor, only copy one-by-one
         for (int32_t k = start; k < num + start; ++k) {
-          SCellVal    val = {0};
-          if(tdGetColDataOfRow(&val, src, k) < 0){
+          SCellVal    sVal = {0};
+          if(tdGetColDataOfRow(&sVal, src, k) < 0){
             TASSERT(0);
           }
-          memcpy(dst, val.val, varDataTLen(val.val));
+          memcpy(dst, sVal.val, varDataTLen(sVal.val));
           dst += bytes;
         }
       }

@@ -602,7 +602,7 @@ int32_t tsParseValues(char **str, STableDataBlocks *pDataBlock, int maxRows, SIn
     
     *str += index;
 
-    (*numOfRows)++;
+    ++(*numOfRows);
   }
 
   if ((*numOfRows) <= 0) {

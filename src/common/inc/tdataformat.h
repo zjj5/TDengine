@@ -365,18 +365,18 @@ typedef struct SDataCol {
   int8_t          type;       // column type
   int16_t         colId;      // column ID
   int             bytes;      // column data bytes defined
-  int             Xoffset;     // data offset in a STpRow (including the header size)
+  int             offset;     // data offset in a STpRow (including the header size)
   int             spaceSize;  // Total space size for this column
-  int             lenXYZ;     // column data length
+  int             len;        // column data length
   VarDataOffsetT *dataOff;    // For binary and nchar data, the offset in the data column
   void *          pData;      // Buffer pointer
   void *          pBitmap;
   TSKEY           ts;  // only used in last NULL column
 } SDataCol;
 
-#define isAllRowsNull(pCol) ((pCol)->lenXYZ == 0)
-#define isAllRowsNone(pCol) ((pCol)->lenXYZ == 0)
-static FORCE_INLINE void dataColReset(SDataCol *pDataCol) { pDataCol->lenXYZ = 0; }
+#define isAllRowsNull(pCol) ((pCol)->len == 0)
+#define isAllRowsNone(pCol) ((pCol)->len == 0)
+static FORCE_INLINE void dataColReset(SDataCol *pDataCol) { pDataCol->len = 0; }
 
 int tdAllocMemForCol(SDataCol *pCol, int maxPoints);
 
