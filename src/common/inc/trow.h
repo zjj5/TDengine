@@ -960,7 +960,7 @@ static FORCE_INLINE int32_t tdGetColDataOfRow(SCellVal *pVal, SDataCol *pCol, in
   if (tdGetBitmapValType(pCol->pBitmap, row, &(pVal->valType)) < 0) {
     return terrno;
   }
-  if (tdValTypeIsNorm(pVal->valType)) {
+  if ((pCol->bitmap == 1) || tdValTypeIsNorm(pVal->valType)) {
     if (IS_VAR_DATA_TYPE(pCol->type)) {
       pVal->val = POINTER_SHIFT(pCol->pData, pCol->dataOff[row]);
     } else {

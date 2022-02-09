@@ -120,7 +120,7 @@ typedef struct {
 typedef struct {
   int16_t  colId;
   uint8_t  offsetH;
-  uint8_t  bitmap : 1;    // 0: no bitmap if all rows not null, 1: has bitmap if has null rows
+  uint8_t  bitmap : 1;    // 0: has bitmap if has null rows, 1: no bitmap if all rows not null
   uint8_t  reserved : 7;  // reserved field, not used
   int32_t  len;
   uint32_t type : 8;

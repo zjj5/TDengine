@@ -362,14 +362,16 @@ static FORCE_INLINE void tdCopyColOfRowBySchema(STpRow dst, STSchema *pDstSchema
 
 // ----------------- Data column structure
 typedef struct SDataCol {
-  int8_t          type;       // column type
-  int16_t         colId;      // column ID
-  int             bytes;      // column data bytes defined
-  int             offset;     // data offset in a STpRow (including the header size)
-  int             spaceSize;  // Total space size for this column
-  int             len;        // column data length
-  VarDataOffsetT *dataOff;    // For binary and nchar data, the offset in the data column
-  void *          pData;      // Buffer pointer
+  int8_t          type;          // column type
+  uint8_t         bitmap : 1;    // 0: has bitmap if has null rows, 1: no bitmap if all rows not null(only valid when read data from files)
+  uint8_t         reserved : 7;  // reserved field, not used
+  int16_t         colId;         // column ID
+  int             bytes;         // column data bytes defined
+  int             offset;        // data offset in a STpRow (including the header size)
+  int             spaceSize;     // Total space size for this column
+  int             len;           // column data length
+  VarDataOffsetT *dataOff;       // For binary and nchar data, the offset in the data column
+  void *          pData;         // Buffer pointer
   void *          pBitmap;
   TSKEY           ts;  // only used in last NULL column
 } SDataCol;
