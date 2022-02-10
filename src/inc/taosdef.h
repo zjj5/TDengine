@@ -358,7 +358,7 @@ do { \
 #define PRIMARYKEY_TIMESTAMP_COL_INDEX  0
 
 #ifndef TD_SUPPORT_BITMAP
-#define PRIMARYKEY_TIMESTAMP_COL_ID 0
+#define PRIMARYKEY_TIMESTAMP_COL_ID 0 // just for test
 #define COL_REACH_END(colId, maxColId) ((colId) >= (maxColId))
 #else
 #define PRIMARYKEY_TIMESTAMP_COL_ID 1
