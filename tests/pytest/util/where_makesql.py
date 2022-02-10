@@ -276,8 +276,8 @@ class TDWhere_makesql:
         query_where = self.q_where()
         tag_where = self.t_where()
 
-        table_list = ['regular_table_1','table_1','regular_table_2','table_2','table_null','regular_table_null','stable_1','stable_2']
-        stable_list = ['stable_1','stable_2']
+        table_list = ['regular_table_1','stable_1_1','regular_table_2','stable_1_2','regular_table_3','stable_1_3','stable_1_4','stable_2_1','stable_2_2','regular_table_null','stable_null_data_1','stable_1','stable_2']
+        stable_list = ['stable_1','stable_2','stable_null_data']
         table = str(random.sample(table_list,1)).replace("[","").replace("]","").replace("'","")
         if table not in stable_list:
             q_where = random.sample(query_where[0],6)
@@ -341,8 +341,8 @@ class TDWhere_makesql:
         query_where = self.q_join_where()
         tag_where = self.t_join_where()
 
-        table_list = ['regular_table_1','table_1','regular_table_2','table_2','table_null','regular_table_null','stable_1','stable_2']
-        stable_list = ['stable_1','stable_2']
+        table_list = ['regular_table_1','stable_1_1','regular_table_2','stable_1_2','regular_table_3','stable_1_3','stable_1_4','stable_2_1','stable_2_2','regular_table_null','stable_null_data_1','stable_1','stable_2']
+        stable_list = ['stable_1','stable_2','stable_null_data']
         table1 = str(random.sample(table_list,1)).replace("[","").replace("]","").replace("'","")
         table2 = str(random.sample(table_list,1)).replace("[","").replace("]","").replace("'","")
         if (table1 not in stable_list) and (table2 not in stable_list):
