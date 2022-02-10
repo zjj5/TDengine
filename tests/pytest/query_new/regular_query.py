@@ -314,7 +314,7 @@ class TDTestCase:
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from %s where %s %s %s order by ts limit 10) where %s %s %s order by ts limit 10 offset 5" %(self.table,q_where,q_like_match,q_in_where,q_where,q_like_match,q_in_where)
+                        sql2 = "select * from (select * from %s where %s %s %s order by ts limit 100) where %s %s %s order by ts limit 10 offset 5" %(self.table,q_where,q_like_match,q_in_where,q_where,q_like_match,q_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
