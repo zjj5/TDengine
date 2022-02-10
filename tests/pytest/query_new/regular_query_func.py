@@ -58,12 +58,10 @@ class TDTestCase:
 
     def init(self, conn, logSql):
         tdLog.debug("start to execute %s" % __file__)
-        tdSql.init(conn.cursor(), logSql)        
+        tdSql.init(conn.cursor(), logSql)    
 
-    def right_case(self):
-        # all right function case
-        os.system("rm -rf query_new/%s.sql" % self.testcaseFilename )
-    
+    def case_common(self):
+        os.system("rm -rf query_new/%s.sql" % self.testcaseFilename )    
         tdCreateData.dropandcreateDB_random("%s" %self.db,1) 
 
         conn1 = taos.connect(host="127.0.0.1", user="root", password="taosdata", config="/etc/taos/")
@@ -72,6 +70,14 @@ class TDTestCase:
         cur1.execute('use "%s";' %self.db)
         sql = 'select * from regular_table_1 limit 5;'
         cur1.execute(sql)
+
+        return(conn1,cur1)    
+
+    def right_case(self):
+        # all right function case
+        case_common = self.case_common()
+        conn1 = case_common[0]
+        cur1 = case_common[1]
 
         for hanshu in range(1,5):
             func = tdFunction.func_regular_all(hanshu)
@@ -159,6 +165,14 @@ class TDTestCase:
                         tdCreateData.dataequal('%s' %sql1 ,1,1,'%s' %sql2 ,1,1)
                         cur1.execute(sql2)
 
+                        sql2 = "select %s from (select * from %s where %s %s %s ) order by ts desc" %(func,self.table,q_where,q_like_match,q_in_where)
+                        tdCreateData.dataequal('%s' %sql1 ,1,1,'%s' %sql2 ,1,1)
+                        cur1.execute(sql2)
+
+                        sql2 = "select %s from (select * from %s where %s %s %s order by ts desc ) order by ts desc" %(func,self.table,q_where,q_like_match,q_in_where)
+                        #tdCreateData.dataequal('%s' %sql1 ,1,1,'%s' %sql2 ,1,1)
+                        cur1.execute(sql2)
+
                 print("case3:select * from regular_table where condition order by ts limit && select * from ( select front )")
                 print("\n\n\n=========================================case3=========================================\n\n\n")
 
@@ -190,16 +204,9 @@ class TDTestCase:
 
     def special_case(self):
 	    # all special function case
-        os.system("rm -rf query_new/%s.sql" % self.testcaseFilename )
-    
-        tdCreateData.dropandcreateDB_random("%s" %self.db,1) 
-
-        conn1 = taos.connect(host="127.0.0.1", user="root", password="taosdata", config="/etc/taos/")
-        cur1 = conn1.cursor()
-        tdSql.init(cur1, True)        
-        cur1.execute('use "%s";' %self.db)
-        sql = 'select * from regular_table_1 limit 5;'
-        cur1.execute(sql)
+        case_common = self.case_common()
+        conn1 = case_common[0]
+        cur1 = case_common[1]
 
         for hanshu in range(1,3):
             func = tdFunction.func_regular_special(hanshu)
@@ -328,7 +335,7 @@ class TDTestCase:
                 _ = subprocess.check_output(taos_cmd1, shell=True).decode("utf-8")
                 cur1.execute('use "%s";' %self.db)                
 
-                print("\n\n\n=======================================right case=======================================\n\n\n")
+                print("\n\n\n=======================================special case=======================================\n\n\n")
                 print("case1:select * from regular_table where condition && select * from ( select front )")
                 print("\n\n\n=========================================case1=========================================\n\n\n")
 
@@ -428,16 +435,9 @@ class TDTestCase:
 
     def false_case(self):
         # all false function case
-        os.system("rm -rf query_new/%s.sql" % self.testcaseFilename )
-    
-        tdCreateData.dropandcreateDB_random("%s" %self.db,1) 
-
-        conn1 = taos.connect(host="127.0.0.1", user="root", password="taosdata", config="/etc/taos/")
-        cur1 = conn1.cursor()
-        tdSql.init(cur1, True)        
-        cur1.execute('use "%s";' %self.db)
-        sql = 'select * from regular_table_1 limit 5;'
-        cur1.execute(sql)
+        case_common = self.case_common()
+        conn1 = case_common[0]
+        cur1 = case_common[1]
         
         for hanshu in range(1,4):
             func = tdFunction.func_regular_error_all(hanshu)
