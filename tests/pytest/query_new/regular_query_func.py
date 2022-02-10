@@ -316,16 +316,9 @@ class TDTestCase:
 
     def special_case_1(self):
         # special_case for top and bottom
-        os.system("rm -rf query_new/%s.sql" % self.testcaseFilename )
-    
-        tdCreateData.dropandcreateDB_random("%s" %self.db,1) 
-
-        conn1 = taos.connect(host="127.0.0.1", user="root", password="taosdata", config="/etc/taos/")
-        cur1 = conn1.cursor()
-        tdSql.init(cur1, True)        
-        cur1.execute('use "%s";' %self.db)
-        sql = 'select * from regular_table_1 limit 5;'
-        cur1.execute(sql)
+        case_common = self.case_common()
+        conn1 = case_common[0]
+        cur1 = case_common[1]
 
         for hanshu in range(11,12):
             func = tdFunction.func_regular_special(hanshu)
@@ -519,7 +512,6 @@ class TDTestCase:
                 raise e   
 
     def run(self):
-        #tdSql.prepare()
         startTime = time.time() 
 
         self.right_case()
