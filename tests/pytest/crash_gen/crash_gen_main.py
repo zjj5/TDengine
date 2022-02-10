@@ -53,7 +53,7 @@ from .shared.misc import Dice, Logging, Helper, Status, CrashGenError, Progress
 from .shared.types import TdDataType
 
 # Config.init()
-
+random.seed(103)
 # Require Python 3
 if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")

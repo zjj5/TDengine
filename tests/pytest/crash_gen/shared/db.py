@@ -407,7 +407,12 @@ class DbConnNative(DbConn):
                 "Cannot query database until connection is open, restarting?", CrashGenError.DB_CONNECTION_NOT_OPEN)
         Logging.debug("[SQL] Executing SQL: {}".format(sql))
         self._lastSql = sql
-        nRows = self._tdSql.query(sql)
+        try:
+            nRows = self._tdSql.query(sql)
+        except Exception as e:
+            nRows= 0
+            print(e)
+            pass
         cls = self.__class__
         cls.totalRequests += 1
         Logging.debug(
