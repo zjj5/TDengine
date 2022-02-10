@@ -27,7 +27,6 @@ from util.where import *
 import itertools
 from itertools import product
 from itertools import combinations
-from faker import Faker
 import subprocess
 
 class TDTestCase:
@@ -46,46 +45,48 @@ class TDTestCase:
         ''' 
         return
 
+    #basic_param
+    db = "stable_all"
+    table_list = ['stable_1','stable_2',]
+    table = str(random.sample(table_list,1)).replace("[","").replace("]","").replace("'","")
+    table_null_list = ['stable_null_data','stable_null_childtable']
+    table_null = str(random.sample(table_null_list,1)).replace("[","").replace("]","").replace("'","")
+    testcaseFilename = os.path.split(__file__)[-1]
+
     def init(self, conn, logSql):
         tdLog.debug("start to execute %s" % __file__)
         tdSql.init(conn.cursor(), logSql)
 
-        testcaseFilename = os.path.split(__file__)[-1]
-        os.system("rm -rf query_new/%s.sql" % testcaseFilename )
-
-    def run(self):
-        tdSql.prepare()
-        startTime = time.time() 
-
-        db = "stable_all"
-        tdCreateData.dropandcreateDB_random("%s" %db,1) 
-
-        table_list = ['stable_1','stable_2',]
-        table = str(random.sample(table_list,1)).replace("[","").replace("]","").replace("'","")
-        table_null_list = ['stable_null_data','stable_null_childtable']
-        table_null = str(random.sample(table_null_list,1)).replace("[","").replace("]","").replace("'","")
+    def case_common(self):
+        os.system("rm -rf query_new/%s.sql" % self.testcaseFilename )    
+        tdCreateData.dropandcreateDB_random("%s" %self.db,1) 
 
         conn1 = taos.connect(host="127.0.0.1", user="root", password="taosdata", config="/etc/taos/")
-        print(conn1)
         cur1 = conn1.cursor()
         tdSql.init(cur1, True)        
-        cur1.execute('use "%s";' %db)
+        cur1.execute('use "%s";' %self.db)
         sql = 'select * from stable_1 limit 5;'
         cur1.execute(sql)
 
+        return(conn1,cur1)
+
+    def right_case1(self):
+        print("case1:select * from stable where condition && select * from ( select front )")
+        print("\n\n\n=========================================case1=========================================\n\n\n")
+        
+        case_common = self.case_common()
+        conn1 = case_common[0]
+        cur1 = case_common[1]
+
         for i in range(2):
             try:
-                testcaseFilename = os.path.split(__file__)[-1]
-                taos_cmd1 = "taos -f query_new/%s.sql" % testcaseFilename
+                taos_cmd1 = "taos -f query_new/%s.sql" % self.testcaseFilename
                 _ = subprocess.check_output(taos_cmd1, shell=True).decode("utf-8")
                 print(conn1)
-                cur1.execute('use "%s";' %db)                 
-
-                print("case1:select * from stable where condition && select * from ( select front )")
-                print("\n\n\n=========================================case1=========================================\n\n\n")
+                cur1.execute('use "%s";' %self.db)                 
 
                 stable_where = tdWhere.stable_where()
-                sql1 = 'select * from %s;' % table
+                sql1 = 'select * from %s;' % self.table
                 for i in range(2,len(stable_where[2])+1):
                     qt_where = list(combinations(stable_where[2],i))
                     for qt_where in qt_where:
@@ -93,23 +94,38 @@ class TDTestCase:
                         qt_like_match = stable_where[3]
                         qt_in_where = stable_where[4]
 
-                        sql2 = "select * from %s where %s %s %s " %(table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select * from %s where %s %s %s " %(self.table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from %s where %s %s %s ) " %(table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select * from (select * from %s where %s %s %s ) " %(self.table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from %s ) where %s %s %s " %(table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select * from (select * from %s ) where %s %s %s " %(self.table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                print("case2:select * from stable where condition order by ts asc | desc && select * from ( select front )")
-                print("\n\n\n=========================================case2=========================================\n\n\n")
+            except Exception as e:
+                raise e 
 
+    def right_case2(self):
+        print("case2:select * from stable where condition order by ts asc | desc && select * from ( select front )")
+        print("\n\n\n=========================================case2=========================================\n\n\n")
+        
+        case_common = self.case_common()
+        conn1 = case_common[0]
+        cur1 = case_common[1]
+
+        for i in range(2):
+            try:
+                taos_cmd1 = "taos -f query_new/%s.sql" % self.testcaseFilename
+                _ = subprocess.check_output(taos_cmd1, shell=True).decode("utf-8")
+                print(conn1)
+                cur1.execute('use "%s";' %self.db)                 
+                
                 stable_where = tdWhere.stable_where()
-                sql1 = 'select * from %s;' % table 
+                sql1 = 'select * from %s;' % self.table 
                 for i in range(2,len(stable_where[2])+1):
                     qt_where = list(combinations(stable_where[2],i))
                     for qt_where in qt_where:
@@ -117,26 +133,41 @@ class TDTestCase:
                         qt_like_match = stable_where[3]
                         qt_in_where = stable_where[4]
 
-                        sql2 = "select * from %s where tbname in ('%s_1') and %s %s %s order by ts" %(table,table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select * from %s where tbname in ('%s_1') and %s %s %s order by ts" %(self.table,self.table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from %s where tbname in ('%s_1') and %s %s %s order by ts ) " %(table,table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select * from (select * from %s where tbname in ('%s_1') and %s %s %s order by ts ) " %(self.table,self.table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from %s  where tbname in ('%s_1')) where %s %s %s order by ts " %(table,table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select * from (select * from %s  where tbname in ('%s_1')) where %s %s %s order by ts " %(self.table,self.table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from %s ) where tbname in ('%s_1') and %s %s %s order by ts " %(table,table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select * from (select * from %s ) where tbname in ('%s_1') and %s %s %s order by ts " %(self.table,self.table,qt_where,qt_like_match,qt_in_where)
                         tdSql.error(sql2)
 
-                print("case3:select * from stable where condition order by ts limit && select * from ( select front ) ")
-                print("\n\n\n=========================================case3=========================================\n\n\n")
+            except Exception as e:
+                raise e 
+
+    def right_case3(self):
+        print("case3:select * from stable where condition order by ts limit && select * from ( select front ) ")
+        print("\n\n\n=========================================case3=========================================\n\n\n")
+        
+        case_common = self.case_common()
+        conn1 = case_common[0]
+        cur1 = case_common[1]
+
+        for i in range(2):
+            try:
+                taos_cmd1 = "taos -f query_new/%s.sql" % self.testcaseFilename
+                _ = subprocess.check_output(taos_cmd1, shell=True).decode("utf-8")
+                print(conn1)
+                cur1.execute('use "%s";' %self.db)                                
 
                 stable_where = tdWhere.stable_where()
-                sql1 = 'select * from %s;' % table 
+                sql1 = 'select * from %s;' % self.table 
                 for i in range(2,len(stable_where[2])+1):
                     qt_where = list(combinations(stable_where[2],i))
                     for qt_where in qt_where:
@@ -144,26 +175,41 @@ class TDTestCase:
                         qt_like_match = stable_where[3]
                         qt_in_where = stable_where[4]
 
-                        sql2 = "select * from %s where tbname in ('%s_1') and %s %s %s order by ts limit 10" %(table,table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select * from %s where tbname in ('%s_1') and %s %s %s order by ts limit 10" %(self.table,self.table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from %s where tbname in ('%s_1') and %s %s %s order by ts limit 10)" %(table,table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select * from (select * from %s where tbname in ('%s_1') and %s %s %s order by ts limit 10)" %(self.table,self.table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from %s where tbname in ('%s_1')) where %s %s %s order by ts limit 10" %(table,table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select * from (select * from %s where tbname in ('%s_1')) where %s %s %s order by ts limit 10" %(self.table,self.table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from %s) where tbname in ('%s_1') and %s %s %s order by ts limit 10" %(table,table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select * from (select * from %s) where tbname in ('%s_1') and %s %s %s order by ts limit 10" %(self.table,self.table,qt_where,qt_like_match,qt_in_where)
                         tdSql.error(sql2)
 
-                print("case4:select * from stable where condition order by ts limit offset && select * from ( select front )")
-                print("\n\n\n=========================================case4=========================================\n\n\n")
+            except Exception as e:
+                raise e 
+
+    def right_case4(self):
+        print("case4:select * from stable where condition order by ts limit offset && select * from ( select front )")
+        print("\n\n\n=========================================case4=========================================\n\n\n")
+        
+        case_common = self.case_common()
+        conn1 = case_common[0]
+        cur1 = case_common[1]
+
+        for i in range(2):
+            try:
+                taos_cmd1 = "taos -f query_new/%s.sql" % self.testcaseFilename
+                _ = subprocess.check_output(taos_cmd1, shell=True).decode("utf-8")
+                print(conn1)
+                cur1.execute('use "%s";' %self.db)                                 
 
                 stable_where = tdWhere.stable_where()
-                sql1 = 'select * from  %s limit 10 offset 5;'  % table
+                sql1 = 'select * from  %s limit 10 offset 5;'  % self.table
                 for i in range(2,len(stable_where[2])+1):
                     qt_where = list(combinations(stable_where[2],i))
                     for qt_where in qt_where:
@@ -171,24 +217,39 @@ class TDTestCase:
                         qt_like_match = stable_where[3]
                         qt_in_where = stable_where[4]
 
-                        sql2 = "select * from %s where tbname in ('%s_1') and %s %s %s order by ts limit 10 offset 5" %(table,table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select * from %s where tbname in ('%s_1') and %s %s %s order by ts limit 10 offset 5" %(self.table,self.table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from %s where tbname in ('%s_1') and %s %s %s order by ts limit 10 offset 5)" %(table,table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select * from (select * from %s where tbname in ('%s_1') and %s %s %s order by ts limit 10 offset 5)" %(self.table,self.table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from %s where tbname in ('%s_1')) where %s %s %s order by ts limit 10 offset 5" %(table,table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select * from (select * from %s where tbname in ('%s_1')) where %s %s %s order by ts limit 10 offset 5" %(self.table,self.table,qt_where,qt_like_match,qt_in_where)
                         tdCreateData.dataequal('%s' %sql1 ,10,10,'%s' %sql2 ,10,10)
                         cur1.execute(sql2)
 
-                        sql2 = "select * from (select * from %s ) where tbname in ('%s_1') and %s %s %s order by ts limit 10 offset 5" %(table,table,qt_where,qt_like_match,qt_in_where)
-                        tdSql.error(sql2)                                  
+                        sql2 = "select * from (select * from %s ) where tbname in ('%s_1') and %s %s %s order by ts limit 10 offset 5" %(self.table,self.table,qt_where,qt_like_match,qt_in_where)
+                        tdSql.error(sql2)    
 
-                print("\n\n\n=======================================error case=======================================\n\n\n")
-                print("case1:select * from stable where condition interval | sliding | Fill && select * from ( select front )")
-                print("\n\n\n=========================================case1=========================================\n\n\n")
+            except Exception as e:
+                raise e 
+
+    def false_case1(self):
+        print("\n\n\n=======================================error case=======================================\n\n\n")
+        print("case1:select * from stable where condition interval | sliding | Fill && select * from ( select front )")
+        print("\n\n\n=========================================case1=========================================\n\n\n")
+        
+        case_common = self.case_common()
+        conn1 = case_common[0]
+        cur1 = case_common[1]
+
+        for i in range(2):
+            try:
+                taos_cmd1 = "taos -f query_new/%s.sql" % self.testcaseFilename
+                _ = subprocess.check_output(taos_cmd1, shell=True).decode("utf-8")
+                print(conn1)
+                cur1.execute('use "%s";' %self.db)                                 
 
                 stable_where = tdWhere.stable_where()
                 sql1 = 'select * from stable_1 interval(3s) sliding(3n) Fill(NEXT);'  
@@ -202,24 +263,33 @@ class TDTestCase:
                         og_by = stable_where[6]
                         groupby = tdWhere.groupby()
 
-                        sql2 = "select * from %s where %s %s %s %s" %(table,qt_where,qt_like_match,qt_in_where,time_window)
+                        sql2 = "select * from %s where %s %s %s %s" %(self.table,qt_where,qt_like_match,qt_in_where,time_window)
                         tdSql.error(sql2)
 
-                        sql2 = "select * from (select * from %s where %s %s %s %s)" %(table,qt_where,qt_like_match,qt_in_where,time_window)
+                        sql2 = "select * from (select * from %s where %s %s %s %s)" %(self.table,qt_where,qt_like_match,qt_in_where,time_window)
                         tdSql.error(sql2)
 
-                        sql2 = "select * from (select * from %s) where %s %s %s %s" %(table,qt_where,qt_like_match,qt_in_where,time_window)
+                        sql2 = "select * from (select * from %s) where %s %s %s %s" %(self.table,qt_where,qt_like_match,qt_in_where,time_window)
                         tdSql.error(sql2)
 
-                        sql2 = "select distinct(*) from %s where %s %s %s" %(table,qt_where,qt_like_match,qt_in_where)
+                        sql2 = "select distinct(*) from %s where %s %s %s" %(self.table,qt_where,qt_like_match,qt_in_where)
                         tdSql.error(sql2)
 
-                        sql2 = "select * from %s where %s %s %s %s" %(table,qt_where,qt_like_match,qt_in_where,groupby)
+                        sql2 = "select * from %s where %s %s %s %s" %(self.table,qt_where,qt_like_match,qt_in_where,groupby)
                         tdSql.error(sql2)
-
 
             except Exception as e:
-                raise e   
+                raise e 
+
+    def run(self):
+        startTime = time.time() 
+
+        self.right_case1()
+        self.right_case2()
+        self.right_case3()
+        self.right_case4()
+
+        self.false_case1()
 
         endTime = time.time()
         print("total time %ds" % (endTime - startTime))
