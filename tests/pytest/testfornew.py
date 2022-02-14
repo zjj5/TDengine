@@ -31,18 +31,23 @@ class TDTestCase:
 
         for i in range(1000):           
             try:
-                testcmd1 = os.system("sudo python3 ./test.py -f query_new/auto_makesql.py   >>/root/log/testcmd1.txt")
-                print ("The regular_query_null.py num:%d result is %d " % (i ,  testcmd1))
+                # testcmd1 = os.system("sudo python3 ./test.py -f query_new/auto_makesql.py   >>/root/log/testcmd1.txt")
+                # print ("The regular_query_null.py num:%d result is %d " % (i ,  testcmd1))
                 # testcmd2 = os.system("sudo python3 ./test.py -f query_new/regular_query_union.py  >>/root/log/testcmd2.txt")                
                 # print ("The regular_query_union.py num:%d result is %d " % (i ,  testcmd2))
-                # testcmd3 = os.system("sudo python3 ./test.py -f query_new/regular_query.py  >>/root/log/testcmd3.txt")                
-                # print ("The regular_query.py num:%d result is %d " % (i ,  testcmd2))
+                #testcmd4 = os.system("sudo python3 ./test.py -f query_new/regular_query.py  >>/root/log/testcmd3.txt")   
+                #testcmd4 = os.system("sudo python3 ./test.py -f query_new/regular_query_union.py  >>/root/log/testcmd3.txt")              
+                # print ("The regular_query.py num:%d result is %d " % (i ,  testcmd3))
+                testcmd4 = os.system("sudo python3 ./test.py -f query_new/stable_query.py  >>/root/log/testcmd3.txt") 
+                #testcmd4 = os.system("sudo python3 ./test.py -f query_new/regular_query_func.py  >>/root/log/testcmd3.txt")  
+                #testcmd4 = os.system("sudo python3 ./test.py -f query_new/stable_ls.py  >>/root/log/testcmd3.txt")               
+                print ("The regular_query.py num:%d result is %d " % (i ,  testcmd4))
 
                 # if testcmd1==0 and testcmd2==0 and testcmd3==0:
                 #     continue
                 # elif :
                 #     continue
-                if testcmd1==0 :
+                if testcmd4==0:
                     continue
                 else:
                     break
