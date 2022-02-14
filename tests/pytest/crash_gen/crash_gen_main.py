@@ -53,7 +53,7 @@ from .shared.misc import Dice, Logging, Helper, Status, CrashGenError, Progress
 from .shared.types import TdDataType
 
 # Config.init()
-random.seed(103)
+
 # Require Python 3
 if sys.version_info[0] < 3:
     raise Exception("Must be using Python 3")
@@ -1622,6 +1622,32 @@ class TaskDropDb(StateTransitionTask):
         self.execWtSql(wt, "drop database {}".format(self._db.getName()))
         Logging.debug("[OPS] database dropped at {}".format(time.time()))
 
+class TaskAlterDatabase(StateTransitionTask):
+    @classmethod
+    def getEndState(cls):
+        return StateEmpty()
+
+    @classmethod
+    def canBeginFrom(cls, state: AnyState):
+        return state.canDropDb()  # this mean database exists
+
+    def _executeInternal(self, te: TaskExecutor, wt: WorkerThread):
+        #ALTER DATABASE db_name COMP 2;
+       
+        alter_dict = {"days" : int(random.randint(1,5)) , 
+        "keep":int(random.randint(10,20)) ,
+        "precision":"ns",
+        "blocks" : int(random.randint(1,6)*2),
+        "quorum": int(random.randint(0,3)),
+        "comp":int(random.randint(0,3)),
+        "minrows":int(random.randint(1,3)*100),
+        "replica":int(random.randint(1,Config.getConfig().num_replicas))
+        }
+        random_key = random.sample(alter_dict.keys(), 1)
+        self.execWtSql(wt, "alter database {} {} {}".format(self._db.getName(), random_key, alter_dict[random_key]))
+        Logging.debug("[OPS] alter databases {} at {}".format(self._db.getName(), time.time()))
+        
+
 class TaskCreateSuperTable(StateTransitionTask):
     @classmethod
     def getEndState(cls):
@@ -1976,7 +2002,7 @@ class TaskAlterTags(StateTransitionTask):
         else:  # dice == 3
             sTable.changeTag(dbc, "extraTag", "newTag")
             # sql = "alter table db.{} change tag extraTag newTag".format(tblName)
-
+    
 class TaskRestartService(StateTransitionTask):
     _isRunning = False
     _classLock = threading.Lock()

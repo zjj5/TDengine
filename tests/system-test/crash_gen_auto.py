@@ -52,7 +52,6 @@ class TDTestCase:
 
         '''
         case1 <wenzhouwww>: this is an test case for auto run crash_gen use different arguments to work : 
-
         ''' 
         return
 
@@ -115,15 +114,20 @@ class TDTestCase:
         # args_list["--num-dnodes"]=random.randint(max(1,args_list["--num-replicas"]-1),args_list["--num-replicas"]+1)
         args_list["--num-replicas"]=1
         args_list["--num-dnodes"]=1
-        args_list["--max-steps"]=random.randint(500,3000)
-        args_list["--num-threads"]=random.randint(10,50)
+        args_list["--debug"]=False
 
-        # args_list["--max-steps"]=random.randint(5,30)
-        # args_list["--num-threads"]=random.randint(1,5) #$ debug
+        # args_list["--max-steps"]=random.randint(500,3000)
+        # args_list["--num-threads"]=random.randint(10,50)
+
+        args_list["--max-steps"]=random.randint(5,30)
+        args_list["--num-threads"]=random.randint(1,5) #$ debug
         args_list["--ignore-errors"]=[]   ## can add error codes for detail
 
-    
-        args_list["--auto-start-service"]= True
+        
+        if random.randint(0,1)==1 :
+            args_list["--auto-start-service"]= True
+        else:
+            args_list["--auto-start-service"]= False
 
         if run_tdengine :
             args_list["--run-tdengine"]= True
@@ -135,6 +139,8 @@ class TDTestCase:
             elif key =="--run-tdengine":
                 continue
             elif key == "--ignore-errors":
+                continue
+            elif key == "--debug":
                 continue
             else:
                 args_list[key]=set_bool_value[random.randint(0,1)]
@@ -163,7 +169,7 @@ class TDTestCase:
         return crash_gen_cmd
 
     def run_crash_gen(self, crash_cmds,result_file):
-        os.system("%s>%s 2>&1"%(crash_cmds,result_file))
+        os.system("%s>>%s"%(crash_cmds,result_file))
         
     
     def check_error_of_result(self,result_file):
@@ -203,13 +209,13 @@ class TDTestCase:
         
         build_path = self.getBuildPath()
         crash_gen_path = build_path[:-5]+"tests/pytest/"
-        taospy =  build_path[:-5]+"/src/connector/python"
-        try:
-            tdLog.notice("install new release taos connector for python! ")
-            os.system("pip3 install %s " %(taospy))
-        except Exception as e:
-            print(" ======install taospy error occured===== ")
-            print(e)
+        # taospy =  build_path[:-5]+"/src/connector/python"
+        # try:
+        #     tdLog.notice("install new release taos connector for python! ")
+        #     os.system("pip3 install %s " %(taospy))
+        # except Exception as e:
+        #     print(" ======install taospy error occured===== ")
+        #     print(e)
 
 
         if os.path.exists(crash_gen_path+"crash_gen.sh"):
@@ -251,7 +257,7 @@ class TDTestCase:
                     os.system("rm -rf %s/test*"%auto_start_path)
                     os.system("rm -rf %s/cluster*"%auto_start_path)
                     tdDnodes.deploy(1,{})
-                    tdLog.notice(" envs has read for single taosd service ")
+                    print(" ===== envs has read for single taosd service ==== ")
                     self.start()
                     pass
                 
@@ -284,11 +290,7 @@ class TDTestCase:
                 run_code = self.check_error_of_result(result_file)
                 end_time = datetime.datetime.now()
                 core_set = self.check_coredump_exist(start_time ,end_time,core_dump_dir)
-                
-                if run_code>0 or core_set: # unexpected exit or coredump
-
-                    if core_set:
-                        tdLog.notice("  coredump occured as follow paths :" , core_set)
+                if run_code>0: # unexpected exit
 
                     if args_list["--auto-start-service"]:
                             # set single taosd 
@@ -306,59 +308,13 @@ class TDTestCase:
                         if not os.path.exists(result_file):
                             tdLog.notice(" %s not exists " % result_file )
                         try:
-                            tdLog.notice(" execute shell cmds : 'cp %s %s '  "%(result_file,back_path_set))
-                            # shutil.copyfile(result_file,back_path_set)
-                            os.system("cp -r %s %s")%(log_path,back_path_set)
-
+                            os.system("cp %s %s")%(result_file,back_path_set)
                         except Exception as e :
                             pass
                         if core_set :
                             for core_file in core_set:
                                 os.system(" cp -r  %s %s"%(core_file,back_path_set))
                                 tdLog.notice(" coredump when run crash gen ,core  has back at %s "%back_path_set)
-                                logfiles.write("============="*5)
-                                logfiles.write(" coredump when run crash gen ,core  has back at %s \n"%back_path_set)
-                                logfiles.write("============="*5)
-                        else:
-                            pass
-                        tdLog.notice(" error expected run crash gen ,data and log  has back at %s "%back_path_set)
-                        logfiles.write('================'*5)
-                        logfiles.write(" error expected run crash gen ,data and log  has back at %s "%back_path_set)
-                        logfiles.write('================'*5)
-                        with open(back_path_set+"/crash_gen_cmds.txt","a+") as fcmds:
-                            fcmds.write("=====the unexpected crash occured with follow crash_gen_cmds====== \n")
-                            fcmds.write(crash_gen_cmd+"\n")
-                            fcmds.write("==========="*5)
-                        fcmds.close()
-
-                        os.system("ps -aux |grep 'taosd'  |awk '{print $2}'|xargs kill -9 >/dev/null 2>&1")
-                        auto_start_path = build_path[:-5] +"debug/"
-                        os.system("rm -rf %s/test*"%auto_start_path)
-                        os.system("rm -rf %s/cluster*"%auto_start_path)
-                        os.system("rm %s"%result_file)
-                    else:
-                        back_path = build_path[:-5] +"sim/"
-                        
-                        back_path_set = back_data_dir + dateString+str(i)+"_th/"
-                        if not os.path.exists(back_path_set):
-                            os.mkdir(back_path_set)
-                        # back files taosdlog and database data
-                        os.system(" cp -r  %s %s"%(back_path,back_path_set))
-                        if not os.path.exists(result_file):
-                            tdLog.notice(" %s not exists " % result_file )
-                        try:
-                            tdLog.notice(" execute shell cmds : 'cp %s %s '  "%(result_file,back_path_set))
-                            # shutil.copyfile(result_file,back_path_set)
-                            os.system("cp -r %s %s")%(log_path,back_path_set)
-                        except Exception as e :
-                            pass
-                        if core_set :
-                            for core_file in core_set:
-                                os.system(" cp -r  %s %s"%(core_file,back_path_set))
-                                tdLog.notice(" coredump when run crash gen ,core  has back at %s "%back_path_set)
-                                logfiles.write("============="*5)
-                                logfiles.write(" coredump when run crash gen ,core  has back at %s \n"%back_path_set)
-                                logfiles.write("============="*5)
                         else:
                             pass
                         tdLog.notice(" error expected run crash gen ,data and log  has back at %s "%back_path_set)
@@ -376,6 +332,43 @@ class TDTestCase:
                         os.system("rm -rf %s/test*"%auto_start_path)
                         os.system("rm -rf %s/cluster*"%auto_start_path)
                         os.system("rm %s"%result_file)
+                    else:
+                        back_path = build_path[:-5] +"sim/"
+                        
+                        back_path_set = back_data_dir + dateString
+                        if not os.path.exists(back_path_set):
+                            os.mkdir(back_path_set)
+                        # back files taosdlog and database data
+                        os.system(" cp -r  %s %s"%(back_path,back_path_set))
+                        if not os.path.exists(result_file):
+                            tdLog.notice(" %s not exists " % result_file )
+                        try:
+                            os.system("cp %s %s")%(result_file,back_path_set)
+                        except Exception as e :
+                            pass
+                        if core_set :
+                            for core_file in core_set:
+                                os.system(" cp -r  %s %s"%(core_file,back_path_set))
+                                tdLog.notice(" coredump when run crash gen ,core  has back at %s "%back_path_set)
+
+                        else:
+                            pass
+                        tdLog.notice(" error expected run crash gen ,data and log  has back at %s "%back_path_set)
+                        logfiles.write('================'*5)
+                        logfiles.write(" error expected run crash gen ,data and log  has back at %s "%back_path_set)
+                        logfiles.write('================'*5)
+                        with open(back_path_set+"/crash_gen_cmds.txt","a+") as fcmds:
+                            fcmds.write("=====the unexpected crash occured with follow crash_gen_cmds======\n ")
+                            fcmds.write(crash_gen_cmd+"\n")
+                            fcmds.write("==========="*5)
+                        fcmds.close()
+
+                        os.system("ps -aux |grep 'taosd'  |awk '{print $2}'|xargs kill -9 >/dev/null 2>&1")
+                        auto_start_path = build_path[:-5] +"debug/"
+                        os.system("rm -rf %s/test*"%auto_start_path)
+                        os.system("rm -rf %s/cluster*"%auto_start_path)
+                        os.system("rm %s"%result_file)
+                        
                 else:
                     logfiles.write('================'*5)
                     logfiles.write(" crash_gen run done, and exit sucess as expected  ")
@@ -386,7 +379,6 @@ class TDTestCase:
                     os.system("rm -rf %s/test*"%auto_start_path)
                     os.system("rm -rf %s/cluster*"%auto_start_path)
                     os.system("rm %s"%result_file)
-                logfiles.flush()
                 
             print("unrunning task number : ",error_arguments_mix)
         logfiles.close()
@@ -398,4 +390,3 @@ class TDTestCase:
 
 tdCases.addWindows(__file__, TDTestCase())
 tdCases.addLinux(__file__, TDTestCase())
-

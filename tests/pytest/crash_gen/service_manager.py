@@ -128,16 +128,16 @@ firstEp {ip}:{fepPort}
 fqdn {ip}
 serverPort {port}
 
-# was all 135 below
-dDebugFlag 135
-cDebugFlag 135
-rpcDebugFlag 135
-qDebugFlag 135
+# was all 143 below
+dDebugFlag 143
+cDebugFlag 143
+rpcDebugFlag 143
+qDebugFlag 143
 # httpDebugFlag 143
 asyncLog 0
 debugflag 143
 # tables 10
-maxtablesPerVnode 10
+maxtablesPerVnode 10000
 rpcMaxTime 101
 # cache 2
 keep 36500
