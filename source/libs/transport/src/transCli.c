@@ -27,13 +27,18 @@ typedef struct SCliConn {
   SConnBuffer  readBuf;
   void*        data;
   queue        conn;
-  char         spi;
-  char         secured;
   uint64_t     expireTime;
   int8_t       notifyCount;  // timers already notify to client
-  int32_t      ref;
 
+  SRpcPush* push;
+  int       persist;  //
+  // spi configure
+  char    spi;
+  char    secured;
+  int32_t ref;
+  // debug and log info
   struct sockaddr_in addr;
+  struct sockaddr_in locaddr;
 } SCliConn;
 
 typedef struct SCliMsg {
@@ -126,17 +131,25 @@ static void clientHandleResp(SCliConn* conn) {
   rpcMsg.msgType = pHead->msgType;
   rpcMsg.ahandle = pCtx->ahandle;
 
-  tDebug("client conn %p %s received from %s:%d", conn, TMSG_INFO(pHead->msgType), inet_ntoa(conn->addr.sin_addr),
-         ntohs(conn->addr.sin_port));
-  if (pCtx->pSem == NULL) {
-    tTrace("client conn(sync) %p handle resp", conn);
-    (pRpc->cfp)(pRpc->parent, &rpcMsg, NULL);
+  tDebug("client conn %p %s received from %s:%d, local info: %s:%d", conn, TMSG_INFO(pHead->msgType),
+         inet_ntoa(conn->addr.sin_addr), ntohs(conn->addr.sin_port), inet_ntoa(conn->locaddr.sin_addr),
+         ntohs(conn->locaddr.sin_port));
+
+  if (conn->push != NULL && conn->notifyCount != 0) {
+    (*conn->push->callback)(conn->push->arg, &rpcMsg);
+    conn->push = NULL;
   } else {
-    tTrace("client conn(sync) %p handle resp", conn);
-    memcpy((char*)pCtx->pRsp, (char*)&rpcMsg, sizeof(rpcMsg));
-    tsem_post(pCtx->pSem);
+    if (pCtx->pSem == NULL) {
+      tTrace("client conn%p handle resp", conn);
+      (pRpc->cfp)(pRpc->parent, &rpcMsg, NULL);
+    } else {
+      tTrace("client conn(sync) %p handle resp", conn);
+      memcpy((char*)pCtx->pRsp, (char*)&rpcMsg, sizeof(rpcMsg));
+      tsem_post(pCtx->pSem);
+    }
   }
   conn->notifyCount += 1;
+  conn->secured = pHead->secured;
 
   // buf's mem alread translated to rpcMsg.pCont
   transClearBuffer(&conn->readBuf);
@@ -144,17 +157,20 @@ static void clientHandleResp(SCliConn* conn) {
   uv_read_start((uv_stream_t*)conn->stream, clientAllocBufferCb, clientReadCb);
 
   SCliThrdObj* pThrd = conn->hostThrd;
-  addConnToPool(pThrd->pool, pCtx->ip, pCtx->port, conn);
+  // user owns conn->persist = 1
+  if (conn->push == NULL) {
+    addConnToPool(pThrd->pool, pCtx->ip, pCtx->port, conn);
 
-  destroyCmsg(pMsg);
-  conn->data = NULL;
+    destroyCmsg(conn->data);
+    conn->data = NULL;
+  }
   // start thread's timer of conn pool if not active
   if (!uv_is_active((uv_handle_t*)pThrd->timer) && pRpc->idleTime > 0) {
     uv_timer_start((uv_timer_t*)pThrd->timer, clientTimeoutCb, CONN_PERSIST_TIME(pRpc->idleTime) / 2, 0);
   }
 }
 static void clientHandleExcept(SCliConn* pConn) {
-  if (pConn->data == NULL) {
+  if (pConn->data == NULL && pConn->push == NULL) {
     // handle conn except in conn pool
     clientConnDestroy(pConn, true);
     return;
@@ -162,24 +178,31 @@ static void clientHandleExcept(SCliConn* pConn) {
   tTrace("client conn %p start to destroy", pConn);
   SCliMsg* pMsg = pConn->data;
 
-  destroyUserdata(&pMsg->msg);
-
   STransConnCtx* pCtx = pMsg->ctx;
 
   SRpcMsg rpcMsg = {0};
   rpcMsg.ahandle = pCtx->ahandle;
   rpcMsg.code = TSDB_CODE_RPC_NETWORK_UNAVAIL;
-  if (pCtx->pSem == NULL) {
-    // SRpcInfo* pRpc = pMsg->ctx->pRpc;
-    (pCtx->pTransInst->cfp)(pCtx->pTransInst->parent, &rpcMsg, NULL);
-  } else {
-    memcpy((char*)(pCtx->pRsp), (char*)(&rpcMsg), sizeof(rpcMsg));
-    // SRpcMsg rpcMsg
-    tsem_post(pCtx->pSem);
-  }
 
-  destroyCmsg(pMsg);
-  pConn->data = NULL;
+  if (pConn->push != NULL && pConn->notifyCount != 0) {
+    (*pConn->push->callback)(pConn->push->arg, &rpcMsg);
+    pConn->push = NULL;
+  } else {
+    if (pCtx->pSem == NULL) {
+      (pCtx->pTransInst->cfp)(pCtx->pTransInst->parent, &rpcMsg, NULL);
+    } else {
+      memcpy((char*)(pCtx->pRsp), (char*)(&rpcMsg), sizeof(rpcMsg));
+      tsem_post(pCtx->pSem);
+    }
+    if (pConn->push != NULL) {
+      (*pConn->push->callback)(pConn->push->arg, &rpcMsg);
+    }
+    pConn->push = NULL;
+  }
+  if (pConn->push == NULL) {
+    destroyCmsg(pConn->data);
+    pConn->data = NULL;
+  }
   // transDestroyConnCtx(pCtx);
   clientConnDestroy(pConn, true);
   pConn->notifyCount += 1;
@@ -365,17 +388,40 @@ static void clientWriteCb(uv_write_t* req, int status) {
 
 static void clientWrite(SCliConn* pConn) {
   SCliMsg*       pCliMsg = pConn->data;
-  SRpcMsg*       pMsg = (SRpcMsg*)(&pCliMsg->msg);
-  STransMsgHead* pHead = transHeadFromCont(pMsg->pCont);
+  STransConnCtx* pCtx = pCliMsg->ctx;
+  SRpcInfo*      pTransInst = pCtx->pTransInst;
 
-  int msgLen = transMsgLenFromCont(pMsg->contLen);
+  SRpcMsg* pMsg = (SRpcMsg*)(&pCliMsg->msg);
+
+  STransMsgHead* pHead = transHeadFromCont(pMsg->pCont);
+  int            msgLen = transMsgLenFromCont(pMsg->contLen);
+
+  if (!pConn->secured) {
+    char* buf = calloc(1, msgLen + sizeof(STransUserMsg));
+    memcpy(buf, (char*)pHead, msgLen);
+
+    STransUserMsg* uMsg = (STransUserMsg*)(buf + msgLen);
+    memcpy(uMsg->user, pTransInst->user, tListLen(uMsg->user));
+    memcpy(uMsg->secret, pTransInst->secret, tListLen(uMsg->secret));
+
+    // to avoid mem leak
+    destroyUserdata(pMsg);
+
+    pMsg->pCont = (char*)buf + sizeof(STransMsgHead);
+    pMsg->contLen = msgLen + sizeof(STransUserMsg) - sizeof(STransMsgHead);
+
+    pHead = (STransMsgHead*)buf;
+    pHead->secured = 1;
+    msgLen += sizeof(STransUserMsg);
+  }
 
   pHead->msgType = pMsg->msgType;
   pHead->msgLen = (int32_t)htonl((uint32_t)msgLen);
 
   uv_buf_t wb = uv_buf_init((char*)pHead, msgLen);
-  tDebug("client conn %p %s is send to %s:%d", pConn, TMSG_INFO(pHead->msgType), inet_ntoa(pConn->addr.sin_addr),
-         ntohs(pConn->addr.sin_port));
+  tDebug("client conn %p %s is send to %s:%d, local info %s:%d", pConn, TMSG_INFO(pHead->msgType),
+         inet_ntoa(pConn->addr.sin_addr), ntohs(pConn->addr.sin_port), inet_ntoa(pConn->locaddr.sin_addr),
+         ntohs(pConn->locaddr.sin_port));
   uv_write(pConn->writeReq, (uv_stream_t*)pConn->stream, &wb, 1, clientWriteCb);
 }
 static void clientConnCb(uv_connect_t* req, int status) {
@@ -389,6 +435,9 @@ static void clientConnCb(uv_connect_t* req, int status) {
   }
   int addrlen = sizeof(pConn->addr);
   uv_tcp_getpeername((uv_tcp_t*)pConn->stream, (struct sockaddr*)&pConn->addr, &addrlen);
+
+  addrlen = sizeof(pConn->locaddr);
+  uv_tcp_getsockname((uv_tcp_t*)pConn->stream, (struct sockaddr*)&pConn->locaddr, &addrlen);
 
   tTrace("client conn %p create", pConn);
 
@@ -426,6 +475,8 @@ static void clientHandleReq(SCliMsg* pMsg, SCliThrdObj* pThrd) {
     }
     clientWrite(conn);
 
+    conn->push = pMsg->msg.push;
+
   } else {
     SCliConn* conn = calloc(1, sizeof(SCliConn));
     conn->ref++;
@@ -443,6 +494,8 @@ static void clientHandleReq(SCliMsg* pMsg, SCliThrdObj* pThrd) {
     conn->connReq.data = conn;
     conn->data = pMsg;
     conn->hostThrd = pThrd;
+
+    conn->push = pMsg->msg.push;
 
     struct sockaddr_in addr;
     uv_ip4_addr(pMsg->ctx->ip, pMsg->ctx->port, &addr);
@@ -532,7 +585,7 @@ static SCliThrdObj* createThrdObj() {
   pThrd->loop = (uv_loop_t*)malloc(sizeof(uv_loop_t));
   uv_loop_init(pThrd->loop);
 
-  pThrd->asyncPool = transCreateAsyncPool(pThrd->loop, pThrd, clientAsyncCb);
+  pThrd->asyncPool = transCreateAsyncPool(pThrd->loop, 5, pThrd, clientAsyncCb);
 
   pThrd->timer = malloc(sizeof(uv_timer_t));
   uv_timer_init(pThrd->loop, pThrd->timer);
