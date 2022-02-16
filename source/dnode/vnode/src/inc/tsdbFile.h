@@ -292,9 +292,10 @@ static FORCE_INLINE int tsdbCopyDFile(SDFile* pSrc, SDFile* pDest) {
 
 // =============== SDFileSet
 typedef struct {
-  int    fid;
-  int    state;
-  SDFile files[TSDB_FILE_MAX];
+  int     fid;
+  int16_t state;
+  int16_t ver;
+  SDFile  files[TSDB_FILE_MAX];
 } SDFileSet;
 
 #define TSDB_FSET_FID(s) ((s)->fid)

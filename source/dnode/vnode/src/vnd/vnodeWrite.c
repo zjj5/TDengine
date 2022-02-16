@@ -122,6 +122,12 @@ int vnodeApplyWMsg(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
       if (tqProcessRebReq(pVnode->pTq, POINTER_SHIFT(ptr, sizeof(SMsgHead))) < 0) {
       }
     } break;
+    case TDMT_VND_CREATE_SMA: {  // timeRangeSMA
+    } break;
+    case TDMT_VND_CANCEL_SMA: {  // timeRangeSMA
+    } break;
+    case TDMT_VND_DROP_SMA: {  // timeRangeSMA
+    } break;
     default:
       ASSERT(0);
       break;

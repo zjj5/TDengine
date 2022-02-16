@@ -57,9 +57,17 @@ extern "C" {
     memcpy(varDataVal(x), (str), (_size));      \
   } while (0);
 
+#define BLOCK_SMA_FUNC_NONE 0x0U
+#define BLOCK_SMA_FUNC_SUM  0x01U
+#define BLOCK_SMA_FUNC_MAX  0x02U
+#define BLOCK_SMA_FUNC_MIN  0x04U
+// ...
+#define BLOCK_SMA_FUNC_XXX 0x80U
+
 // ----------------- TSDB COLUMN DEFINITION
 typedef struct {
   int8_t   type;    // Column type
+  uint8_t  smaId;   // block SMA function Ids(bit operation): 0 ~ 255, default value is 0x07(sum,max,min)
   col_id_t colId;   // column ID(start from PRIMARYKEY_TIMESTAMP_COL_ID(1))
   int16_t  bytes;   // column bytes (restore to int16_t in case of misuse)
   uint16_t offset;  // point offset in STpRow after the header part.
