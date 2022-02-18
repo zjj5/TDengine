@@ -315,7 +315,7 @@ void hbFreeReq(void *req) {
 
 
 SClientHbBatchReq* hbGatherAllInfo(SAppHbMgr *pAppHbMgr) {
-  SClientHbBatchReq* pBatchReq = malloc(sizeof(SClientHbBatchReq));
+  SClientHbBatchReq* pBatchReq = calloc(1, sizeof(SClientHbBatchReq));
   if (pBatchReq == NULL) {
     terrno = TSDB_CODE_TSC_OUT_OF_MEMORY;
     return NULL;
@@ -395,8 +395,10 @@ static void* hbThreadFunc(void* param) {
         hbClearReqInfo(pAppHbMgr);
         break;
       }
+    
       tSerializeSClientHbBatchReq(buf, tlen, pReq);
-      SMsgSendInfo *pInfo = malloc(sizeof(SMsgSendInfo));
+      SMsgSendInfo *pInfo = calloc(1, sizeof(SMsgSendInfo));
+
       if (pInfo == NULL) {
         terrno = TSDB_CODE_TSC_OUT_OF_MEMORY;
         tFreeClientHbBatchReq(pReq, false);

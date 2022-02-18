@@ -20,6 +20,44 @@
 extern "C" {
 #endif
 
+#include "querynodes.h"
+#include "planner.h"
+
+typedef struct SLogicNode {
+  ENodeType type;
+  int32_t id;
+  SNodeList* pTargets;
+  SNode* pConditions;
+  SNodeList* pChildren;
+  struct SLogicNode* pParent;
+} SLogicNode;
+
+typedef struct SScanLogicNode {
+  SLogicNode node;
+  SNodeList* pScanCols;
+  struct STableMeta* pMeta;
+} SScanLogicNode;
+
+typedef struct SJoinLogicNode {
+  SLogicNode node;
+  EJoinType joinType;
+  SNode* pOnConditions;
+} SJoinLogicNode;
+
+typedef struct SFilterLogicNode {
+  SLogicNode node;
+} SFilterLogicNode;
+
+typedef struct SAggLogicNode {
+  SLogicNode node;
+  SNodeList* pGroupKeys;
+  SNodeList* pAggFuncs;
+} SAggLogicNode;
+
+typedef struct SProjectLogicNode {
+  SLogicNode node;
+} SProjectLogicNode;
+
 #ifdef __cplusplus
 }
 #endif

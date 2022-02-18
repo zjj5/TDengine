@@ -37,7 +37,7 @@ typedef struct SDataType {
 } SDataType;
 
 typedef struct SExprNode {
-  ENodeType nodeType;
+  ENodeType type;
   SDataType resType;
   char aliasName[TSDB_COL_NAME_LEN];
   SNodeList* pAssociationList;
@@ -50,6 +50,7 @@ typedef enum EColumnType {
 
 typedef struct SColumnNode {
   SExprNode node; // QUERY_NODE_COLUMN
+  uint64_t tableId;
   int16_t colId;
   EColumnType colType; // column or tag
   char dbName[TSDB_DB_NAME_LEN];
@@ -58,6 +59,12 @@ typedef struct SColumnNode {
   char colName[TSDB_COL_NAME_LEN];
   SNode* pProjectRef;
 } SColumnNode;
+
+typedef struct SColumnRefNode {
+  ENodeType type;
+  int32_t tupleId;
+  int32_t slotId;
+} SColumnRefNode;
 
 typedef struct SValueNode {
   SExprNode node; // QUERY_NODE_VALUE
@@ -80,6 +87,10 @@ typedef enum EOperatorType {
   OP_TYPE_DIV,
   OP_TYPE_MOD,
 
+  // bit operator
+  OP_TYPE_BIT_AND,
+  OP_TYPE_BIT_OR,
+
   // comparison operator
   OP_TYPE_GREATER_THAN,
   OP_TYPE_GREATER_EQUAL,
@@ -93,6 +104,8 @@ typedef enum EOperatorType {
   OP_TYPE_NOT_LIKE,
   OP_TYPE_MATCH,
   OP_TYPE_NMATCH,
+  OP_TYPE_IS_NULL,
+  OP_TYPE_IS_NOT_NULL,
 
   // json operator
   OP_TYPE_JSON_GET_VALUE,
@@ -118,12 +131,6 @@ typedef struct SLogicConditionNode {
   SNodeList* pParameterList;
 } SLogicConditionNode;
 
-typedef struct SIsNullCondNode {
-  SExprNode node; // QUERY_NODE_IS_NULL_CONDITION
-  SNode* pExpr;
-  bool isNull;
-} SIsNullCondNode;
-
 typedef struct SNodeListNode {
   ENodeType type; // QUERY_NODE_NODE_LIST
   SNodeList* pNodeList;
@@ -138,7 +145,7 @@ typedef struct SFunctionNode {
 } SFunctionNode;
 
 typedef struct STableNode {
-  ENodeType type;
+  SExprNode node;
   char dbName[TSDB_DB_NAME_LEN];
   char tableName[TSDB_TABLE_NAME_LEN];
   char tableAlias[TSDB_TABLE_NAME_LEN];
@@ -263,6 +270,25 @@ typedef struct SSetOperator {
   SNodeList* pOrderByList; // SOrderByExprNode
   SNode* pLimit;
 } SSetOperator;
+
+typedef enum ESqlClause {
+  SQL_CLAUSE_FROM = 1,
+  SQL_CLAUSE_WHERE,
+  SQL_CLAUSE_PARTITION_BY,
+  SQL_CLAUSE_WINDOW,
+  SQL_CLAUSE_GROUP_BY,
+  SQL_CLAUSE_HAVING,
+  SQL_CLAUSE_SELECT,
+  SQL_CLAUSE_ORDER_BY
+} ESqlClause;
+
+void nodesWalkSelectStmt(SSelectStmt* pSelect, ESqlClause clause, FNodeWalker walker, void* pContext);
+void nodesRewriteSelectStmt(SSelectStmt* pSelect, ESqlClause clause, FNodeRewriter rewriter, void* pContext);
+
+int32_t nodesCollectColumns(SSelectStmt* pSelect, ESqlClause clause, uint64_t tableId, bool realCol, SNodeList** pCols);
+
+typedef bool (*FFuncClassifier)(int32_t funcId);
+int32_t nodesCollectFuncs(SSelectStmt* pSelect, FFuncClassifier classifier, SNodeList** pFuncs);
 
 bool nodesIsExprNode(const SNode* pNode);
 

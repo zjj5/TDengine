@@ -62,6 +62,23 @@ int32_t init_env() {
     return -1;
   }
   taos_free_result(pRes);
+  return 0;
+}
+
+int32_t create_topic() {
+  printf("create topic");
+  TAOS_RES* pRes;
+  TAOS*     pConn = taos_connect("localhost", "root", "taosdata", NULL, 0);
+  if (pConn == NULL) {
+    return -1;
+  }
+
+  pRes = taos_query(pConn, "use abc1");
+  if (taos_errno(pRes) != 0) {
+    printf("error in use db, reason:%s\n", taos_errstr(pRes));
+    return -1;
+  }
+  taos_free_result(pRes);
 
   const char* sql = "select * from tu1";
   pRes = tmq_create_topic(pConn, "test_stb_topic_1", sql, strlen(sql));
@@ -193,6 +210,7 @@ int main(int argc, char* argv[]) {
     printf("env init\n");
     code = init_env();
   }
+  create_topic();
   tmq_t*      tmq = build_consumer();
   tmq_list_t* topic_list = build_topic_list();
   /*perf_loop(tmq, topic_list);*/
