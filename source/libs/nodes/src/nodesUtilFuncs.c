@@ -14,9 +14,10 @@
  */
 
 #include "querynodes.h"
-#include "nodesShowStmts.h"
+#include "plannodes.h"
 #include "taos.h"
 #include "taoserror.h"
+#include "taos.h"
 #include "thash.h"
 
 static SNode* makeNode(ENodeType type, size_t size) {
@@ -68,8 +69,18 @@ SNode* nodesMakeNode(ENodeType type) {
       return makeNode(type, sizeof(SSetOperator));
     case QUERY_NODE_SELECT_STMT:
       return makeNode(type, sizeof(SSelectStmt));
-    case QUERY_NODE_SHOW_STMT:
-      return makeNode(type, sizeof(SShowStmt));
+    // case QUERY_NODE_SHOW_STMT:
+    //   return makeNode(type, sizeof(SShowStmt));
+    case QUERY_NODE_LOGIC_PLAN_SCAN:
+      return makeNode(type, sizeof(SScanLogicNode));
+    case QUERY_NODE_LOGIC_PLAN_JOIN:
+      return makeNode(type, sizeof(SJoinLogicNode));
+    case QUERY_NODE_LOGIC_PLAN_FILTER:
+      return makeNode(type, sizeof(SFilterLogicNode));
+    case QUERY_NODE_LOGIC_PLAN_AGG:
+      return makeNode(type, sizeof(SAggLogicNode));
+    case QUERY_NODE_LOGIC_PLAN_PROJECT:
+      return makeNode(type, sizeof(SProjectLogicNode));
     default:
       break;
   }
@@ -121,6 +132,26 @@ int32_t nodesListAppend(SNodeList* pList, SNode* pNode) {
   return TSDB_CODE_SUCCESS;
 }
 
+int32_t nodesListAppendList(SNodeList* pTarget, SNodeList* pSrc) {
+  if (NULL == pTarget || NULL == pSrc) {
+    return TSDB_CODE_SUCCESS;
+  }
+
+  if (NULL == pTarget->pHead) {
+    pTarget->pHead = pSrc->pHead;
+  } else {
+    pTarget->pTail->pNext = pSrc->pHead;
+    if (NULL != pSrc->pHead) {
+      pSrc->pHead->pPrev = pTarget->pTail;
+    }
+  }
+  pTarget->pTail = pSrc->pTail;
+  pTarget->length += pSrc->length;
+  tfree(pSrc);
+
+  return TSDB_CODE_SUCCESS;
+}
+
 SListCell* nodesListErase(SNodeList* pList, SListCell* pCell) {
   if (NULL == pCell->pPrev) {
     pList->pHead = pCell->pNext;
@@ -129,6 +160,7 @@ SListCell* nodesListErase(SNodeList* pList, SListCell* pCell) {
     pCell->pNext->pPrev = pCell->pPrev;
   }
   SListCell* pNext = pCell->pNext;
+  nodesDestroyNode(pCell->pNode);
   tfree(pCell);
   --(pList->length);
   return pNext;
@@ -150,6 +182,36 @@ void nodesDestroyList(SNodeList* pList) {
     nodesDestroyNode(node);
   }
   tfree(pList);
+}
+
+void *nodesGetValueFromNode(SValueNode *pNode) {
+  switch (pNode->node.resType.type) {
+    case TSDB_DATA_TYPE_BOOL:
+      return (void *)&pNode->datum.b;
+    case TSDB_DATA_TYPE_TINYINT:
+    case TSDB_DATA_TYPE_SMALLINT:
+    case TSDB_DATA_TYPE_INT:
+    case TSDB_DATA_TYPE_BIGINT:
+    case TSDB_DATA_TYPE_TIMESTAMP:
+      return (void *)&pNode->datum.i;
+    case TSDB_DATA_TYPE_UTINYINT:
+    case TSDB_DATA_TYPE_USMALLINT:
+    case TSDB_DATA_TYPE_UINT:
+    case TSDB_DATA_TYPE_UBIGINT:
+      return (void *)&pNode->datum.u;
+    case TSDB_DATA_TYPE_FLOAT:
+    case TSDB_DATA_TYPE_DOUBLE: 
+      return (void *)&pNode->datum.d;
+    case TSDB_DATA_TYPE_BINARY:
+    case TSDB_DATA_TYPE_NCHAR:
+    case TSDB_DATA_TYPE_VARCHAR:
+    case TSDB_DATA_TYPE_VARBINARY: 
+      return (void *)pNode->datum.p;
+    default:
+      break;
+  }
+
+  return NULL;
 }
 
 bool nodesIsExprNode(const SNode* pNode) {
@@ -185,6 +247,14 @@ bool nodesIsComparisonOp(const SOperatorNode* pOp) {
     case OP_TYPE_NOT_LIKE:
     case OP_TYPE_MATCH:
     case OP_TYPE_NMATCH:
+    case OP_TYPE_IS_NULL:
+    case OP_TYPE_IS_NOT_NULL:
+    case OP_TYPE_IS_TRUE:
+    case OP_TYPE_IS_FALSE:
+    case OP_TYPE_IS_UNKNOWN:
+    case OP_TYPE_IS_NOT_TRUE:
+    case OP_TYPE_IS_NOT_FALSE:
+    case OP_TYPE_IS_NOT_UNKNOWN:
       return true;
     default:
       break;
@@ -213,8 +283,7 @@ bool nodesIsTimelineQuery(const SNode* pQuery) {
 
 typedef struct SCollectColumnsCxt {
   int32_t errCode;
-  uint64_t tableId;
-  bool realCol;
+  const char* pTableAlias;
   SNodeList* pCols;
   SHashObj* pColIdHash;
 } SCollectColumnsCxt;
@@ -232,27 +301,24 @@ static EDealRes doCollect(SCollectColumnsCxt* pCxt, int32_t id, SNode* pNode) {
 
 static EDealRes collectColumns(SNode* pNode, void* pContext) {
   SCollectColumnsCxt* pCxt = (SCollectColumnsCxt*)pContext;
-
-  if (pCxt->realCol && QUERY_NODE_COLUMN == nodeType(pNode)) {
+  if (QUERY_NODE_COLUMN == nodeType(pNode)) {
     SColumnNode* pCol = (SColumnNode*)pNode;
     int32_t colId = pCol->colId;
-    if (pCxt->tableId == pCol->tableId && colId > 0) {
+    if (0 == strcmp(pCxt->pTableAlias, pCol->tableAlias)) {
       return doCollect(pCxt, colId, pNode);
     }
-  } else if (!pCxt->realCol && QUERY_NODE_COLUMN_REF == nodeType(pNode)) {
-    return doCollect(pCxt, ((SColumnRefNode*)pNode)->slotId, pNode);
   }
   return DEAL_RES_CONTINUE;
 }
 
-int32_t nodesCollectColumns(SSelectStmt* pSelect, ESqlClause clause, uint64_t tableId, bool realCol, SNodeList** pCols) {
+int32_t nodesCollectColumns(SSelectStmt* pSelect, ESqlClause clause, const char* pTableAlias, SNodeList** pCols) {
   if (NULL == pSelect || NULL == pCols) {
     return TSDB_CODE_SUCCESS;
   }
 
   SCollectColumnsCxt cxt = {
     .errCode = TSDB_CODE_SUCCESS,
-    .realCol = realCol,
+    .pTableAlias = pTableAlias,
     .pCols = nodesMakeList(),
     .pColIdHash = taosHashInit(128, taosGetDefaultHashFunction(TSDB_DATA_TYPE_BIGINT), true, HASH_NO_LOCK)
   };
@@ -265,6 +331,10 @@ int32_t nodesCollectColumns(SSelectStmt* pSelect, ESqlClause clause, uint64_t ta
   if (TSDB_CODE_SUCCESS != cxt.errCode) {
     nodesDestroyList(cxt.pCols);
     return cxt.errCode;
+  }
+  if (0 == LIST_LENGTH(cxt.pCols)) {
+    nodesDestroyList(cxt.pCols);
+    cxt.pCols = NULL;
   }
   *pCols = cxt.pCols;
   return TSDB_CODE_SUCCESS;
@@ -303,6 +373,12 @@ int32_t nodesCollectFuncs(SSelectStmt* pSelect, FFuncClassifier classifier, SNod
     nodesDestroyList(cxt.pFuncs);
     return cxt.errCode;
   }
-  *pFuncs = cxt.pFuncs;
+  if (LIST_LENGTH(cxt.pFuncs) > 0) {
+    *pFuncs = cxt.pFuncs;
+  } else {
+    nodesDestroyList(cxt.pFuncs);
+    *pFuncs = NULL;
+  }
+  
   return TSDB_CODE_SUCCESS;
 }

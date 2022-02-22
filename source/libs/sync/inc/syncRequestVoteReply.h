@@ -13,14 +13,24 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "tdb_db.h"
+#ifndef _TD_LIBS_SYNC_REQUEST_VOTE_REPLY_H
+#define _TD_LIBS_SYNC_REQUEST_VOTE_REPLY_H
 
-int tdbOpen(TDB **dbpp, const char *fname, const char *dbname, uint32_t flags) {
-  // TODO
-  return 0;
-}
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-int tdbClose(TDB *dbp, uint32_t flags) {
-  // TODO
-  return 0;
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "syncMessage.h"
+#include "syncRaft.h"
+#include "taosdef.h"
+
+void onRequestVoteReply(SRaft *pRaft, const SyncRequestVoteReply *pMsg);
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif /*_TD_LIBS_SYNC_REQUEST_VOTE_REPLY_H*/

@@ -13,21 +13,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _TD_COMMON_BIN_SCALAR_OPERATOR_H_
-#define _TD_COMMON_BIN_SCALAR_OPERATOR_H_
+#include "syncTimeout.h"
+#include "sync.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "tscalarfunction.h"
-
-typedef void (*_bin_scalar_fn_t)(SScalarFuncParam* pLeft, SScalarFuncParam* pRight, void *output, int32_t order);
-_bin_scalar_fn_t getBinScalarOperatorFn(int32_t binOperator);
-bool isBinaryStringOp(int32_t op);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif  /*_TD_COMMON_BIN_SCALAR_OPERATOR_H_*/
+void onTimeout(SRaft *pRaft, void *pMsg) {}

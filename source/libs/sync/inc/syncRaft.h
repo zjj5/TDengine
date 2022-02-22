@@ -13,46 +13,35 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _TD_TDB_INC_H_
-#define _TD_TDB_INC_H_
-
-#include "os.h"
-#include "tlist.h"
-#include "tlockfree.h"
+#ifndef _TD_LIBS_SYNC_RAFT_H
+#define _TD_LIBS_SYNC_RAFT_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// pgno_t
-typedef int32_t pgno_t;
-#define TDB_IVLD_PGNO ((pgno_t)-1)
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "sync.h"
+#include "syncMessage.h"
+#include "taosdef.h"
 
-// fileid
-#define TDB_FILE_ID_LEN 24
+typedef struct SRaftId {
+  SyncNodeId  nodeId;
+  SyncGroupId vgId;
+} SRaftId;
 
-// pgid_t
-typedef struct {
-  uint8_t fileid[TDB_FILE_ID_LEN];
-  pgno_t  pgno;
-} pgid_t;
-#define TDB_IVLD_PGID (pgid_t){0, TDB_IVLD_PGNO};
+typedef struct SRaft {
+  SRaftId id;
+} SRaft;
 
-// framd_id_t
-typedef int32_t frame_id_t;
+int32_t raftPropose(SRaft* pRaft, const SSyncBuffer* pBuf, bool isWeak);
 
-// pgsize_t
-typedef int32_t pgsize_t;
-#define TDB_MIN_PGSIZE 512
-#define TDB_MAX_PGSIZE 16384
-#define TDB_DEFAULT_PGSIZE 4096
-#define TDB_IS_PGSIZE_VLD(s) (((s) >= TDB_MIN_PGSIZE) && ((s) <= TDB_MAX_PGSIZE))
-
-// tdb_log
-#define tdbError(var)
+static int raftSendMsg(SRaftId destRaftId, const void* pMsg, const SRaft* pRaft);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /*_TD_TDB_INC_H_*/
+#endif /*_TD_LIBS_SYNC_RAFT_H*/

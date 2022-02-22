@@ -118,16 +118,18 @@ do { \
 #define TSDB_RELATION_GREATER_EQUAL 5
 #define TSDB_RELATION_NOT_EQUAL   6
 #define TSDB_RELATION_LIKE        7
-#define TSDB_RELATION_ISNULL      8
-#define TSDB_RELATION_NOTNULL     9
-#define TSDB_RELATION_IN          10
+#define TSDB_RELATION_NOT_LIKE    8
+#define TSDB_RELATION_ISNULL      9
+#define TSDB_RELATION_NOTNULL     10
+#define TSDB_RELATION_IN          11
+#define TSDB_RELATION_NOT_IN      12
 
-#define TSDB_RELATION_AND         11
-#define TSDB_RELATION_OR          12
-#define TSDB_RELATION_NOT         13
+#define TSDB_RELATION_AND         13
+#define TSDB_RELATION_OR          14
+#define TSDB_RELATION_NOT         15
 
-#define TSDB_RELATION_MATCH       14
-#define TSDB_RELATION_NMATCH      15
+#define TSDB_RELATION_MATCH       16
+#define TSDB_RELATION_NMATCH      17
 
 #define TSDB_BINARY_OP_ADD        4000
 #define TSDB_BINARY_OP_SUBTRACT   4001
@@ -334,6 +336,8 @@ do { \
 #define TSDB_QUERY_TYPE_NON_TYPE        0x00u     // none type
 #define TSDB_QUERY_TYPE_FREE_RESOURCE   0x01u     // free qhandle at vnode
 
+#define TSDB_QUERY_TYPE_NON_TYPE      0x00u  // none type
+#define TSDB_QUERY_TYPE_FREE_RESOURCE 0x01u  // free qhandle at vnode
 
 #define TSDB_META_COMPACT_RATIO         0       // disable tsdb meta compact by default
 

@@ -13,33 +13,23 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _TD_TDB_DB_H_
-#define _TD_TDB_DB_H_
-
-#include "tdb_mpool.h"
+#ifndef _TD_LIBS_SYNC_ON_MESSAGE_H
+#define _TD_LIBS_SYNC_ON_MESSAGE_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct TDB TDB;
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "syncRaft.h"
+#include "taosdef.h"
 
-struct TDB {
-  char *      fname;
-  char *      dbname;
-  TDB_MPFILE *mpf;
-  // union {
-  //   TDB_BTREE *btree;
-  //   TDB_HASH * hash;
-  //   TDB_HEAP * heap;
-  // } dbam;  // db access method
-};
-
-int tdbOpen(TDB **dbpp, const char *fname, const char *dbname, uint32_t flags);
-int tdbClose(TDB *dbp, uint32_t flags);
+void onMessage(SRaft *pRaft, void *pMsg);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /*_TD_TDB_DB_H_*/
+#endif /*_TD_LIBS_SYNC_ON_MESSAGE_H*/
