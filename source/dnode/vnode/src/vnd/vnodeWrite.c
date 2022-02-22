@@ -129,6 +129,9 @@ int vnodeApplyWMsg(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
       }
     } break;
     case TDMT_VND_CREATE_SMA: {  // timeRangeSMA
+      // 1. tdCreateSmaMeta(pVnode->pMeta,...);
+      // 2. tdCreateSmaDataInit();
+      // 3. tdCreateSmaData
     } break;
     case TDMT_VND_CANCEL_SMA: {  // timeRangeSMA
     } break;

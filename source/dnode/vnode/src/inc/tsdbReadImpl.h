@@ -73,7 +73,7 @@ typedef struct {
   SBlock   blocks[];
 } SBlockInfo;
 
-#if 0
+#ifndef TD_REFACTOR_3
 typedef struct {
   int16_t  colId;
   uint16_t bitmap : 1;  // 0: has bitmap if has NULL/NORM rows, 1: no bitmap if all rows are NORM
@@ -90,7 +90,7 @@ typedef struct {
   uint8_t  offsetH;
   char     padding[1];
 } SBlockCol;
-#endif 
+#else 
 typedef struct {
   int16_t  colId;
   uint8_t  bitmap : 1;  // 0: has bitmap if has NULL/NORM rows, 1: no bitmap if all rows are NORM
@@ -106,23 +106,25 @@ typedef struct {
   int16_t  numOfNull;
   char     padding[6];
 } SBlockCol;
-
+#endif
 // Code here just for back-ward compatibility
 static FORCE_INLINE void tsdbSetBlockColOffset(SBlockCol *pBlockCol, uint32_t offset) {
-#if 0
+#ifndef TD_REFACTOR_3
   pBlockCol->offset = offset & ((((uint32_t)1) << 24) - 1);
   pBlockCol->offsetH = (uint8_t)(offset >> 24);
-#endif
+#else
   pBlockCol->offset = offset;
+#endif
 }
 
 static FORCE_INLINE uint32_t tsdbGetBlockColOffset(SBlockCol *pBlockCol) {
-#if 0
+#ifndef TD_REFACTOR_3
   uint32_t offset1 = pBlockCol->offset;
   uint32_t offset2 = pBlockCol->offsetH;
   return (offset1 | (offset2 << 24));
-#endif
+#else
   return pBlockCol->offset;
+#endif
 }
 
 typedef struct {
@@ -153,6 +155,8 @@ struct SReadH {
 #define TSDB_READ_HEAD_FILE(rh) TSDB_DFILE_IN_SET(TSDB_READ_FSET(rh), TSDB_FILE_HEAD)
 #define TSDB_READ_DATA_FILE(rh) TSDB_DFILE_IN_SET(TSDB_READ_FSET(rh), TSDB_FILE_DATA)
 #define TSDB_READ_LAST_FILE(rh) TSDB_DFILE_IN_SET(TSDB_READ_FSET(rh), TSDB_FILE_LAST)
+#define TSDB_READ_SMAD_FILE(rh) TSDB_DFILE_IN_SET(TSDB_READ_FSET(rh), TSDB_FILE_SMAD)
+#define TSDB_READ_SMAL_FILE(rh) TSDB_DFILE_IN_SET(TSDB_READ_FSET(rh), TSDB_FILE_SMAL)
 #define TSDB_READ_BUF(rh) ((rh)->pBuf)
 #define TSDB_READ_COMP_BUF(rh) ((rh)->pCBuf)
 

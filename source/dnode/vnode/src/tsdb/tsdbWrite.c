@@ -15,6 +15,7 @@
 
 #include "tsdbDef.h"
 
+// insert TS data
 int tsdbInsertData(STsdb *pTsdb, SSubmitReq *pMsg, SSubmitRsp *pRsp) {
   // Check if mem is there. If not, create one.
   if (pTsdb->mem == NULL) {
@@ -25,3 +26,20 @@ int tsdbInsertData(STsdb *pTsdb, SSubmitReq *pMsg, SSubmitRsp *pRsp) {
   }
   return tsdbMemTableInsert(pTsdb, pTsdb->mem, pMsg, NULL);
 }
+
+/**
+ * @brief insert Time-range-wise Sma(TSma) data
+ *
+ * @param pTsdb
+ * @param param
+ * @param pData
+ * @return int32_t
+ * TODO: Who is responsible for resource release
+ */
+int32_t tsdbInsertTSmaData(STsdb *pTsdb, STimeRangeSma *param, STimeRangeData *pData) {
+  // 
+  return tsdbInsertTSmaDataImpl(pTsdb, param, pData);
+}
+
+// insert Time-range-wise Roll-Up Sma(RSma) data
+int32_t tsdbInsertRSmaData(STsdb *pTsdb) { return TSDB_CODE_SUCCESS; }

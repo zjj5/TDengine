@@ -19,7 +19,11 @@ static const char *TSDB_FNAME_SUFFIX[] = {
     "head",  // TSDB_FILE_HEAD
     "data",  // TSDB_FILE_DATA
     "last",  // TSDB_FILE_LAST
+    "smad",  // TSDB_FILE_SMAD
+    "smal",  // TSDB_FILE_SMAL
     "",      // TSDB_FILE_MAX
+    "tsma",  // TSDB_FILE_TSMA
+    "rsma",  // TSDB_FILE_RSMA
     "meta",  // TSDB_FILE_META
 };
 
@@ -304,6 +308,7 @@ void tsdbInitDFile(STsdb *pRepo, SDFile *pDFile, SDiskID did, int fid, uint32_t 
 
   memset(&(pDFile->info), 0, sizeof(pDFile->info));
   pDFile->info.magic = TSDB_FILE_INIT_MAGIC;
+  pDFile->info.fver = tsdbGetDFSVersion(ftype);
 
   tsdbGetFilename(pRepo->vgId, fid, ver, ftype, fname);
   tfsInitFile(pRepo->pTfs, &(pDFile->f), did, fname);
@@ -352,7 +357,7 @@ static void *tsdbDecodeSDFileEx(void *buf, SDFile *pDFile) {
   return buf;
 }
 
-int tsdbCreateDFile(STsdb *pRepo, SDFile *pDFile, bool updateHeader) {
+int tsdbCreateDFile(STsdb *pRepo, SDFile *pDFile, bool updateHeader, TSDB_FILE_T fType) {
   ASSERT(pDFile->info.size == 0 && pDFile->info.magic == TSDB_FILE_INIT_MAGIC);
 
   pDFile->fd = open(TSDB_FILE_FULL_NAME(pDFile), O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0755);
@@ -382,6 +387,7 @@ int tsdbCreateDFile(STsdb *pRepo, SDFile *pDFile, bool updateHeader) {
   }
 
   pDFile->info.size += TSDB_FILE_HEAD_SIZE;
+  pDFile->info.fver = tsdbGetDFSVersion(fType);
 
   if (tsdbUpdateDFileHeader(pDFile) < 0) {
     tsdbCloseDFile(pDFile);
@@ -635,7 +641,7 @@ int tsdbApplyDFileSetChange(SDFileSet *from, SDFileSet *to) {
 
 int tsdbCreateDFileSet(STsdb *pRepo, SDFileSet *pSet, bool updateHeader) {
   for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
-    if (tsdbCreateDFile(pRepo, TSDB_DFILE_IN_SET(pSet, ftype), updateHeader) < 0) {
+    if (tsdbCreateDFile(pRepo, TSDB_DFILE_IN_SET(pSet, ftype), updateHeader, ftype) < 0) {
       tsdbCloseDFileSet(pSet);
       tsdbRemoveDFileSet(pSet);
       return -1;

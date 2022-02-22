@@ -33,7 +33,7 @@ typedef struct {
 
 typedef struct {
   SDiskID did;
-  char    aname[TSDB_FILENAME_LEN];  // TABS name
+  char    aname[TSDB_FULLNAME_LEN];  // TABS name
   char    rname[TSDB_FILENAME_LEN];  // REL name
   STfs   *pTfs;
 } STfsFile;

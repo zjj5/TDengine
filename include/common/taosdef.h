@@ -25,6 +25,8 @@ extern "C" {
 
 typedef int64_t tb_uid_t;
 
+#define TSDB_REFACTOR_3
+
 #define TSWINDOW_INITIALIZER ((STimeWindow){INT64_MIN, INT64_MAX})
 #define TSWINDOW_DESC_INITIALIZER ((STimeWindow){INT64_MAX, INT64_MIN})
 #define IS_TSWINDOW_SPECIFIED(win) (((win).skey != INT64_MIN) || ((win).ekey != INT64_MAX))

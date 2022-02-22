@@ -28,6 +28,7 @@ extern "C" {
 #define TD_SUPPORT_BITMAP
 #define TD_SUPPORT_READ2
 #define TD_SUPPORT_BACK2  // suppport back compatibility of 2.0
+#define TD_REFACTOR_3
 
 #define TASSERT(x) ASSERT(x)
 

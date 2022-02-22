@@ -15,6 +15,35 @@
 
 #include "tsdbDef.h"
 
+// save TSma data blocks to file
+typedef struct {
+  SFSIter   fsIter;
+  SArray *  aSmaTableIdx;
+  SArray *  aSmaColIdx;
+  SArray *  aSmaBlocks;
+  SArray *  aSmaData;
+  SDFileSet wSet;
+} STSmaH;
+
+int32_t tsdbInsertTSmaDataImpl(STsdb *pTsdb, STimeRangeSma *param, STimeRangeData *pData) {
+  STsdbCfg *pCfg = REPO_CFG(pTsdb);
+
+  // tsdbStartCommit
+  // TODO: the precision of skey should be consistent to pCfg->precision.
+  int32_t minFid = (int32_t)(TSDB_KEY_FID(pData->tsWindow.skey, pCfg->daysPerFile, pCfg->precision));
+  int32_t maxFid = (int32_t)(TSDB_KEY_FID(pData->tsWindow.ekey, pCfg->daysPerFile, pCfg->precision));
+
+  if (minFid == maxFid) {  // save all the TSma data to one file
+   // SDFile
+
+  } else if (minFid < maxFid) {  // split the TSma data and save to multiple files
+    // TODO
+  } else {
+    ASSERT(0);
+  }
+}
+
+#if 0
 #define TSDB_MAX_SUBBLOCKS 8
 
 typedef struct {
@@ -39,7 +68,7 @@ typedef struct {
   SArray      *aSupBlk;  // Table super-block array
   SArray      *aSubBlk;  // table sub-block array
   SDataCols   *pDataCols;
-} SCommitH;
+} STSmaH;
 
 #define TSDB_DEFAULT_BLOCK_ROWS(maxRows) ((maxRows)*4 / 5)
 
@@ -511,7 +540,7 @@ static int tsdbSetAndOpenCommitFile(SCommitH *pCommith, SDFileSet *pSet, int fid
     // TSDB_FILE_HEAD
     SDFile *pWHeadf = TSDB_COMMIT_HEAD_FILE(pCommith);
     tsdbInitDFile(pRepo, pWHeadf, did, fid, FS_TXN_VERSION(REPO_FS(pRepo)), TSDB_FILE_HEAD);
-    if (tsdbCreateDFile(pRepo, pWHeadf, true, TSDB_FILE_HEAD) < 0) {
+    if (tsdbCreateDFile(pRepo, pWHeadf, true) < 0) {
       tsdbError("vgId:%d failed to create file %s to commit since %s", REPO_ID(pRepo), TSDB_FILE_FULL_NAME(pWHeadf),
                 tstrerror(terrno));
 
@@ -560,76 +589,8 @@ static int tsdbSetAndOpenCommitFile(SCommitH *pCommith, SDFileSet *pSet, int fid
       tsdbInitDFile(pRepo, pWLastf, did, fid, FS_TXN_VERSION(REPO_FS(pRepo)), TSDB_FILE_LAST);
       pCommith->isLFileSame = false;
 
-      if (tsdbCreateDFile(pRepo, pWLastf, true, TSDB_FILE_LAST) < 0) {
+      if (tsdbCreateDFile(pRepo, pWLastf, true) < 0) {
         tsdbError("vgId:%d failed to create file %s to commit since %s", REPO_ID(pRepo), TSDB_FILE_FULL_NAME(pWLastf),
-                  tstrerror(terrno));
-
-        tsdbCloseDFileSet(pWSet);
-        (void)tsdbRemoveDFile(pWHeadf);
-        if (pCommith->isRFileSet) {
-          tsdbCloseAndUnsetFSet(&(pCommith->readh));
-          return -1;
-        }
-      }
-    }
-
-    // TSDB_FILE_SMAD
-    SDFile *pRSmadF = TSDB_READ_SMAD_FILE(&(pCommith->readh));
-    SDFile *pWSmadF = TSDB_COMMIT_SMAD_FILE(pCommith);
-
-    if (access(TSDB_FILE_FULL_NAME(pRSmadF), F_OK) != 0) {
-      tsdbDebug("vgId:%d create data file %s as not exist", REPO_ID(pRepo), TSDB_FILE_FULL_NAME(pRSmadF));
-      tsdbInitDFile(pRepo, pWSmadF, did, fid, FS_TXN_VERSION(REPO_FS(pRepo)), TSDB_FILE_SMAD);
-
-      if (tsdbCreateDFile(pRepo, pWSmadF, true, TSDB_FILE_SMAD) < 0) {
-        tsdbError("vgId:%d failed to create file %s to commit since %s", REPO_ID(pRepo), TSDB_FILE_FULL_NAME(pWSmadF),
-                  tstrerror(terrno));
-
-        tsdbCloseDFileSet(pWSet);
-        (void)tsdbRemoveDFile(pWHeadf);
-        if (pCommith->isRFileSet) {
-          tsdbCloseAndUnsetFSet(&(pCommith->readh));
-          return -1;
-        }
-      }
-    } else {
-      tsdbInitDFileEx(pWSmadF, pRSmadF);
-      if (tsdbOpenDFile(pWSmadF, O_RDWR) < 0) {
-        tsdbError("vgId:%d failed to open file %s to commit since %s", REPO_ID(pRepo), TSDB_FILE_FULL_NAME(pWSmadF),
-                  tstrerror(terrno));
-
-        tsdbCloseDFileSet(pWSet);
-        tsdbRemoveDFile(pWHeadf);
-        if (pCommith->isRFileSet) {
-          tsdbCloseAndUnsetFSet(&(pCommith->readh));
-          return -1;
-        }
-      }
-    }
-
-    // TSDB_FILE_SMAL
-    SDFile *pRSmalF = TSDB_READ_SMAL_FILE(&(pCommith->readh));
-    SDFile *pWSmalF = TSDB_COMMIT_SMAL_FILE(pCommith);
-
-    if ((pCommith->isLFileSame) && access(TSDB_FILE_FULL_NAME(pRSmalF), F_OK) == 0) {
-      tsdbInitDFileEx(pWSmalF, pRSmalF);
-      if (tsdbOpenDFile(pWSmalF, O_RDWR) < 0) {
-        tsdbError("vgId:%d failed to open file %s to commit since %s", REPO_ID(pRepo), TSDB_FILE_FULL_NAME(pWSmalF),
-                  tstrerror(terrno));
-
-        tsdbCloseDFileSet(pWSet);
-        tsdbRemoveDFile(pWHeadf);
-        if (pCommith->isRFileSet) {
-          tsdbCloseAndUnsetFSet(&(pCommith->readh));
-          return -1;
-        }
-      }
-    } else {
-      tsdbDebug("vgId:%d create data file %s as not exist", REPO_ID(pRepo), TSDB_FILE_FULL_NAME(pRSmalF));
-      tsdbInitDFile(pRepo, pWSmalF, did, fid, FS_TXN_VERSION(REPO_FS(pRepo)), TSDB_FILE_SMAL);
-
-      if (tsdbCreateDFile(pRepo, pWSmalF, true, TSDB_FILE_SMAL) < 0) {
-        tsdbError("vgId:%d failed to create file %s to commit since %s", REPO_ID(pRepo), TSDB_FILE_FULL_NAME(pWSmalF),
                   tstrerror(terrno));
 
         tsdbCloseDFileSet(pWSet);
@@ -1710,3 +1671,4 @@ static bool tsdbCanAddSubBlock(SCommitH *pCommith, SBlock *pBlock, SMergeInfo *p
 
 //   return 0;
 // }
+#endif
