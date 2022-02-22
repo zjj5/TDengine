@@ -336,23 +336,27 @@ typedef struct {
   uint8_t nxFiles;  // 0~255
   uint8_t reserve;
   SDFile  files[TSDB_FILE_MAX];  // core TS data files, e.g. .head/.data/.last
-  SDFile  xFiles[];              // extended files, e.g. v2f1900.tsma.${sma_index_name}
+  SDFile  xFiles[];              // extended auxiliary files, e.g. v2f1900.tsma.${sma_index_name}
 } SDFileSet;
 #endif
 
-#define TSDB_FSET_FID(s) ((s)->fid)
+#define TSDB_FSET_FID(s)        ((s)->fid)
+#define TSDB_FSET_STATE(s)      ((s)->state)
+#define TSDB_FSET_VER(s)        ((s)->ver)
+#define TSDB_FSET_NXFILES(s)    ((s)->nxFiles)
 #define TSDB_DFILE_IN_SET(s, t) ((s)->files + (t))
-#define TSDB_FSET_LEVEL(s) TSDB_FILE_LEVEL(TSDB_DFILE_IN_SET(s, 0))
-#define TSDB_FSET_ID(s) TSDB_FILE_ID(TSDB_DFILE_IN_SET(s, 0))
+#define TSDB_XFILE_IN_SET(s, n) ((s)->xFiles + (n))
+#define TSDB_FSET_LEVEL(s)      TSDB_FILE_LEVEL(TSDB_DFILE_IN_SET(s, 0))
+#define TSDB_FSET_ID(s)         TSDB_FILE_ID(TSDB_DFILE_IN_SET(s, 0))
 #define TSDB_FSET_SET_CLOSED(s)                                                \
   do {                                                                         \
-    for (TSDB_FILE_T ftype = TSDB_FILE_HEAD; ftype < TSDB_FILE_MAX; ftype++) { \
+    for (TSDB_FILE_T ftype = TSDB_FILE_HEAD; ftype < TSDB_FILE_MAX; ++ftype) { \
       TSDB_FILE_SET_CLOSED(TSDB_DFILE_IN_SET(s, ftype));                       \
     }                                                                          \
   } while (0);
 #define TSDB_FSET_FSYNC(s)                                                     \
   do {                                                                         \
-    for (TSDB_FILE_T ftype = TSDB_FILE_HEAD; ftype < TSDB_FILE_MAX; ftype++) { \
+    for (TSDB_FILE_T ftype = TSDB_FILE_HEAD; ftype < TSDB_FILE_MAX; ++ftype) { \
       TSDB_FILE_FSYNC(TSDB_DFILE_IN_SET(s, ftype));                            \
     }                                                                          \
   } while (0);
