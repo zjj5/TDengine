@@ -278,21 +278,24 @@ typedef struct SSessionWindow {
 
 typedef enum {
   TD_TIME_UNIT_YEAR = 0,
-  TD_TIME_UNIT_MONTH = 1,     //
-  TD_TIME_UNIT_DAY = 2,       //
-  TD_TIME_UNIT_HOUR = 3,      //
-  TD_TIME_UNIT_MINUTE = 4,    //
-  TD_TIME_UNIT_SEC = 5,       //
-  TD_TIME_UNIT_MILISEC = 6,   //
-  TD_TIME_UNIT_MICROSEC = 7,  //
-  TD_TIME_UNIT_NANOSEC = 8
+  TD_TIME_UNIT_SEASON = 1,
+  TD_TIME_UNIT_MONTH = 2,     //
+  TD_TIME_UNIT_WEEK = 3,      //
+  TD_TIME_UNIT_DAY = 4,       //
+  TD_TIME_UNIT_HOUR = 5,      //
+  TD_TIME_UNIT_MINUTE = 6,    //
+  TD_TIME_UNIT_SEC = 7,       //
+  TD_TIME_UNIT_MILLISEC = 8,   //
+  TD_TIME_UNIT_MICROSEC = 9,  //
+  TD_TIME_UNIT_NANOSEC = 10
 } ETDTimeUnit;  // TODO: Use the unified MACRO definition of TAOS
 
 typedef int32_t sma_func_t;
 
 typedef struct {
   // TODO: use definition from schema =>
-  uint64_t    tableUid;
+  char*       indexName;  // point to indexName of schema or copied instance.
+  uint64_t    tableUid;   // super/common table uid
   int64_t     interval;
   int64_t     sliding;
   uint8_t     intervalUnit;
@@ -307,6 +310,7 @@ typedef struct {
 
 typedef struct {
   STimeWindow tsWindow;       // [skey, ekey]
+  uint64_t    tableUid;       // sub/common table uid
   int32_t     numOfSmaBlock;  // number of sma blocks for each column, total number is numOfSmaBlock*numOfColId
   int32_t     dataLen;        // total data length
   col_id_t*   colIds;         // e.g. 2,4,9,10

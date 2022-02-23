@@ -16,8 +16,19 @@
 #ifndef _TD_TSDB_SMA_H_
 #define _TD_TSDB_SMA_H_
 
+// insert interface
 int32_t tsdbInsertTSmaDataImpl(STsdb *pTsdb, STSma *param, STSmaData *pData);
 int32_t tsdbInsertRSmaDataImpl(STsdb *pTsdb, SRSma *param, STSmaData *pData);
+
+// query interface
+
+
+// internal func
+static FORCE_INLINE int32_t tsdbEncodeTSmaKey(uint64_t tableUid, col_id_t colId, TSKEY tsKey, void **pData) {
+  taosEncodeFixedU64(pData, tableUid);
+  taosEncodeFixedU16(pData, colId);
+  taosEncodeFixedI64(pData, tsKey);
+}
 
 #if 0
 

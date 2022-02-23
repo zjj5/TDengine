@@ -51,8 +51,8 @@ typedef enum {
   TSDB_FILE_SMAD,      // .smad(Block-wise SMA)
   TSDB_FILE_SMAL,      // .smal(Block-wise SMA)
   TSDB_FILE_MAX,       //
-  TSDB_FILE_TSMA,      // .tsma.${sma_index_name}, Time-range-wise SMA
-  TSDB_FILE_RSMA,      // .rsma.${sma_index_name}, Time-range-wise Rollup SMA
+  TSDB_FILE_TSMA,      // .${sma_index_name}.tsma, Time-range-wise SMA
+  TSDB_FILE_RSMA,      // .${sma_index_name}.rsma, Time-range-wise Rollup SMA
   TSDB_FILE_META       // meta
 } TSDB_FILE_T;
 
@@ -337,6 +337,11 @@ typedef struct {
   uint8_t reserve;               // for future use
   SDFile  files[TSDB_FILE_MAX];  // core TS data files, e.g. .head/.data/.last
   SDFile  xFiles[];              // extended auxiliary files, e.g. v2f1900.tsma.${sma_index_name}
+                                 // TODO: the xFiles field is designed to store the tsma data file.
+                                 // And .tsma would be stored into B+Tree files, how to use xFiles with type SDFile to
+                                 // store B+Tree files?
+                                 // Solution: 1) Store all the B+Tree files in separated tsdb/.tsma directory;
+                                 //           2) Refactor the SDFile to accommodate to both TS data and TSma data files.
 } SDFileSet;
 #endif
 
@@ -385,6 +390,24 @@ static FORCE_INLINE int tsdbOpenDFileSet(SDFileSet* pSet, int flags) {
       return -1;
     }
   }
+  return 0;
+}
+
+// TODO: The xFiles is designed to store extended TSma file. But the format of B+Tree files is not determined yet.
+// TODO: Thus, the definition would be adapted later.
+static FORCE_INLINE int32_t tsdbExtendDFileSet(SDFileSet* pSet, int flags, uint8_t nExtendedFiles) {
+  if ((TSDB_FSET_NXFILES(pSet) + nExtendedFiles) > UINT8_MAX) {
+    terrno = TSDB_CODE_TDB_OUT_OF_RANGE;
+    return -1;
+  }
+  void* tptr = realloc(pSet->xFiles, nExtendedFiles * sizeof(SDFile));
+  if (!tptr) {
+    terrno = TSDB_CODE_TDB_OUT_OF_MEMORY;
+    return -1;
+  }
+
+  TSDB_FSET_NXFILES(pSet) += nExtendedFiles;
+
   return 0;
 }
 

@@ -27,7 +27,7 @@ static const char *TSDB_FNAME_SUFFIX[] = {
     "meta",  // TSDB_FILE_META
 };
 
-static void tsdbGetFilename(int vid, int fid, uint32_t ver, TSDB_FILE_T ftype, char *fname);
+static void tsdbGetFilename(int vid, int fid, uint32_t ver, TSDB_FILE_T ftype, const char* parts, char *fname);
 // static int   tsdbRollBackMFile(SMFile *pMFile);
 static int   tsdbEncodeDFInfo(void **buf, SDFInfo *pInfo);
 static void *tsdbDecodeDFInfo(void *buf, SDFInfo *pInfo);
@@ -309,8 +309,8 @@ void tsdbInitDFile(STsdb *pRepo, SDFile *pDFile, SDiskID did, int fid, uint32_t 
   memset(&(pDFile->info), 0, sizeof(pDFile->info));
   pDFile->info.magic = TSDB_FILE_INIT_MAGIC;
   pDFile->info.fver = tsdbGetDFSVersion(ftype);
-
-  tsdbGetFilename(pRepo->vgId, fid, ver, ftype, fname);
+  // TODO: adaption for .tsma/.rsma files
+  tsdbGetFilename(pRepo->vgId, fid, ver, ftype, NULL, fname);
   tfsInitFile(pRepo->pTfs, &(pDFile->f), did, fname);
 }
 
@@ -729,7 +729,7 @@ int tsdbParseDFilename(const char *fname, int *vid, int *fid, TSDB_FILE_T *ftype
   return 0;
 }
 
-static void tsdbGetFilename(int vid, int fid, uint32_t ver, TSDB_FILE_T ftype, char *fname) {
+static void tsdbGetFilename(int vid, int fid, uint32_t ver, TSDB_FILE_T ftype, const char* parts, char *fname) {
   ASSERT(ftype != TSDB_FILE_MAX);
 
   if (ftype < TSDB_FILE_MAX) {
@@ -738,6 +738,14 @@ static void tsdbGetFilename(int vid, int fid, uint32_t ver, TSDB_FILE_T ftype, c
     } else {
       snprintf(fname, TSDB_FILENAME_LEN, "vnode/vnode%d/tsdb/data/v%df%d.%s-ver%" PRIu32, vid, vid, fid,
                TSDB_FNAME_SUFFIX[ftype], ver);
+    }
+  } else if(ftype > TSDB_FILE_MAX && ftype < TSDB_FILE_META) {
+    if (ver == 0) {
+      snprintf(fname, TSDB_FILENAME_LEN, "vnode/vnode%d/tsdb/data/v%df%d.%s.%s", vid, vid, fid, parts ? parts : "",
+               TSDB_FNAME_SUFFIX[ftype]);
+    } else {
+      snprintf(fname, TSDB_FILENAME_LEN, "vnode/vnode%d/tsdb/data/v%df%d.%s.%s-ver%" PRIu32, vid, vid, fid,
+               parts ? parts : "", TSDB_FNAME_SUFFIX[ftype], ver);
     }
   } else {
     if (ver == 0) {
