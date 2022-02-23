@@ -15,7 +15,14 @@
 
 #include "tsdbDef.h"
 
-// insert TS data
+/**
+ * @brief insert TS data
+ *
+ * @param pTsdb
+ * @param pMsg
+ * @param pRsp
+ * @return int
+ */
 int tsdbInsertData(STsdb *pTsdb, SSubmitReq *pMsg, SSubmitRsp *pRsp) {
   // Check if mem is there. If not, create one.
   if (pTsdb->mem == NULL) {
@@ -41,7 +48,14 @@ int32_t tsdbInsertTSmaData(STsdb *pTsdb, STSma *param, STSmaData *pData) {
   return tsdbInsertTSmaDataImpl(pTsdb, param, pData);
 }
 
-// insert Time-range-wise Rollup Sma(RSma) data
+/**
+ * @brief insert Time-range-wise Rollup Sma(RSma) data
+ *
+ * @param pTsdb
+ * @param param
+ * @param pData
+ * @return int32_t
+ */
 int32_t tsdbInsertRSmaData(STsdb *pTsdb, SRSma *param, STSmaData *pData) {
   // TODO
   return tsdbInsertTSmaDataImpl(pTsdb, param, pData);

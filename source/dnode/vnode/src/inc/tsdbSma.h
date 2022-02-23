@@ -25,9 +25,11 @@ int32_t tsdbInsertRSmaDataImpl(STsdb *pTsdb, SRSma *param, STSmaData *pData);
 
 // internal func
 static FORCE_INLINE int32_t tsdbEncodeTSmaKey(uint64_t tableUid, col_id_t colId, TSKEY tsKey, void **pData) {
-  taosEncodeFixedU64(pData, tableUid);
-  taosEncodeFixedU16(pData, colId);
-  taosEncodeFixedI64(pData, tsKey);
+  int32_t len = 0;
+  len += taosEncodeFixedU64(pData, tableUid);
+  len += taosEncodeFixedU16(pData, colId);
+  len += taosEncodeFixedI64(pData, tsKey);
+  return len;
 }
 
 #if 0
