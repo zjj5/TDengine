@@ -52,7 +52,7 @@ typedef enum {
   TSDB_FILE_SMAL,      // .smal(Block-wise SMA)
   TSDB_FILE_MAX,       //
   TSDB_FILE_TSMA,      // .tsma.${sma_index_name}, Time-range-wise SMA
-  TSDB_FILE_RSMA,      // .rsma.${sma_index_name}, Time-range-wise RollUp SMA
+  TSDB_FILE_RSMA,      // .rsma.${sma_index_name}, Time-range-wise Rollup SMA
   TSDB_FILE_META       // meta
 } TSDB_FILE_T;
 
@@ -331,10 +331,10 @@ typedef struct {
 #else
 typedef struct {
   int     fid;
-  int8_t  state;    // -128~127
-  uint8_t ver;      // 0~255, DFileSet version
-  uint8_t nxFiles;  // 0~255
-  uint8_t reserve;
+  int8_t  state;                 // -128~127
+  uint8_t ver;                   // 0~255, DFileSet version
+  uint8_t nxFiles;               // 0~255, max 255 extended files
+  uint8_t reserve;               // for future use
   SDFile  files[TSDB_FILE_MAX];  // core TS data files, e.g. .head/.data/.last
   SDFile  xFiles[];              // extended auxiliary files, e.g. v2f1900.tsma.${sma_index_name}
 } SDFileSet;
@@ -361,25 +361,25 @@ typedef struct {
     }                                                                          \
   } while (0);
 
-void  tsdbInitDFileSet(STsdb *pRepo, SDFileSet* pSet, SDiskID did, int fid, uint32_t ver);
+void  tsdbInitDFileSet(STsdb* pRepo, SDFileSet* pSet, SDiskID did, int fid, uint32_t ver);
 void  tsdbInitDFileSetEx(SDFileSet* pSet, SDFileSet* pOSet);
 int   tsdbEncodeDFileSet(void** buf, SDFileSet* pSet);
-void* tsdbDecodeDFileSet(STsdb *pRepo, void* buf, SDFileSet* pSet);
+void* tsdbDecodeDFileSet(STsdb* pRepo, void* buf, SDFileSet* pSet);
 int   tsdbEncodeDFileSetEx(void** buf, SDFileSet* pSet);
 void* tsdbDecodeDFileSetEx(void* buf, SDFileSet* pSet);
 int   tsdbApplyDFileSetChange(SDFileSet* from, SDFileSet* to);
-int   tsdbCreateDFileSet(STsdb *pRepo, SDFileSet* pSet, bool updateHeader);
+int   tsdbCreateDFileSet(STsdb* pRepo, SDFileSet* pSet, bool updateHeader);
 int   tsdbUpdateDFileSetHeader(SDFileSet* pSet);
 int   tsdbScanAndTryFixDFileSet(STsdb* pRepo, SDFileSet* pSet);
 
 static FORCE_INLINE void tsdbCloseDFileSet(SDFileSet* pSet) {
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
     tsdbCloseDFile(TSDB_DFILE_IN_SET(pSet, ftype));
   }
 }
 
 static FORCE_INLINE int tsdbOpenDFileSet(SDFileSet* pSet, int flags) {
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
     if (tsdbOpenDFile(TSDB_DFILE_IN_SET(pSet, ftype), flags) < 0) {
       tsdbCloseDFileSet(pSet);
       return -1;
@@ -389,13 +389,13 @@ static FORCE_INLINE int tsdbOpenDFileSet(SDFileSet* pSet, int flags) {
 }
 
 static FORCE_INLINE void tsdbRemoveDFileSet(SDFileSet* pSet) {
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
     (void)tsdbRemoveDFile(TSDB_DFILE_IN_SET(pSet, ftype));
   }
 }
 
 static FORCE_INLINE int tsdbCopyDFileSet(SDFileSet* pSrc, SDFileSet* pDest) {
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
     if (tsdbCopyDFile(TSDB_DFILE_IN_SET(pSrc, ftype), TSDB_DFILE_IN_SET(pDest, ftype)) < 0) {
       tsdbRemoveDFileSet(pDest);
       return -1;
@@ -411,7 +411,7 @@ static FORCE_INLINE void tsdbGetFidKeyRange(int days, int8_t precision, int fid,
 }
 
 static FORCE_INLINE bool tsdbFSetIsOk(SDFileSet* pSet) {
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
     if (TSDB_FILE_IS_BAD(TSDB_DFILE_IN_SET(pSet, ftype))) {
       return false;
     }

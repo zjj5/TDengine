@@ -568,21 +568,35 @@ static int tsdbRollBackDFile(SDFile *pDFile) {
 
 // ============== Operations on SDFileSet
 void tsdbInitDFileSet(STsdb *pRepo, SDFileSet *pSet, SDiskID did, int fid, uint32_t ver) {
-  pSet->fid = fid;
-  pSet->state = 0;
+  TSDB_FSET_FID(pSet) = fid;
+  TSDB_FSET_STATE(pSet) = 0;
+  TSDB_FSET_NXFILES(pSet) = 0;
+  pSet->reserve = 0;
 
   for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
     SDFile *pDFile = TSDB_DFILE_IN_SET(pSet, ftype);
     tsdbInitDFile(pRepo, pDFile, did, fid, ver, ftype);
   }
+  
 }
 
 void tsdbInitDFileSetEx(SDFileSet *pSet, SDFileSet *pOSet) {
-  pSet->fid = pOSet->fid;
+  TSDB_FSET_FID(pSet) = TSDB_FSET_FID(pOSet);
+  TSDB_FSET_STATE(pSet) = 0;
+  TSDB_FSET_NXFILES(pSet) = TSDB_FSET_NXFILES(pOSet);
+  pSet->reserve = 0;
+
   for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
     tsdbInitDFileEx(TSDB_DFILE_IN_SET(pSet, ftype), TSDB_DFILE_IN_SET(pOSet, ftype));
   }
+
+  // TODO: The extended auxiliary e.g. .tsma files should be copied when new slave is added into the cluster.
+  // TODO: Yes? If yes, should process the sync and copy procedure further.
+  for (int32_t n = 0; n < TSDB_FSET_NXFILES(pOSet); ++n) {
+    tsdbInitDFileEx(TSDB_XFILE_IN_SET(pSet, n), TSDB_XFILE_IN_SET(pOSet, n));
+  }
 }
+
 // typedef struct {
 //   int     fid;
 //   int8_t  state;    // -128~127

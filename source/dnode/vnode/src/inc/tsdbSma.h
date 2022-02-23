@@ -16,68 +16,8 @@
 #ifndef _TD_TSDB_SMA_H_
 #define _TD_TSDB_SMA_H_
 
-// The function Ids available for SMA calculation should occupy the 2^n numbers
-#define SMA_FUNC_AVG  0x01U
-#define SMA_FUNC_SUM  0x02U
-#define SMA_FUNC_MIN  0x04U
-#define SMA_FUNC_MAX  0x08U
-#define SMA_FUNC_LAST 0x10U
-// TBD
-#define SMA_FUNC_MAX_SIZE (1 << 63U)
-
-typedef enum {
-  TD_TIME_UNIT_YEAR = 0,
-  TD_TIME_UNIT_MONTH = 1,     //
-  TD_TIME_UNIT_DAY = 2,       //
-  TD_TIME_UNIT_HOUR = 3,      //
-  TD_TIME_UNIT_MINUTE = 4,    //
-  TD_TIME_UNIT_SEC = 5,       //
-  TD_TIME_UNIT_MILISEC = 6,   //
-  TD_TIME_UNIT_MICROSEC = 7,  //
-  TD_TIME_UNIT_NANOSEC = 8
-} ETDTimeUnit;
-
-typedef uint64_t sma_func_t;
-typedef struct {
-  uint64_t   tableUid;
-  int64_t    interval;
-  int64_t    sliding;
-  sma_func_t smaFuncId;
-  col_id_t   colId;
-  uint8_t    intervalUnit;
-  uint8_t    slidingUnit;
-} STimeRangeSmaItem;
-
-typedef struct {
-  uint64_t tableUid;
-  int64_t  interval;
-  int64_t  sliding;
-  // TODO: use definition from schema =>
-  col_id_t *  colIds;     // sorted column ids
-  sma_func_t *smaFuncId;  // sorted sma function ids
-  col_id_t    numOfColId;
-  uint16_t    numOfFuncId;
-  uint8_t     intervalUnit;
-  uint8_t     slidingUnit;
-  // TODO: use definition from schema <=
-} STimeRangeSma;
-//  STimeRangeSma *param;
-
-typedef struct {
-  STimeWindow tsWindow;       // [skey, ekey]
-  int32_t     numOfSmaBlock;  // total number of sma blocks. The sma blocks for each column is numOfSmaBlock/numOfColId.
-  int32_t     dataLen;        // total data length
-  col_id_t *  colIds;         // e.g. 2,4,9,10
-  col_id_t    numOfColId;
-  char        data[];
-} STimeRangeData;
-
-// TimeRangeSma的最大粒度为天。因为原始TS数据是以天粒度标识的，例如，days=7表示7天的数据保存在一个文件组中。
-
-static FORCE_INLINE uint64_t tsdbEncodeFuncIds(sma_func_t *smaFuncId, int32_t nFuncIds) { return 0; }
-
-int32_t tsdbInsertTSmaDataImpl(STsdb *pTsdb, STimeRangeSma *param, STimeRangeData *pData);
-int32_t tsdbInsertRSmaData(STsdb *pTsdb);
+int32_t tsdbInsertTSmaDataImpl(STsdb *pTsdb, STSma *param, STSmaData *pData);
+int32_t tsdbInsertRSmaDataImpl(STsdb *pTsdb, SRSma *param, STSmaData *pData);
 
 #if 0
 

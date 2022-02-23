@@ -15,32 +15,126 @@
 
 #include "tsdbDef.h"
 
-// save TSma data blocks to file
-typedef struct {
-  SFSIter   fsIter;
-  SArray *  aSmaTableIdx;
-  SArray *  aSmaColIdx;
-  SArray *  aSmaBlocks;
-  SArray *  aSmaData;
-  SDFileSet wSet;
-} STSmaH;
+#define SMA_STORAGE_LEVEL_TSDB_HOUR 1
+typedef enum {
+  SMA_STORAGE_LEVEL_TSDB = 0,     // store TSma in directory e.g. vnode${N}/tsdb/.tsma
+  SMA_STORAGE_LEVEL_DFILESET = 1  // store TSma in file e.g. vnode${N}/tsdb/v2f1900.tsma.${sma_index_name}
+} ESmaStorageLevel;
 
-int32_t tsdbInsertTSmaDataImpl(STsdb *pTsdb, STimeRangeSma *param, STimeRangeData *pData) {
+
+static int32_t tsdbTSmaDataSplit(STsdb *pTsdb, STSma *param, STSmaData *pData, int32_t fid, int32_t *step);
+static int32_t tsdbJudgeStorageLevel(int64_t interval, int8_t unit);
+
+/**
+ * @brief For the TSma data blocks with interval less than 1h, split them by fids.
+ *
+ * @param pTsdb
+ * @param param
+ * @param pData
+ * @param fid
+ * @param step
+ * @return int32_t
+ */
+static int32_t tsdbTSmaDataSplit(STsdb *pTsdb, STSma *param, STSmaData *pData, int32_t fid, int32_t *step) {
   STsdbCfg *pCfg = REPO_CFG(pTsdb);
 
-  // tsdbStartCommit
+  // TODO: use binary search
+  for (int32_t n = 0; n < pData->numOfSmaBlock; ++n) {
+    // TODO: Do we need to check the precision of tsWindow.skey?
+    int32_t tFid = (int32_t)(TSDB_KEY_FID(pData->tsWindow.skey, pCfg->daysPerFile, pCfg->precision));
+  }
+  return TSDB_CODE_SUCCESS;
+}
+
+/**
+ * @brief
+ *
+ * @param interval
+ * @param unit
+ * @return int32_t
+ */
+static int32_t tsdbJudgeStorageLevel(int64_t interval, int8_t unit) {
+  // TODO: configurable for SMA_STORAGE_LEVEL_TSDB_HOUR?
+  switch (unit) {
+    case TD_TIME_UNIT_HOUR:
+      if (interval <= 1 * SMA_STORAGE_LEVEL_TSDB_HOUR) {
+        return SMA_STORAGE_LEVEL_DFILESET;
+      }
+      break;
+    case TD_TIME_UNIT_MINUTE:
+      if (interval <= 60 * SMA_STORAGE_LEVEL_TSDB_HOUR) {
+        return SMA_STORAGE_LEVEL_DFILESET;
+      }
+      break;
+    case TD_TIME_UNIT_SEC:
+      if (interval <= 3600 * SMA_STORAGE_LEVEL_TSDB_HOUR) {
+        return SMA_STORAGE_LEVEL_DFILESET;
+      }
+      break;
+    case TD_TIME_UNIT_MILISEC:
+      if (interval <= 3600 * 1e3 * SMA_STORAGE_LEVEL_TSDB_HOUR) {
+        return SMA_STORAGE_LEVEL_DFILESET;
+      }
+      break;
+    case TD_TIME_UNIT_MICROSEC:
+      if (interval <= 3600 * 1e6 * SMA_STORAGE_LEVEL_TSDB_HOUR) {
+        return SMA_STORAGE_LEVEL_DFILESET;
+      }
+      break;
+    case TD_TIME_UNIT_NANOSEC:
+      if (interval <= 3600 * 1e9 * SMA_STORAGE_LEVEL_TSDB_HOUR) {
+        return SMA_STORAGE_LEVEL_DFILESET;
+      }
+      break;
+    default:
+      break;
+  }
+  return SMA_STORAGE_LEVEL_TSDB;
+}
+
+/**
+ * @brief Insert Time-range-wise SMA data
+ *        1) If interval<=1h, save the SMA data as a part of DFileSet to e.g. v2f1900.tsma.${sma_index_name}.btree
+ *        2) If interval>=1h, save the SMA data as a separated parts to e.g. vnode3/tsma/${sma_index_name}.btree
+ *
+ * @param pTsdb
+ * @param param
+ * @param pData
+ * @return int32_t
+ */
+
+int32_t tsdbInsertTSmaDataImpl(STsdb *pTsdb, STSma *param, STSmaData *pData) {
+  STsdbCfg *pCfg = REPO_CFG(pTsdb);
+
+  // Step 1: Judge the storage level
+  int32_t storeLevel = tsdbJudgeStorageLevel(param->interval, param->intervalUnit);
+
+  // Step 2: Prepare the DFile for storage of SMA index
+
+  // Step 3: Iterate/split the TSma data and store to B+Tree index file
   // TODO: the precision of skey should be consistent to pCfg->precision.
   int32_t minFid = (int32_t)(TSDB_KEY_FID(pData->tsWindow.skey, pCfg->daysPerFile, pCfg->precision));
   int32_t maxFid = (int32_t)(TSDB_KEY_FID(pData->tsWindow.ekey, pCfg->daysPerFile, pCfg->precision));
 
   if (minFid == maxFid) {  // save all the TSma data to one file
-   // SDFile
+    // tsdbInsertTSmaDataIntoFile(pTsdb, param, fid, pData);
 
   } else if (minFid < maxFid) {  // split the TSma data and save to multiple files
-    // TODO
+    int32_t tmpFid = 0;
+    int32_t step = 0;
+    for (int32_t n = 0; n < pData->numOfSmaBlock; ++n) {
+    }
   } else {
-    ASSERT(0);
+    TASSERT(0);
+    return TSDB_CODE_INVALID_PARA;
   }
+  // Step 4: finish
+  return TSDB_CODE_SUCCESS;
+}
+
+int32_t tsdbInsertRSmaDataImpl(STsdb *pTsdb, SRSma *param, STSmaData *pData) {
+  // TODO
+  return TSDB_CODE_SUCCESS;
 }
 
 #if 0
