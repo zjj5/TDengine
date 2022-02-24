@@ -54,8 +54,9 @@ typedef enum {
   TSDB_FILE_TSMA,      // .${sma_index_name}.tsma, Time-range-wise SMA
   TSDB_FILE_RSMA,      // .${sma_index_name}.rsma, Time-range-wise Rollup SMA
   TSDB_FILE_META       // meta
-} TSDB_FILE_T;
+} E_TSDB_FILE_T;
 
+typedef int32_t TSDB_FILE_T;
 typedef enum {
   TSDB_FS_VER_0 = 0,
   TSDB_FS_VER_MAX,
@@ -333,35 +334,26 @@ typedef struct {
   int     fid;
   int8_t  state;                 // -128~127
   uint8_t ver;                   // 0~255, DFileSet version
-  uint8_t nxFiles;               // 0~255, max 255 extended files
   uint8_t reserve;               // for future use
   SDFile  files[TSDB_FILE_MAX];  // core TS data files, e.g. .head/.data/.last
-  SDFile  xFiles[];              // extended auxiliary files, e.g. v2f1900.tsma.${sma_index_name}
-                                 // TODO: the xFiles field is designed to store the tsma data file.
-                                 // And .tsma would be stored into B+Tree files, how to use xFiles with type SDFile to
-                                 // store B+Tree files?
-                                 // Solution: 1) Store all the B+Tree files in separated tsdb/.tsma directory;
-                                 //           2) Refactor the SDFile to accommodate to both TS data and TSma data files.
 } SDFileSet;
 #endif
 
 #define TSDB_FSET_FID(s)        ((s)->fid)
 #define TSDB_FSET_STATE(s)      ((s)->state)
 #define TSDB_FSET_VER(s)        ((s)->ver)
-#define TSDB_FSET_NXFILES(s)    ((s)->nxFiles)
 #define TSDB_DFILE_IN_SET(s, t) ((s)->files + (t))
-#define TSDB_XFILE_IN_SET(s, n) ((s)->xFiles + (n))
 #define TSDB_FSET_LEVEL(s)      TSDB_FILE_LEVEL(TSDB_DFILE_IN_SET(s, 0))
 #define TSDB_FSET_ID(s)         TSDB_FILE_ID(TSDB_DFILE_IN_SET(s, 0))
 #define TSDB_FSET_SET_CLOSED(s)                                                \
   do {                                                                         \
-    for (TSDB_FILE_T ftype = TSDB_FILE_HEAD; ftype < TSDB_FILE_MAX; ++ftype) { \
+    for (TSDB_FILE_T ftype = TSDB_FILE_HEAD; ftype < TSDB_FILE_MAX; ftype++) { \
       TSDB_FILE_SET_CLOSED(TSDB_DFILE_IN_SET(s, ftype));                       \
     }                                                                          \
   } while (0);
 #define TSDB_FSET_FSYNC(s)                                                     \
   do {                                                                         \
-    for (TSDB_FILE_T ftype = TSDB_FILE_HEAD; ftype < TSDB_FILE_MAX; ++ftype) { \
+    for (TSDB_FILE_T ftype = TSDB_FILE_HEAD; ftype < TSDB_FILE_MAX; ftype++) { \
       TSDB_FILE_FSYNC(TSDB_DFILE_IN_SET(s, ftype));                            \
     }                                                                          \
   } while (0);
@@ -378,13 +370,13 @@ int   tsdbUpdateDFileSetHeader(SDFileSet* pSet);
 int   tsdbScanAndTryFixDFileSet(STsdb* pRepo, SDFileSet* pSet);
 
 static FORCE_INLINE void tsdbCloseDFileSet(SDFileSet* pSet) {
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     tsdbCloseDFile(TSDB_DFILE_IN_SET(pSet, ftype));
   }
 }
 
 static FORCE_INLINE int tsdbOpenDFileSet(SDFileSet* pSet, int flags) {
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     if (tsdbOpenDFile(TSDB_DFILE_IN_SET(pSet, ftype), flags) < 0) {
       tsdbCloseDFileSet(pSet);
       return -1;
@@ -396,6 +388,7 @@ static FORCE_INLINE int tsdbOpenDFileSet(SDFileSet* pSet, int flags) {
 // TODO: The xFiles is designed to store extended TSma file. But the format of B+Tree files is not determined yet.
 // TODO: Thus, the definition would be adapted later.
 static FORCE_INLINE int32_t tsdbExtendDFileSet(SDFileSet* pSet, int flags, uint8_t nExtendedFiles) {
+#if 0
   if ((TSDB_FSET_NXFILES(pSet) + nExtendedFiles) > UINT8_MAX) {
     terrno = TSDB_CODE_TDB_OUT_OF_RANGE;
     return -1;
@@ -407,18 +400,18 @@ static FORCE_INLINE int32_t tsdbExtendDFileSet(SDFileSet* pSet, int flags, uint8
   }
 
   TSDB_FSET_NXFILES(pSet) += nExtendedFiles;
-
+#endif
   return 0;
 }
 
 static FORCE_INLINE void tsdbRemoveDFileSet(SDFileSet* pSet) {
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     (void)tsdbRemoveDFile(TSDB_DFILE_IN_SET(pSet, ftype));
   }
 }
 
 static FORCE_INLINE int tsdbCopyDFileSet(SDFileSet* pSrc, SDFileSet* pDest) {
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     if (tsdbCopyDFile(TSDB_DFILE_IN_SET(pSrc, ftype), TSDB_DFILE_IN_SET(pDest, ftype)) < 0) {
       tsdbRemoveDFileSet(pDest);
       return -1;
@@ -434,7 +427,7 @@ static FORCE_INLINE void tsdbGetFidKeyRange(int days, int8_t precision, int fid,
 }
 
 static FORCE_INLINE bool tsdbFSetIsOk(SDFileSet* pSet) {
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     if (TSDB_FILE_IS_BAD(TSDB_DFILE_IN_SET(pSet, ftype))) {
       return false;
     }

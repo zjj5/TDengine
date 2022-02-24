@@ -276,6 +276,7 @@ typedef struct SSessionWindow {
 
 #define GET_FORWARD_DIRECTION_FACTOR(ord) (((ord) == TSDB_ORDER_ASC) ? QUERY_ASC_FORWARD_STEP : QUERY_DESC_FORWARD_STEP)
 
+// TODO: ETDTimeUnit => Use the unified MACRO definition of TAOS
 typedef enum {
   TD_TIME_UNIT_YEAR = 0,
   TD_TIME_UNIT_SEASON = 1,
@@ -285,10 +286,11 @@ typedef enum {
   TD_TIME_UNIT_HOUR = 5,      //
   TD_TIME_UNIT_MINUTE = 6,    //
   TD_TIME_UNIT_SEC = 7,       //
-  TD_TIME_UNIT_MILLISEC = 8,   //
+  TD_TIME_UNIT_MILLISEC = 8,  //
   TD_TIME_UNIT_MICROSEC = 9,  //
   TD_TIME_UNIT_NANOSEC = 10
-} ETDTimeUnit;  // TODO: Use the unified MACRO definition of TAOS
+} ETDTimeUnit;
+// TODO: ETDTimeUnit => Use the unified MACRO definition of TAOS
 
 typedef int32_t sma_func_t;
 
@@ -319,7 +321,11 @@ typedef struct {
 } STSmaData;
 
 // RSma: Time-range-wise Rollup SMA
-typedef STSma     SRSma;
+// TODO: refactor when rSma grammar defined finally
+typedef struct {
+  STSma tsma;
+  // TODO: extended fields for rSma
+} SRSma;
 
 #ifdef __cplusplus
 }

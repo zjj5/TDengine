@@ -24,9 +24,9 @@
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #pragma GCC diagnostic ignored "-Wsign-compare"
 
-#include "../inc/clientInt.h"
-#include "taos.h"
+#include "tsdbDef.h"
 
+#if 0
 namespace {
 void showDB(TAOS* pConn) {
   TAOS_RES* pRes = taos_query(pConn, "show databases");
@@ -42,19 +42,31 @@ void showDB(TAOS* pConn) {
   }
 }
 }  // namespace
+#endif
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
 
-TEST(testCase, driverInit_Test) {
-  taosInitGlobalCfg();
-  printf("hello world\n");
-  //  taos_init();
+TEST(testCase, tSmaInsertTest) {
+  STSma     tSma = {0};
+  STSmaData tSmaData = {0};
+  STsdb     tsdb = {0};
+
+  tSma.intervalUnit = TD_TIME_UNIT_DAY;
+  
+
+  tsdbInsertTSmaData(&tsdb, &tSma, &tSmaData);
 }
 
 #if 0
+
+TEST(testCase, tSmaInsertTest) {
+  taosInitGlobalCfg();
+//  taos_init();
+}
+
 TEST(testCase, connect_Test) {
   TAOS* pConn = taos_connect("localhost", "root", "taosdata", NULL, 0);
   if (pConn == NULL) {
@@ -563,7 +575,6 @@ TEST(testCase, insert_test) {
   taos_free_result(pRes);
   taos_close(pConn);
 }
-#endif
 
 
 TEST(testCase, projection_query_tables) {
@@ -622,7 +633,7 @@ TEST(testCase, projection_query_tables) {
   taos_free_result(pRes);
   taos_close(pConn);
 }
-#if 0
+
 
 TEST(testCase, projection_query_stables) {
   TAOS* pConn = taos_connect("localhost", "root", "taosdata", NULL, 0);

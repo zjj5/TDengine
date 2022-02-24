@@ -570,42 +570,31 @@ static int tsdbRollBackDFile(SDFile *pDFile) {
 void tsdbInitDFileSet(STsdb *pRepo, SDFileSet *pSet, SDiskID did, int fid, uint32_t ver) {
   TSDB_FSET_FID(pSet) = fid;
   TSDB_FSET_STATE(pSet) = 0;
-  TSDB_FSET_NXFILES(pSet) = 0;
+  // TSDB_FSET_NXFILES(pSet) = 0;
   pSet->reserve = 0;
 
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     SDFile *pDFile = TSDB_DFILE_IN_SET(pSet, ftype);
     tsdbInitDFile(pRepo, pDFile, did, fid, ver, ftype);
   }
-  
 }
 
 void tsdbInitDFileSetEx(SDFileSet *pSet, SDFileSet *pOSet) {
   TSDB_FSET_FID(pSet) = TSDB_FSET_FID(pOSet);
   TSDB_FSET_STATE(pSet) = 0;
-  TSDB_FSET_NXFILES(pSet) = TSDB_FSET_NXFILES(pOSet);
+  // TSDB_FSET_NXFILES(pSet) = TSDB_FSET_NXFILES(pOSet);
   pSet->reserve = 0;
 
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     tsdbInitDFileEx(TSDB_DFILE_IN_SET(pSet, ftype), TSDB_DFILE_IN_SET(pOSet, ftype));
   }
 
   // TODO: The extended auxiliary e.g. .tsma files should be copied when new slave is added into the cluster.
   // TODO: Yes? If yes, should process the sync and copy procedure further.
-  for (int32_t n = 0; n < TSDB_FSET_NXFILES(pOSet); ++n) {
-    tsdbInitDFileEx(TSDB_XFILE_IN_SET(pSet, n), TSDB_XFILE_IN_SET(pOSet, n));
-  }
+  // for (int32_t n = 0; n < TSDB_FSET_NXFILES(pOSet); ++n) {
+  //   tsdbInitDFileEx(TSDB_XFILE_IN_SET(pSet, n), TSDB_XFILE_IN_SET(pOSet, n));
+  // }
 }
-
-// typedef struct {
-//   int     fid;
-//   int8_t  state;    // -128~127
-//   uint8_t ver;      // 0~255, DFileSet version
-//   uint8_t nxFiles;  // 0~255
-//   uint8_t reserve;
-//   SDFile  files[TSDB_FILE_MAX];  // core TS data files, e.g. .head/.data/.last
-//   SDFile  xFiles[];              // extended files, e.g. v2f1900.tsma.${sma_index_name}
-// } SDFileSet;
 
 int tsdbEncodeDFileSet(void **buf, SDFileSet *pSet) {
   int tlen = 0;
@@ -613,16 +602,16 @@ int tsdbEncodeDFileSet(void **buf, SDFileSet *pSet) {
   tlen += taosEncodeFixedI32(buf, TSDB_FSET_FID(pSet));
   // state not included
   tlen += taosEncodeFixedU8(buf, TSDB_FSET_VER(pSet));
-  tlen += taosEncodeFixedU8(buf, TSDB_FSET_NXFILES(pSet));
+  // tlen += taosEncodeFixedU8(buf, TSDB_FSET_NXFILES(pSet));
   tlen += taosEncodeFixedU8(buf, pSet->reserve);
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     tlen += tsdbEncodeSDFile(buf, TSDB_DFILE_IN_SET(pSet, ftype));
   }
 
   // TODO: extended files, e.g. .tsma data
-  for (uint8_t n = 0; n < pSet->nxFiles; ++n) {
-    tlen += tsdbEncodeSDFile(buf, TSDB_XFILE_IN_SET(pSet, n));
-  }
+  // for (uint8_t n = 0; n < pSet->nxFiles; ++n) {
+  //   tlen += tsdbEncodeSDFile(buf, TSDB_XFILE_IN_SET(pSet, n));
+  // }
 
   return tlen;
 }
@@ -631,16 +620,16 @@ void *tsdbDecodeDFileSet(STsdb *pRepo, void *buf, SDFileSet *pSet) {
   buf = taosDecodeFixedI32(buf, &(TSDB_FSET_FID(pSet)));
   pSet->state = 0;
   buf = taosDecodeFixedU8(buf, &(TSDB_FSET_VER(pSet)));
-  buf = taosDecodeFixedU8(buf, &(TSDB_FSET_NXFILES(pSet)));
+  // buf = taosDecodeFixedU8(buf, &(TSDB_FSET_NXFILES(pSet)));
   buf = taosDecodeFixedU8(buf, &(pSet->reserve));
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     buf = tsdbDecodeSDFile(pRepo, buf, TSDB_DFILE_IN_SET(pSet, ftype));
   }
 
   // TODO: extended files, e.g. .tsma data
-  for (uint8_t n = 0; n < TSDB_FSET_NXFILES(pSet); ++n) {
-    buf = tsdbDecodeSDFile(pRepo, buf, TSDB_XFILE_IN_SET(pSet, n));
-  }
+  // for (uint8_t n = 0; n < TSDB_FSET_NXFILES(pSet); ++n) {
+  //   buf = tsdbDecodeSDFile(pRepo, buf, TSDB_XFILE_IN_SET(pSet, n));
+  // }
 
   return buf;
 }
@@ -650,9 +639,9 @@ int tsdbEncodeDFileSetEx(void **buf, SDFileSet *pSet) {
 
   tlen += taosEncodeFixedI32(buf, TSDB_FSET_FID(pSet));
   tlen += taosEncodeFixedU8(buf, TSDB_FSET_VER(pSet));
-  tlen += taosEncodeFixedU8(buf, TSDB_FSET_NXFILES(pSet));
+  // tlen += taosEncodeFixedU8(buf, TSDB_FSET_NXFILES(pSet));
   tlen += taosEncodeFixedU8(buf, pSet->reserve);
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     tlen += tsdbEncodeSDFileEx(buf, TSDB_DFILE_IN_SET(pSet, ftype));
   }
 
@@ -662,16 +651,16 @@ int tsdbEncodeDFileSetEx(void **buf, SDFileSet *pSet) {
 void *tsdbDecodeDFileSetEx(void *buf, SDFileSet *pSet) {
   buf = taosDecodeFixedI32(buf, &(TSDB_FSET_FID(pSet)));
   buf = taosDecodeFixedU8(buf, &(TSDB_FSET_VER(pSet)));
-  buf = taosDecodeFixedU8(buf, &(TSDB_FSET_NXFILES(pSet)));
+  // buf = taosDecodeFixedU8(buf, &(TSDB_FSET_NXFILES(pSet)));
   buf = taosDecodeFixedU8(buf, &(pSet->reserve));
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     buf = tsdbDecodeSDFileEx(buf, TSDB_DFILE_IN_SET(pSet, ftype));
   }
   return buf;
 }
 
 int tsdbApplyDFileSetChange(SDFileSet *from, SDFileSet *to) {
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     SDFile *pDFileFrom = (from) ? TSDB_DFILE_IN_SET(from, ftype) : NULL;
     SDFile *pDFileTo = (to) ? TSDB_DFILE_IN_SET(to, ftype) : NULL;
     if (tsdbApplyDFileChange(pDFileFrom, pDFileTo) < 0) {
@@ -683,7 +672,7 @@ int tsdbApplyDFileSetChange(SDFileSet *from, SDFileSet *to) {
 }
 
 int tsdbCreateDFileSet(STsdb *pRepo, SDFileSet *pSet, bool updateHeader) {
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     if (tsdbCreateDFile(pRepo, TSDB_DFILE_IN_SET(pSet, ftype), updateHeader, ftype) < 0) {
       tsdbCloseDFileSet(pSet);
       tsdbRemoveDFileSet(pSet);
@@ -695,7 +684,7 @@ int tsdbCreateDFileSet(STsdb *pRepo, SDFileSet *pSet, bool updateHeader) {
 }
 
 int tsdbUpdateDFileSetHeader(SDFileSet *pSet) {
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     if (tsdbUpdateDFileHeader(TSDB_DFILE_IN_SET(pSet, ftype)) < 0) {
       return -1;
     }
@@ -704,7 +693,7 @@ int tsdbUpdateDFileSetHeader(SDFileSet *pSet) {
 }
 
 int tsdbScanAndTryFixDFileSet(STsdb *pRepo, SDFileSet *pSet) {
-  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ++ftype) {
+  for (TSDB_FILE_T ftype = 0; ftype < TSDB_FILE_MAX; ftype++) {
     if (tsdbScanAndTryFixDFile(pRepo, TSDB_DFILE_IN_SET(pSet, ftype)) < 0) {
       return -1;
     }

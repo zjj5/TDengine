@@ -44,8 +44,11 @@ int tsdbInsertData(STsdb *pTsdb, SSubmitReq *pMsg, SSubmitRsp *pRsp) {
  * TODO: Who is responsible for resource release
  */
 int32_t tsdbInsertTSmaData(STsdb *pTsdb, STSma *param, STSmaData *pData) {
-  // TODO
-  return tsdbInsertTSmaDataImpl(pTsdb, param, pData);
+  int32_t code = TSDB_CODE_SUCCESS;
+  if ((code = tsdbInsertTSmaDataImpl(pTsdb, param, pData)) < 0) {
+    tsdbWarn("vgId:%d insert tSma data failed since %s", REPO_ID(pTsdb), tstrerror(terrno));
+  }
+  return code;
 }
 
 /**
@@ -57,6 +60,9 @@ int32_t tsdbInsertTSmaData(STsdb *pTsdb, STSma *param, STSmaData *pData) {
  * @return int32_t
  */
 int32_t tsdbInsertRSmaData(STsdb *pTsdb, SRSma *param, STSmaData *pData) {
-  // TODO
-  return tsdbInsertTSmaDataImpl(pTsdb, param, pData);
+  int32_t code = TSDB_CODE_SUCCESS;
+  if ((code = tsdbInsertRSmaDataImpl(pTsdb, param, pData)) < 0) {
+    tsdbWarn("vgId:%d insert rSma data failed since %s", REPO_ID(pTsdb), tstrerror(terrno));
+  }
+  return code;
 }
