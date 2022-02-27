@@ -305,26 +305,47 @@ typedef struct {
   uint16_t    reserve;
   col_id_t    numOfColIds;
   uint16_t    numOfFuncIds;
-  col_id_t*   colIds;      // sorted column ids
-  sma_func_t* smaFuncIds;  // sorted sma function ids
+  col_id_t*   colIds;      // N.B. sorted column ids
+  sma_func_t* smaFuncIds;  // N.B. sorted sma function ids
   // TODO: use definition from schema <=
 } STSma;  // Time-range-wise SMA
 
 typedef struct {
   STimeWindow tsWindow;       // [skey, ekey]
   uint64_t    tableUid;       // sub/common table uid
-  int32_t     numOfSmaBlock;  // number of sma blocks for each column, total number is numOfSmaBlock*numOfColId
+  int32_t     numOfSmaBlocks;  // number of sma blocks for each column, total number is numOfSmaBlocks*numOfColId
   int32_t     dataLen;        // total data length
   col_id_t*   colIds;         // e.g. 2,4,9,10
-  col_id_t    numOfColId;     // e.g. 4
+  col_id_t    numOfColIds;    // e.g. 4
   char        data[];         // the sma blocks
 } STSmaData;
 
+// TODO: move to the final location afte schema of STSma/STSmaData defined
+static FORCE_INLINE void tdDestroySmaData(STSmaData *pSmaData) {
+  if(pSmaData) {
+    if(pSmaData->colIds) {
+      tfree(pSmaData->colIds);
+    }
+    tfree(pSmaData);
+  }
+}
+
 // RSma: Time-range-wise Rollup SMA
-// TODO: refactor when rSma grammar defined finally
+// TODO: refactor when rSma grammar defined finally =>
 typedef struct {
-  STSma tsma;
-  // TODO: extended fields for rSma
+  int64_t  interval;
+  int32_t  retention;  // unit: day
+  uint16_t days;       // unit: day
+  int8_t   intervalUnit;
+} SSmaParams;
+// TODO: refactor when rSma grammar defined finally <=
+
+typedef struct {
+  // TODO: refactor to use the real schema =>
+  STSma   tsma;
+  float   xFilesFactor;
+  SArray* smaParams;  // SSmaParams
+  // TODO: refactor to use the real schema <=
 } SRSma;
 
 #ifdef __cplusplus

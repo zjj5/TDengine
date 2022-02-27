@@ -26,23 +26,6 @@
 
 #include "tsdbDef.h"
 
-#if 0
-namespace {
-void showDB(TAOS* pConn) {
-  TAOS_RES* pRes = taos_query(pConn, "show databases");
-  TAOS_ROW  pRow = NULL;
-
-  TAOS_FIELD* pFields = taos_fetch_fields(pRes);
-  int32_t     numOfFields = taos_num_fields(pRes);
-
-  char str[512] = {0};
-  while ((pRow = taos_fetch_row(pRes)) != NULL) {
-    int32_t code = taos_print_row(str, pRow, pFields, numOfFields);
-    printf("%s\n", str);
-  }
-}
-}  // namespace
-#endif
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
@@ -51,13 +34,40 @@ int main(int argc, char** argv) {
 
 TEST(testCase, tSmaInsertTest) {
   STSma     tSma = {0};
-  STSmaData tSmaData = {0};
+  STSmaData* pSmaData = NULL;
   STsdb     tsdb = {0};
 
+  // init
   tSma.intervalUnit = TD_TIME_UNIT_DAY;
-  
+  tSma.interval = 1;
+  tSma.numOfFuncIds = 5;  // sum/min/max/avg/last
 
-  tsdbInsertTSmaData(&tsdb, &tSma, &tSmaData);
+  int32_t blockSize = tSma.numOfFuncIds * sizeof(int64_t);
+  int32_t numOfColIds = 3;
+  int32_t numOfSmaBlocks = 10;
+
+  int32_t dataLen = numOfColIds * numOfSmaBlocks * blockSize;
+
+  pSmaData = (STSmaData*)malloc(sizeof(STSmaData) + dataLen);
+  ASSERT_EQ(pSmaData != NULL, true);
+  pSmaData->tableUid = 3232329230;
+  pSmaData->numOfColIds = numOfColIds;
+  pSmaData->numOfSmaBlocks = numOfSmaBlocks;
+  pSmaData->dataLen = dataLen;
+  pSmaData->tsWindow.skey = 1640000000;
+  pSmaData->tsWindow.ekey = 1645788649;
+  pSmaData->colIds = (col_id_t*)malloc(sizeof(col_id_t) * numOfColIds);
+  ASSERT_EQ(pSmaData->colIds != NULL, true);
+
+  for (int32_t i = 0; i < numOfColIds; ++i) {
+    *(pSmaData->colIds + i) = (i + PRIMARYKEY_TIMESTAMP_COL_ID);
+  }
+
+  // execute
+  EXPECT_EQ(tsdbInsertTSmaData(&tsdb, &tSma, pSmaData), TSDB_CODE_SUCCESS);
+
+  // release
+  tdDestroySmaData(pSmaData);
 }
 
 #if 0
