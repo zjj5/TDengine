@@ -289,6 +289,7 @@ static int32_t tsdbTSmaDataSplit(STSmaWriteH *pSmaH, STSma *param, STSmaData *pD
  *        1) If interval <= SMA_STORAGE_SPLIT_HOURS, save the SMA data as a part of DFileSet to e.g.
  * v2f1900.tsma.${sma_index_name}.btree 2) If interval >= SMA_STORAGE_SPLIT_HOURS, save the SMA data as a separated
  * parts to e.g. vnode3/tsma/${sma_index_name}.btree
+ *        2) The destination file which the data block of one interval is determined by its start TS key.
  *
  * @param pTsdb
  * @param param
@@ -509,6 +510,40 @@ int32_t tsdbGetTSmaDataImpl(STsdb *pTsdb, STSma *param, STSmaData *pData, STimeW
   }
 
   // read data from file and fill the result
+  return TSDB_CODE_SUCCESS;
+}
+
+/**
+ * @brief Get the start TS key of the last data block of one interval-sliding.
+ *
+ * @param pTsdb
+ * @param param
+ * @param result
+ * @return int32_t
+ *         1) Return 0 and fill the result if the check procedure is normal;
+ *         2) Return -1 if error occurs during the check procedure.
+ */
+int32_t tsdbGetTSmaStatus(STsdb *pTsdb, STSma *param, void *result) {
+  const char *procedure = "";
+  if (strncmp(procedure, "get the start TS key of the last data block", 100) != 0) {
+    return -1;
+  }
+  // fill the result
+  return TSDB_CODE_SUCCESS;
+}
+
+/**
+ * @brief Remove the tSma data files related to param between pWin.
+ *
+ * @param pTsdb
+ * @param param
+ * @param pWin
+ * @return int32_t
+ */
+int32_t tsdbRemoveTSmaData(STsdb *pTsdb, STSma *param, STimeWindow *pWin) {
+  // for ("tSmaFiles of param-interval-sliding between pWin") {
+  //   // remove the tSmaFile
+  // }
   return TSDB_CODE_SUCCESS;
 }
 
