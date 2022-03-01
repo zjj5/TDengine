@@ -88,7 +88,7 @@ int    tsdbPrepareCommit(STsdb *pTsdb);
 int    tsdbCommit(STsdb *pTsdb);
 
 /**
- * @brief Insert TSma(Time-range-wise SMA) data from stream-computing engine
+ * @brief Insert tSma(Time-range-wise SMA) data from stream computing engine
  * 
  * @param pTsdb 
  * @param param 

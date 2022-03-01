@@ -35,13 +35,13 @@ int tsdbInsertData(STsdb *pTsdb, SSubmitReq *pMsg, SSubmitRsp *pRsp) {
 }
 
 /**
- * @brief insert Time-range-wise Sma(TSma) data
- *
- * @param pTsdb
- * @param param
- * @param pData
- * @return int32_t
- * TODO: Who is responsible for resource release
+ * @brief Insert/Update tSma(Time-range-wise SMA) data from stream computing engine
+ * 
+ * @param pTsdb 
+ * @param param 
+ * @param pData 
+ * @return int32_t 
+ * TODO: Who is responsible for resource allocate and release?
  */
 int32_t tsdbInsertTSmaData(STsdb *pTsdb, STSma *param, STSmaData *pData) {
   int32_t code = TSDB_CODE_SUCCESS;
@@ -52,7 +52,7 @@ int32_t tsdbInsertTSmaData(STsdb *pTsdb, STSma *param, STSmaData *pData) {
 }
 
 /**
- * @brief insert Time-range-wise Rollup Sma(RSma) data
+ * @brief Insert Time-range-wise Rollup Sma(RSma) data
  *
  * @param pTsdb
  * @param param

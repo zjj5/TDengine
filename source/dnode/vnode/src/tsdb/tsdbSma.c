@@ -285,11 +285,12 @@ static int32_t tsdbTSmaDataSplit(STSmaWriteH *pSmaH, STSma *param, STSmaData *pD
 }
 
 /**
- * @brief Insert Time-range-wise SMA data
- *        1) If interval <= SMA_STORAGE_SPLIT_HOURS, save the SMA data as a part of DFileSet to e.g.
- * v2f1900.tsma.${sma_index_name}.btree 2) If interval >= SMA_STORAGE_SPLIT_HOURS, save the SMA data as a separated
- * parts to e.g. vnode3/tsma/${sma_index_name}.btree
- *        2) The destination file which the data block of one interval is determined by its start TS key.
+ * @brief Insert/Update Time-range-wise SMA data.
+ *  - If interval < SMA_STORAGE_SPLIT_HOURS(e.g. 24), save the SMA data as a part of DFileSet to e.g.
+ * v3f1900.tsma.${sma_index_name}. The days is the same with that for TS data files.
+ *  - If interval >= SMA_STORAGE_SPLIT_HOURS, save the SMA data to e.g. vnode3/tsma/v3f632.tsma.${sma_index_name}. The
+ * days is 30 times of the interval, and the minimum days is SMA_STORAGE_TSDB_DAYS(30d).
+ *  - The destination file of one data block for some interval is determined by its start TS key.
  *
  * @param pTsdb
  * @param param
@@ -514,7 +515,7 @@ int32_t tsdbGetTSmaDataImpl(STsdb *pTsdb, STSma *param, STSmaData *pData, STimeW
 }
 
 /**
- * @brief Get the start TS key of the last data block of one interval-sliding.
+ * @brief Get the start TS key of the last data block of one interval/sliding.
  *
  * @param pTsdb
  * @param param
