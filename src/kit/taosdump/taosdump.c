@@ -2050,18 +2050,17 @@ static int getTableDes(
                         GET_DOUBLE_VAL(row[TSDB_SHOW_TABLES_NAME_INDEX]));
                 break;
             case TSDB_DATA_TYPE_BINARY:
-                memset(tableDes->cols[i].value, 0,
-                        sizeof(tableDes->cols[i].value));
+                memset(tableDes->cols[i].value, 0, COL_VALUEBUF_LEN);
                 int len = strlen((char *)row[0]);
                 // FIXME for long value
-                if (len < (COL_VALUEBUF_LEN - 2)) {
+                if (len < COL_VALUEBUF_LEN / 4 - 1) {
                     converStringToReadable(
                             (char *)row[0],
                             length[0],
                             tableDes->cols[i].value,
                             len);
                 } else {
-                    tableDes->cols[i].var_value = calloc(1, len * 2);
+                    tableDes->cols[i].var_value = calloc(1, len * 4 + 1);
                     if (tableDes->cols[i].var_value == NULL) {
                         errorPrint("%s() LN%d, memory alalocation failed!\n",
                                 __func__, __LINE__);
@@ -2075,13 +2074,13 @@ static int getTableDes(
                 break;
 
             case TSDB_DATA_TYPE_NCHAR:
-                {
-                    memset(tableDes->cols[i].value, 0, sizeof(tableDes->cols[i].note));
-                    char tbuf[COL_NOTE_LEN-2];    // need reserve 2 bytes for ' '
-                    convertNCharToReadable((char *)row[TSDB_SHOW_TABLES_NAME_INDEX], length[0], tbuf, COL_NOTE_LEN);
-                    sprintf(tableDes->cols[i].value, "%s", tbuf);
-                    break;
-                }
+                memset(tableDes->cols[i].value, 0, sizeof(tableDes->cols[i].note));
+                char tbuf[TSDB_COL_NAME_LEN * 4 + 1];    /* it has a length of TSDB_COL_NAME_LEN, every char has a maximum 4-character memory for display, plus a '\0' */
+                convertNCharToReadable((char *)row[TSDB_SHOW_TABLES_NAME_INDEX], length[0], tbuf, COL_NOTE_LEN);
+                tableDes->cols[i].var_value = calloc(1, sizeof(tbuf));
+                sprintf(tableDes->cols[i].value, "%s", tbuf);
+                break;
+
             case TSDB_DATA_TYPE_TIMESTAMP:
                 sprintf(tableDes->cols[i].value, "%" PRId64 "", *(int64_t *)row[TSDB_SHOW_TABLES_NAME_INDEX]);
 #if 0
@@ -2534,6 +2533,8 @@ static int convertNCharToReadable(char *str, int size, char *buf, int bufsize) {
     char *pstr = str;
     char *pbuf = buf;
     wchar_t wc;
+    int i = 0;
+
     while (size > 0) {
         if (*pstr == '\0') break;
         int byte_width = mbtowc(&wc, pstr, MB_CUR_MAX);
@@ -2545,8 +2546,11 @@ static int convertNCharToReadable(char *str, int size, char *buf, int bufsize) {
         if ((int)wc < 256) {
             pbuf = stpcpy(pbuf, ascii_literal_list[(int)wc]);
         } else {
-            memcpy(pbuf, pstr, byte_width);
-            pbuf += byte_width;
+            while(i < byte_width) {
+                /* index of ascii_literal_list[] is the ith char(byte) value of wc. */
+		pbuf = stpcpy(pbuf, ascii_literal_list[(uint8_t)*((char *)(&wc) + i)]);
+		i++;
+	    }
         }
         pstr += byte_width;
     }
