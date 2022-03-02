@@ -15,7 +15,6 @@
 
 #include "os.h"
 #include "shell.h"
-#include "tconfig.h"
 #include "tglobal.h"
 
 pthread_t pid;
@@ -42,9 +41,11 @@ void *cancelHandler(void *arg) {
     taosReleaseRef(tscObjRef, rid);
 #endif    
 #else
+    reset_terminal_mode();
     printf("\nReceive ctrl+c or other signal, quit shell.\n");
     exit(0);
 #endif
+    reset_terminal_mode();
     printf("\nReceive ctrl+c or other signal, quit shell.\n");
     exit(0);
   }

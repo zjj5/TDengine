@@ -71,7 +71,7 @@ int32_t taosMkDir(const char *dirname) {
   return code;
 }
 
-void taosRemoveOldFiles(char *dirname, int32_t keepDays) {
+void taosRemoveOldFiles(const char *dirname, int32_t keepDays) {
   DIR *dir = opendir(dirname);
   if (dir == NULL) return;
 
@@ -114,7 +114,7 @@ void taosRemoveOldFiles(char *dirname, int32_t keepDays) {
   rmdir(dirname);
 }
 
-int32_t taosExpandDir(char *dirname, char *outname, int32_t maxlen) {
+int32_t taosExpandDir(const char *dirname, char *outname, int32_t maxlen) {
   wordexp_t full_path;
   if (0 != wordexp(dirname, &full_path, 0)) {
     //printf("failed to expand path:%s since %s", dirname, strerror(errno));
@@ -138,6 +138,15 @@ int32_t taosRealPath(char *dirname, int32_t maxlen) {
   }
 
   return 0;
+}
+
+bool taosIsDir(const char *dirname) {
+  DIR *dir = opendir(dirname);
+  if (dir != NULL) {
+    closedir(dir);
+    return true;
+  }
+  return false;
 }
 
 #endif

@@ -25,8 +25,8 @@
 #include "dndMnode.h"
 #include "dndVnodes.h"
 
-#define INTERNAL_USER "_dnd"
-#define INTERNAL_CKEY "_key"
+#define INTERNAL_USER   "_dnd"
+#define INTERNAL_CKEY   "_key"
 #define INTERNAL_SECRET "_pwd"
 
 static void dndInitMsgFp(STransMgmt *pMgmt) {
@@ -95,7 +95,7 @@ static void dndInitMsgFp(STransMgmt *pMgmt) {
   pMgmt->msgFp[TMSG_INDEX(TDMT_MND_CREATE_STB)] = dndProcessMnodeWriteMsg;
   pMgmt->msgFp[TMSG_INDEX(TDMT_MND_ALTER_STB)] = dndProcessMnodeWriteMsg;
   pMgmt->msgFp[TMSG_INDEX(TDMT_MND_DROP_STB)] = dndProcessMnodeWriteMsg;
-  pMgmt->msgFp[TMSG_INDEX(TDMT_MND_STB_META)] = dndProcessMnodeReadMsg;
+  pMgmt->msgFp[TMSG_INDEX(TDMT_MND_TABLE_META)] = dndProcessMnodeReadMsg;
   pMgmt->msgFp[TMSG_INDEX(TDMT_MND_VGROUP_LIST)] = dndProcessMnodeReadMsg;
   pMgmt->msgFp[TMSG_INDEX(TDMT_MND_KILL_QUERY)] = dndProcessMnodeWriteMsg;
   pMgmt->msgFp[TMSG_INDEX(TDMT_MND_KILL_CONN)] = dndProcessMnodeWriteMsg;
@@ -113,7 +113,7 @@ static void dndInitMsgFp(STransMgmt *pMgmt) {
   pMgmt->msgFp[TMSG_INDEX(TDMT_MND_ALTER_TOPIC)] = dndProcessMnodeWriteMsg;
   pMgmt->msgFp[TMSG_INDEX(TDMT_MND_DROP_TOPIC)] = dndProcessMnodeWriteMsg;
   pMgmt->msgFp[TMSG_INDEX(TDMT_MND_SUBSCRIBE)] = dndProcessMnodeWriteMsg;
-  /*pMgmt->msgFp[TMSG_INDEX(TDMT_VND_SUBSCRIBE_RSP)] = dndProcessMnodeWriteMsg;*/
+  pMgmt->msgFp[TMSG_INDEX(TDMT_MND_MQ_COMMIT_OFFSET)] = dndProcessMnodeWriteMsg;
   pMgmt->msgFp[TMSG_INDEX(TDMT_VND_MQ_SET_CONN_RSP)] = dndProcessMnodeWriteMsg;
   pMgmt->msgFp[TMSG_INDEX(TDMT_VND_MQ_REB_RSP)] = dndProcessMnodeWriteMsg;
   pMgmt->msgFp[TMSG_INDEX(TDMT_MND_GET_SUB_EP)] = dndProcessMnodeReadMsg;
@@ -155,7 +155,7 @@ static void dndInitMsgFp(STransMgmt *pMgmt) {
 }
 
 static void dndProcessResponse(void *parent, SRpcMsg *pRsp, SEpSet *pEpSet) {
-  SDnode *    pDnode = parent;
+  SDnode     *pDnode = parent;
   STransMgmt *pMgmt = &pDnode->tmgmt;
 
   tmsg_t msgType = pRsp->msgType;
@@ -188,7 +188,7 @@ static int32_t dndInitClient(SDnode *pDnode) {
   rpcInit.cfp = dndProcessResponse;
   rpcInit.sessions = 1024;
   rpcInit.connType = TAOS_CONN_CLIENT;
-  rpcInit.idleTime = pDnode->cfg.shellActivityTimer * 1000;
+  rpcInit.idleTime = tsShellActivityTimer * 1000;
   rpcInit.user = INTERNAL_USER;
   rpcInit.ckey = INTERNAL_CKEY;
   rpcInit.spi = 1;
@@ -219,7 +219,7 @@ static void dndCleanupClient(SDnode *pDnode) {
 }
 
 static void dndProcessRequest(void *param, SRpcMsg *pReq, SEpSet *pEpSet) {
-  SDnode *    pDnode = param;
+  SDnode     *pDnode = param;
   STransMgmt *pMgmt = &pDnode->tmgmt;
 
   tmsg_t msgType = pReq->msgType;
@@ -313,7 +313,7 @@ static int32_t dndRetrieveUserAuthInfo(void *parent, char *user, char *spi, char
   SAuthReq authReq = {0};
   tstrncpy(authReq.user, user, TSDB_USER_LEN);
   int32_t contLen = tSerializeSAuthReq(NULL, 0, &authReq);
-  void *  pReq = rpcMallocCont(contLen);
+  void   *pReq = rpcMallocCont(contLen);
   tSerializeSAuthReq(pReq, contLen, &authReq);
 
   SRpcMsg rpcMsg = {.pCont = pReq, .contLen = contLen, .msgType = TDMT_MND_AUTH, .ahandle = (void *)9528};
@@ -343,7 +343,7 @@ static int32_t dndInitServer(SDnode *pDnode) {
   STransMgmt *pMgmt = &pDnode->tmgmt;
   dndInitMsgFp(pMgmt);
 
-  int32_t numOfThreads = (int32_t)((pDnode->env.numOfCores * pDnode->cfg.numOfThreadsPerCore) / 2.0);
+  int32_t numOfThreads = (int32_t)((tsNumOfCores * tsNumOfThreadsPerCore) / 2.0);
   if (numOfThreads < 1) {
     numOfThreads = 1;
   }
@@ -354,9 +354,9 @@ static int32_t dndInitServer(SDnode *pDnode) {
   rpcInit.label = "D-S";
   rpcInit.numOfThreads = numOfThreads;
   rpcInit.cfp = dndProcessRequest;
-  rpcInit.sessions = pDnode->cfg.maxShellConns;
+  rpcInit.sessions = tsMaxShellConns;
   rpcInit.connType = TAOS_CONN_SERVER;
-  rpcInit.idleTime = pDnode->cfg.shellActivityTimer * 1000;
+  rpcInit.idleTime = tsShellActivityTimer * 1000;
   rpcInit.afp = dndRetrieveUserAuthInfo;
   rpcInit.parent = pDnode;
 
