@@ -51,12 +51,13 @@ typedef enum {
   TSDB_FILE_SMAD,      // .smad(Block-wise SMA)
   TSDB_FILE_SMAL,      // .smal(Block-wise SMA)
   TSDB_FILE_MAX,       //
-  TSDB_FILE_TSMA,      // .${sma_index_name}.tsma, Time-range-wise SMA
-  TSDB_FILE_RSMA,      // .${sma_index_name}.rsma, Time-range-wise Rollup SMA
-  TSDB_FILE_META       // meta
-} E_TSDB_FILE_T;
+  TSDB_FILE_META,      // meta
+  TSDB_FILE_TSMA,      // .tsma.${sma_index_name}, Time-range-wise SMA
+  TSDB_FILE_RSMA,      // .rsma.${sma_index_name}, Time-range-wise Rollup SMA
+} ETSDB_FILE_T;
 
 typedef int32_t TSDB_FILE_T;
+
 typedef enum {
   TSDB_FS_VER_0 = 0,
   TSDB_FS_VER_MAX,
@@ -220,7 +221,7 @@ void  tsdbInitDFile(STsdb *pRepo, SDFile* pDFile, SDiskID did, int fid, uint32_t
 void  tsdbInitDFileEx(SDFile* pDFile, SDFile* pODFile);
 int   tsdbEncodeSDFile(void** buf, SDFile* pDFile);
 void* tsdbDecodeSDFile(STsdb *pRepo, void* buf, SDFile* pDFile);
-int   tsdbCreateDFile(STsdb* pRepo, SDFile* pDFile, bool updateHeader, TSDB_FILE_T fType);
+int   tsdbCreateDFile(STsdb *pRepo, SDFile* pDFile, bool updateHeader, TSDB_FILE_T fType);
 int   tsdbUpdateDFileHeader(SDFile* pDFile);
 int   tsdbLoadDFileHeader(SDFile* pDFile, SDFInfo* pInfo);
 int   tsdbParseDFilename(const char* fname, int* vid, int* fid, TSDB_FILE_T* ftype, uint32_t* version);
@@ -323,25 +324,19 @@ static FORCE_INLINE int tsdbCopyDFile(SDFile* pSrc, SDFile* pDest) {
 }
 
 // =============== SDFileSet
-#ifndef TSDB_REFACTOR_3
 typedef struct {
-  int    fid;
-  int    state;
-  SDFile files[TSDB_FILE_MAX];
+  int      fid;
+  int8_t   state;    // -128~127
+  uint8_t  ver;      // 0~255, DFileSet version
+  uint16_t reserve;
+  SDFile   files[TSDB_FILE_MAX];
 } SDFileSet;
-#else
-typedef struct {
-  int     fid;
-  int8_t  state;                 // -128~127
-  uint8_t ver;                   // 0~255, DFileSet version
-  uint8_t reserve;               // for future use
-  SDFile  files[TSDB_FILE_MAX];  // core TS data files, e.g. .head/.data/.last
-} SDFileSet;
-#endif
 
-#define TSDB_FSET_FID(s)        ((s)->fid)
-#define TSDB_FSET_STATE(s)      ((s)->state)
-#define TSDB_FSET_VER(s)        ((s)->ver)
+#define TSDB_LATEST_FSET_VER 0
+
+#define TSDB_FSET_FID(s) ((s)->fid)
+#define TSDB_FSET_STATE(s) ((s)->state)
+#define TSDB_FSET_VER(s) ((s)->ver)
 #define TSDB_DFILE_IN_SET(s, t) ((s)->files + (t))
 #define TSDB_FSET_LEVEL(s)      TSDB_FILE_LEVEL(TSDB_DFILE_IN_SET(s, 0))
 #define TSDB_FSET_ID(s)         TSDB_FILE_ID(TSDB_DFILE_IN_SET(s, 0))
