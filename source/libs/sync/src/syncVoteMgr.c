@@ -98,7 +98,7 @@ cJSON *voteGranted2Json(SVotesGranted *pVotesGranted) {
     cJSON_AddItemToObject(pRoot, "isGranted", pIsGranted);
 
     cJSON_AddNumberToObject(pRoot, "votes", pVotesGranted->votes);
-    snprintf(u64buf, sizeof(u64buf), "%lu", pVotesGranted->term);
+    snprintf(u64buf, sizeof(u64buf), "%llu", pVotesGranted->term);
     cJSON_AddStringToObject(pRoot, "term", u64buf);
     cJSON_AddNumberToObject(pRoot, "quorum", pVotesGranted->quorum);
     cJSON_AddNumberToObject(pRoot, "toLeader", pVotesGranted->toLeader);
@@ -225,7 +225,7 @@ cJSON *votesRespond2Json(SVotesRespond *pVotesRespond) {
     cJSON_AddItemToObject(pRoot, "isRespond", pIsRespond);
     cJSON_AddNumberToObject(pRoot, "respondNum", respondNum);
 
-    snprintf(u64buf, sizeof(u64buf), "%lu", pVotesRespond->term);
+    snprintf(u64buf, sizeof(u64buf), "%llu", pVotesRespond->term);
     cJSON_AddStringToObject(pRoot, "term", u64buf);
     snprintf(u64buf, sizeof(u64buf), "%p", pVotesRespond->pSyncNode);
     cJSON_AddStringToObject(pRoot, "pSyncNode", u64buf);

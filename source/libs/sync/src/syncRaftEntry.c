@@ -78,12 +78,12 @@ cJSON* syncEntry2Json(const SSyncRaftEntry* pEntry) {
     cJSON_AddNumberToObject(pRoot, "bytes", pEntry->bytes);
     cJSON_AddNumberToObject(pRoot, "msgType", pEntry->msgType);
     cJSON_AddNumberToObject(pRoot, "originalRpcType", pEntry->originalRpcType);
-    snprintf(u64buf, sizeof(u64buf), "%lu", pEntry->seqNum);
+    snprintf(u64buf, sizeof(u64buf), "%llu", pEntry->seqNum);
     cJSON_AddStringToObject(pRoot, "seqNum", u64buf);
     cJSON_AddNumberToObject(pRoot, "isWeak", pEntry->isWeak);
-    snprintf(u64buf, sizeof(u64buf), "%lu", pEntry->term);
+    snprintf(u64buf, sizeof(u64buf), "%llu", pEntry->term);
     cJSON_AddStringToObject(pRoot, "term", u64buf);
-    snprintf(u64buf, sizeof(u64buf), "%lu", pEntry->index);
+    snprintf(u64buf, sizeof(u64buf), "%llu", pEntry->index);
     cJSON_AddStringToObject(pRoot, "index", u64buf);
     cJSON_AddNumberToObject(pRoot, "dataLen", pEntry->dataLen);
 

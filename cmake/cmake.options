@@ -61,7 +61,7 @@ ELSE ()
     option(
             BUILD_WITH_BDB
             "If build with BerkleyDB"
-            ON
+            OFF
           )
 
 ENDIF ()

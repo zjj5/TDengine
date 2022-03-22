@@ -108,10 +108,10 @@ int32_t raftStoreSerialize(SRaftStore *pRaftStore, char *buf, size_t len) {
   cJSON *pRoot = cJSON_CreateObject();
 
   char u64Buf[128];
-  snprintf(u64Buf, sizeof(u64Buf), "%lu", pRaftStore->currentTerm);
+  snprintf(u64Buf, sizeof(u64Buf), "%llu", pRaftStore->currentTerm);
   cJSON_AddStringToObject(pRoot, "current_term", u64Buf);
 
-  snprintf(u64Buf, sizeof(u64Buf), "%lu", pRaftStore->voteFor.addr);
+  snprintf(u64Buf, sizeof(u64Buf), "%llu", pRaftStore->voteFor.addr);
   cJSON_AddStringToObject(pRoot, "vote_for_addr", u64Buf);
 
   cJSON_AddNumberToObject(pRoot, "vote_for_vgid", pRaftStore->voteFor.vgId);
@@ -142,11 +142,11 @@ int32_t raftStoreDeserialize(SRaftStore *pRaftStore, char *buf, size_t len) {
 
   cJSON *pCurrentTerm = cJSON_GetObjectItem(pRoot, "current_term");
   assert(cJSON_IsString(pCurrentTerm));
-  sscanf(pCurrentTerm->valuestring, "%lu", &(pRaftStore->currentTerm));
+  sscanf(pCurrentTerm->valuestring, "%llu", &(pRaftStore->currentTerm));
 
   cJSON *pVoteForAddr = cJSON_GetObjectItem(pRoot, "vote_for_addr");
   assert(cJSON_IsString(pVoteForAddr));
-  sscanf(pVoteForAddr->valuestring, "%lu", &(pRaftStore->voteFor.addr));
+  sscanf(pVoteForAddr->valuestring, "%llu", &(pRaftStore->voteFor.addr));
 
   cJSON *pVoteForVgid = cJSON_GetObjectItem(pRoot, "vote_for_vgid");
   pRaftStore->voteFor.vgId = pVoteForVgid->valueint;
@@ -188,11 +188,11 @@ cJSON *raftStore2Json(SRaftStore *pRaftStore) {
   cJSON *pRoot = cJSON_CreateObject();
 
   if (pRaftStore != NULL) {
-    snprintf(u64buf, sizeof(u64buf), "%lu", pRaftStore->currentTerm);
+    snprintf(u64buf, sizeof(u64buf), "%llu", pRaftStore->currentTerm);
     cJSON_AddStringToObject(pRoot, "currentTerm", u64buf);
 
     cJSON *pVoteFor = cJSON_CreateObject();
-    snprintf(u64buf, sizeof(u64buf), "%lu", pRaftStore->voteFor.addr);
+    snprintf(u64buf, sizeof(u64buf), "%llu", pRaftStore->voteFor.addr);
     cJSON_AddStringToObject(pVoteFor, "addr", u64buf);
     {
       uint64_t u64 = pRaftStore->voteFor.addr;
