@@ -31,6 +31,7 @@
 #include "syncTimeout.h"
 #include "syncUtil.h"
 #include "syncVoteMgr.h"
+#include "tref.h"
 
 static int32_t tsNodeRefId = -1;
 
@@ -44,28 +45,57 @@ static void syncNodeEqHeartbeatTimer(void* param, void* tmrId);
 static int32_t syncNodeOnPingCb(SSyncNode* ths, SyncPing* pMsg);
 static int32_t syncNodeOnPingReplyCb(SSyncNode* ths, SyncPingReply* pMsg);
 static int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg);
+
+// life cycle
+static void syncFreeNode(void* param);
 // ---------------------------------
 
 int32_t syncInit() {
-  int32_t ret = syncEnvStart();
+  int32_t ret;
+  tsNodeRefId = taosOpenRef(200, syncFreeNode);
+  if (tsNodeRefId < 0) {
+    sError("failed to init node ref");
+    syncCleanUp();
+    ret = -1;
+  } else {
+    ret = syncEnvStart();
+  }
+
   return ret;
 }
 
 void syncCleanUp() {
   int32_t ret = syncEnvStop();
   assert(ret == 0);
+
+  if (tsNodeRefId != -1) {
+    taosCloseRef(tsNodeRefId);
+    tsNodeRefId = -1;
+  }
 }
 
 int64_t syncStart(const SSyncInfo* pSyncInfo) {
-  int32_t    ret = 0;
   SSyncNode* pSyncNode = syncNodeOpen(pSyncInfo);
   assert(pSyncNode != NULL);
-  return ret;
+
+  pSyncNode->rid = taosAddRef(tsNodeRefId, pSyncNode);
+  if (pSyncNode->rid < 0) {
+    syncFreeNode(pSyncNode);
+    return -1;
+  }
+
+  return pSyncNode->rid;
 }
 
 void syncStop(int64_t rid) {
-  SSyncNode* pSyncNode = NULL;  // get pointer from rid
+  SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
+  if (pSyncNode == NULL) {
+    return;
+  }
   syncNodeClose(pSyncNode);
+
+  taosReleaseRef(tsNodeRefId, pSyncNode->rid);
+  taosRemoveRef(tsNodeRefId, rid);
 }
 
 int32_t syncReconfig(int64_t rid, const SSyncCfg* pSyncCfg) {
@@ -73,9 +103,16 @@ int32_t syncReconfig(int64_t rid, const SSyncCfg* pSyncCfg) {
   return ret;
 }
 
-int32_t syncForwardToPeer(int64_t rid, const SRpcMsg* pMsg, bool isWeak) {
-  int32_t    ret = 0;
-  SSyncNode* pSyncNode = NULL;  // get pointer from rid
+int32_t syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak) {
+  int32_t ret = 0;
+
+  // todo : get pointer from rid
+  SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
+  if (pSyncNode == NULL) {
+    return -1;
+  }
+  assert(rid == pSyncNode->rid);
+
   if (pSyncNode->state == TAOS_SYNC_STATE_LEADER) {
     SyncClientRequest* pSyncMsg = syncClientRequestBuild2(pMsg, 0, isWeak);
     SRpcMsg            rpcMsg;
@@ -86,13 +123,21 @@ int32_t syncForwardToPeer(int64_t rid, const SRpcMsg* pMsg, bool isWeak) {
 
   } else {
     sTrace("syncForwardToPeer not leader, %s", syncUtilState2String(pSyncNode->state));
-    ret = -1;  // need define err code !!
+    ret = -1;  // todo : need define err code !!
   }
+
+  taosReleaseRef(tsNodeRefId, pSyncNode->rid);
+  return ret;
+}
+
+int32_t syncForwardToPeer(int64_t rid, const SRpcMsg* pMsg, bool isWeak) {
+  int32_t ret = syncPropose(rid, pMsg, isWeak);
   return ret;
 }
 
 ESyncState syncGetMyRole(int64_t rid) {
-  SSyncNode* pSyncNode = NULL;  // get pointer from rid
+  // todo : get pointer from rid
+  SSyncNode* pSyncNode = NULL;
   return pSyncNode->state;
 }
 
@@ -149,7 +194,7 @@ SSyncNode* syncNodeOpen(const SSyncInfo* pSyncInfo) {
   pSyncNode->quorum = syncUtilQuorum(pSyncInfo->syncCfg.replicaNum);
   pSyncNode->leaderCache = EMPTY_RAFT_ID;
 
-  // init life cycle
+  // init life cycle outside
 
   // TLA+ Spec
   // InitHistoryVars == /\ elections = {}
@@ -195,7 +240,7 @@ SSyncNode* syncNodeOpen(const SSyncInfo* pSyncInfo) {
   // init TLA+ log vars
   pSyncNode->pLogStore = logStoreCreate(pSyncNode);
   assert(pSyncNode->pLogStore != NULL);
-  pSyncNode->commitIndex = 0;
+  pSyncNode->commitIndex = SYNC_INDEX_INVALID;
 
   // init ping timer
   pSyncNode->pPingTimer = NULL;
@@ -438,6 +483,10 @@ cJSON* syncNode2Json(const SSyncNode* pSyncNode) {
     cJSON* pLaderCache = syncUtilRaftId2Json(&pSyncNode->leaderCache);
     cJSON_AddItemToObject(pRoot, "leaderCache", pLaderCache);
 
+    // life cycle
+    snprintf(u64buf, sizeof(u64buf), "%ld", pSyncNode->rid);
+    cJSON_AddStringToObject(pRoot, "rid", u64buf);
+
     // tla+ server vars
     cJSON_AddNumberToObject(pRoot, "state", pSyncNode->state);
     cJSON_AddStringToObject(pRoot, "state_str", syncUtilState2String(pSyncNode->state));
@@ -525,6 +574,17 @@ char* syncNode2Str(const SSyncNode* pSyncNode) {
   cJSON_Delete(pJson);
   return serialized;
 }
+
+SSyncNode* syncNodeAcquire(int64_t rid) {
+  SSyncNode* pNode = taosAcquireRef(tsNodeRefId, rid);
+  if (pNode == NULL) {
+    sTrace("failed to acquire node from refId:%" PRId64, rid);
+  }
+
+  return pNode;
+}
+
+void syncNodeRelease(SSyncNode* pNode) { taosReleaseRef(tsNodeRefId, pNode->rid); }
 
 // raft state change --------------
 void syncNodeUpdateTerm(SSyncNode* pSyncNode, SyncTerm term) {
@@ -774,9 +834,6 @@ static int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg
   if (ths->state == TAOS_SYNC_STATE_LEADER) {
     ths->pLogStore->appendEntry(ths->pLogStore, pEntry);
 
-    // only myself, maybe commit
-    syncMaybeAdvanceCommitIndex(ths);
-
     // start replicate right now!
     syncNodeReplicate(ths);
 
@@ -791,6 +848,9 @@ static int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg
     }
     rpcFreeCont(rpcMsg.pCont);
 
+    // only myself, maybe commit
+    syncMaybeAdvanceCommitIndex(ths);
+
   } else {
     // pre commit
     SRpcMsg rpcMsg;
@@ -798,7 +858,7 @@ static int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg
 
     if (ths->pFsm != NULL) {
       if (ths->pFsm->FpPreCommitCb != NULL) {
-        ths->pFsm->FpPreCommitCb(ths->pFsm, &rpcMsg, pEntry->index, pEntry->isWeak, -1);
+        ths->pFsm->FpPreCommitCb(ths->pFsm, &rpcMsg, pEntry->index, pEntry->isWeak, -2);
       }
     }
     rpcFreeCont(rpcMsg.pCont);
@@ -806,4 +866,11 @@ static int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg
 
   syncEntryDestory(pEntry);
   return ret;
+}
+
+static void syncFreeNode(void* param) {
+  SSyncNode* pNode = param;
+  syncNodePrint2((char*)"==syncFreeNode==", pNode);
+
+  free(pNode);
 }

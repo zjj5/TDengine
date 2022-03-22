@@ -111,15 +111,16 @@ typedef enum _mgmt_table {
   TSDB_MGMT_TABLE_MAX,
 } EShowType;
 
-#define TSDB_ALTER_TABLE_ADD_TAG         1
-#define TSDB_ALTER_TABLE_DROP_TAG        2
-#define TSDB_ALTER_TABLE_UPDATE_TAG_NAME 3
-#define TSDB_ALTER_TABLE_UPDATE_TAG_VAL  4
-
+#define TSDB_ALTER_TABLE_ADD_TAG             1
+#define TSDB_ALTER_TABLE_DROP_TAG            2
+#define TSDB_ALTER_TABLE_UPDATE_TAG_NAME     3
+#define TSDB_ALTER_TABLE_UPDATE_TAG_VAL      4
 #define TSDB_ALTER_TABLE_ADD_COLUMN          5
 #define TSDB_ALTER_TABLE_DROP_COLUMN         6
 #define TSDB_ALTER_TABLE_UPDATE_COLUMN_BYTES 7
 #define TSDB_ALTER_TABLE_UPDATE_TAG_BYTES    8
+#define TSDB_ALTER_TABLE_UPDATE_OPTIONS      9
+#define TSDB_ALTER_TABLE_UPDATE_COLUMN_NAME  10
 
 #define TSDB_FILL_NONE      0
 #define TSDB_FILL_NULL      1
@@ -696,6 +697,7 @@ typedef struct {
 
 int32_t tSerializeSStatusRsp(void* buf, int32_t bufLen, SStatusRsp* pRsp);
 int32_t tDeserializeSStatusRsp(void* buf, int32_t bufLen, SStatusRsp* pRsp);
+void    tFreeSStatusRsp(SStatusRsp* pRsp);
 
 typedef struct {
   int32_t reserved;
@@ -1127,10 +1129,10 @@ typedef struct {
 
 typedef struct {
   char   name[TSDB_TOPIC_FNAME_LEN];
+  char   outputTbName[TSDB_TABLE_NAME_LEN];
   int8_t igExists;
   char*  sql;
-  char*  physicalPlan;
-  char*  logicalPlan;
+  char*  ast;
 } SCMCreateStreamReq;
 
 typedef struct {
@@ -1280,7 +1282,7 @@ static FORCE_INLINE SMqRebSubscribe* tNewSMqRebSubscribe(const char* key) {
   if (pRebSub == NULL) {
     goto _err;
   }
-  pRebSub->key = key;
+  pRebSub->key = strdup(key);
   pRebSub->lostConsumers = taosArrayInit(0, sizeof(int64_t));
   if (pRebSub->lostConsumers == NULL) {
     goto _err;
@@ -1918,13 +1920,14 @@ typedef struct {
 } SVCreateTSmaReq;
 
 typedef struct {
-  int8_t      type;                            // 0 status report, 1 update data
-  char        indexName[TSDB_INDEX_NAME_LEN];  //
-  STimeWindow windows;
+  int8_t  type;  // 0 status report, 1 update data
+  int64_t indexUid;
+  int64_t skey;  // start TS key of interval/sliding window
 } STSmaMsg;
 
 typedef struct {
   int64_t ver;  // use a general definition
+  int64_t indexUid;
   char    indexName[TSDB_INDEX_NAME_LEN];
 } SVDropTSmaReq;
 
@@ -2052,27 +2055,19 @@ static FORCE_INLINE void* tDecodeTSma(void* buf, STSma* pSma) {
   buf = taosDecodeFixedI64(buf, &pSma->sliding);
 
   if (pSma->exprLen > 0) {
-    pSma->expr = (char*)calloc(pSma->exprLen, 1);
-    if (pSma->expr != NULL) {
-      buf = taosDecodeStringTo(buf, pSma->expr);
-    } else {
+    if ((buf = taosDecodeString(buf, &pSma->expr)) == NULL) {
       tdDestroyTSma(pSma);
       return NULL;
     }
-
   } else {
     pSma->expr = NULL;
   }
 
   if (pSma->tagsFilterLen > 0) {
-    pSma->tagsFilter = (char*)calloc(pSma->tagsFilterLen, 1);
-    if (pSma->tagsFilter != NULL) {
-      buf = taosDecodeStringTo(buf, pSma->tagsFilter);
-    } else {
+    if ((buf = taosDecodeString(buf, &pSma->tagsFilter)) == NULL) {
       tdDestroyTSma(pSma);
       return NULL;
     }
-
   } else {
     pSma->tagsFilter = NULL;
   }
@@ -2121,25 +2116,16 @@ typedef struct {
   int8_t  mqMsgType;
   int32_t code;
   int32_t epoch;
+  int64_t consumerId;
 } SMqRspHead;
 
-typedef struct {
-  int64_t         consumerId;
-  SSchemaWrapper* schemas;
-  int64_t         reqOffset;
-  int64_t         rspOffset;
-  int32_t         skipLogNum;
-  int32_t         numOfTopics;
-  SArray*         pBlockData;  // SArray<SSDataBlock>
-} SMqPollRsp;
-
-// one req for one vg+topic
 typedef struct {
   SMsgHead head;
 
   int64_t consumerId;
   int64_t blockingTime;
   int32_t epoch;
+  int8_t  withSchema;
   char    cgroup[TSDB_CGROUP_LEN];
 
   int64_t currentOffset;
@@ -2158,19 +2144,22 @@ typedef struct {
 } SMqSubTopicEp;
 
 typedef struct {
-  int64_t consumerId;
-  char    cgroup[TSDB_CGROUP_LEN];
-  SArray* topics;  // SArray<SMqSubTopicEp>
-} SMqCMGetSubEpRsp;
+  SMqRspHead head;
+  int64_t    reqOffset;
+  int64_t    rspOffset;
+  int32_t    skipLogNum;
+  // TODO: replace with topic name
+  int32_t numOfTopics;
+  // TODO: remove from msg
+  SSchemaWrapper* schema;
+  SArray*         pBlockData;  // SArray<SSDataBlock>
+} SMqPollRsp;
 
 typedef struct {
   SMqRspHead head;
-  union {
-    SMqPollRsp       consumeRsp;
-    SMqCMGetSubEpRsp getEpRsp;
-  };
-  void* extra;
-} SMqMsgWrapper;
+  char       cgroup[TSDB_CGROUP_LEN];
+  SArray*    topics;  // SArray<SMqSubTopicEp>
+} SMqCMGetSubEpRsp;
 
 typedef struct {
   int32_t curBlock;
@@ -2178,11 +2167,13 @@ typedef struct {
   void**  uData;
 } SMqRowIter;
 
-struct tmq_message_t_v1 {
-  SMqPollRsp rsp;
+struct tmq_message_t {
+  SMqPollRsp msg;
+  void*      vg;
   SMqRowIter iter;
 };
 
+#if 0
 struct tmq_message_t {
   SMqRspHead head;
   union {
@@ -2194,6 +2185,7 @@ struct tmq_message_t {
   int32_t curRow;
   void**  uData;
 };
+#endif
 
 static FORCE_INLINE void tDeleteSMqSubTopicEp(SMqSubTopicEp* pSubTopicEp) { taosArrayDestroy(pSubTopicEp->vgs); }
 
@@ -2246,8 +2238,7 @@ static FORCE_INLINE void* tDecodeSMqSubTopicEp(void* buf, SMqSubTopicEp* pTopicE
 
 static FORCE_INLINE int32_t tEncodeSMqCMGetSubEpRsp(void** buf, const SMqCMGetSubEpRsp* pRsp) {
   int32_t tlen = 0;
-  tlen += taosEncodeFixedI64(buf, pRsp->consumerId);
-  tlen += taosEncodeString(buf, pRsp->cgroup);
+  // tlen += taosEncodeString(buf, pRsp->cgroup);
   int32_t sz = taosArrayGetSize(pRsp->topics);
   tlen += taosEncodeFixedI32(buf, sz);
   for (int32_t i = 0; i < sz; i++) {
@@ -2258,8 +2249,7 @@ static FORCE_INLINE int32_t tEncodeSMqCMGetSubEpRsp(void** buf, const SMqCMGetSu
 }
 
 static FORCE_INLINE void* tDecodeSMqCMGetSubEpRsp(void* buf, SMqCMGetSubEpRsp* pRsp) {
-  buf = taosDecodeFixedI64(buf, &pRsp->consumerId);
-  buf = taosDecodeStringTo(buf, pRsp->cgroup);
+  // buf = taosDecodeStringTo(buf, pRsp->cgroup);
   int32_t sz;
   buf = taosDecodeFixedI32(buf, &sz);
   pRsp->topics = taosArrayInit(sz, sizeof(SMqSubTopicEp));
@@ -2280,12 +2270,22 @@ enum {
 };
 
 typedef struct {
+  void* inputHandle;
+  void* executor[4];
+} SStreamTaskParRunner;
+
+typedef struct {
   int64_t streamId;
   int32_t taskId;
   int32_t level;
   int8_t  status;
+  int8_t  pipeEnd;
+  int8_t  parallel;
+  SEpSet  NextOpEp;
   char*   qmsg;
-  void*   executor;
+  // not applied to encoder and decoder
+  SStreamTaskParRunner runner;
+  // void*                executor;
   // void*   stateStore;
   //  storage handle
 } SStreamTask;
