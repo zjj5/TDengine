@@ -133,6 +133,7 @@ static void *vmOpenVnodeFunc(void *param) {
     msgCb.queueFps[QUERY_QUEUE] = vmPutMsgToQueryQueue;
     msgCb.queueFps[FETCH_QUEUE] = vmPutMsgToFetchQueue;
     msgCb.queueFps[APPLY_QUEUE] = vmPutMsgToApplyQueue;
+    msgCb.qsizeFp = vmGetQueueSize;
     msgCb.sendReqFp = dndSendReqToDnode;
     msgCb.sendMnodeReqFp = dndSendReqToMnode;
     msgCb.sendRspFp = dndSendRsp;
@@ -342,7 +343,7 @@ void vmGetMgmtFp(SMgmtWrapper *pWrapper) {
   mgmtFp.requiredFp = vmRequire;
 
   vmInitMsgHandles(pWrapper);
-  pWrapper->name = "vnodes";
+  pWrapper->name = "vnode";
   pWrapper->fp = mgmtFp;
 }
 
