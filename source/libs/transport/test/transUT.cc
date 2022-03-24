@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 #include <cstdio>
 #include <cstring>
+#include "rpcLog.h"
 #include "tdatablock.h"
 #include "tglobal.h"
 #include "tlog.h"
@@ -48,7 +49,10 @@ static void *ConstructArgForSpecificMsgType(void *parent, tmsg_t msgType) {
   return NULL;
 }
 // server except
-static void NotifyAppLinkBroken(void *parent, tmsg_t msgType) {}
+static bool handleExcept(void *parent, tmsg_t msgType) {
+  //
+  return msgType == TDMT_VND_QUERY || msgType == TDMT_VND_FETCH_RSP || msgType == TDMT_VND_RES_READY_RSP;
+}
 typedef void (*CB)(void *parent, SRpcMsg *pMsg, SEpSet *pEpSet);
 
 static void processContinueSend(void *parent, SRpcMsg *pMsg, SEpSet *pEpSet);
@@ -82,6 +86,10 @@ class Client {
     rpcClose(this->transCli);
     rpcInit_.cfp = cb;
     this->transCli = rpcOpen(&rpcInit_);
+  }
+  void Stop() {
+    rpcClose(this->transCli);
+    this->transCli = NULL;
   }
   void SetPersistFP(bool (*pfp)(void *parent, tmsg_t msgType)) {
     rpcClose(this->transCli);
@@ -157,7 +165,7 @@ class Server {
     rpcClose(this->transSrv);
     this->transSrv = NULL;
   }
-  void SetExceptFp(void (*efp)(void *parent, tmsg_t msgType)) {
+  void SetExceptFp(bool (*efp)(void *parent, tmsg_t msgType)) {
     this->Stop();
     rpcInit_.efp = efp;
     this->Start();
@@ -207,6 +215,7 @@ static void processResp(void *parent, SRpcMsg *pMsg, SEpSet *pEpSet) {
   Client *client = (Client *)parent;
   client->SetResp(pMsg);
   client->SemPost();
+  tDebug("received resp");
 }
 
 static void initEnv() {
@@ -266,7 +275,7 @@ class TransObj {
     cli->SetPAndMFp(pfp, mfp);
   }
   // call when link broken, and notify query or fetch stop
-  void SetSrvExceptFp(void (*efp)(void *parent, tmsg_t msgType)) {
+  void SetSrvExceptFp(bool (*efp)(void *parent, tmsg_t msgType)) {
     ////////
     srv->SetExceptFp(efp);
   }
@@ -275,6 +284,10 @@ class TransObj {
     srv->SetSrvContinueSend(cfp);
   }
   void RestartSrv() { srv->Restart(); }
+  void cliStop() {
+    ///////
+    cli->Stop();
+  }
   void cliSendAndRecv(SRpcMsg *req, SRpcMsg *resp) { cli->SendAndRecv(req, resp); }
   void cliSendAndRecvNoHandle(SRpcMsg *req, SRpcMsg *resp) { cli->SendAndRecvNoHandle(req, resp); }
 
@@ -348,7 +361,7 @@ TEST_F(TransEnv, cliPersistHandle) {
   tr->SetCliPersistFp(cliPersistHandle);
   SRpcMsg resp = {0};
   for (int i = 0; i < 10; i++) {
-    SRpcMsg req = {.handle = resp.handle};
+    SRpcMsg req = {.handle = resp.handle, .noResp = 0};
     req.msgType = 1;
     req.pCont = rpcMallocCont(10);
     req.contLen = 10;
@@ -417,22 +430,62 @@ TEST_F(TransEnv, srvContinueSend) {
 }
 
 TEST_F(TransEnv, srvPersistHandleExcept) {
-  // conn breken
+  tr->SetSrvContinueSend(processContinueSend);
+  tr->SetCliPersistFp(cliPersistHandle);
+  SRpcMsg resp = {0};
+  for (int i = 0; i < 5; i++) {
+    SRpcMsg req = {.handle = resp.handle};
+    req.msgType = 1;
+    req.pCont = rpcMallocCont(10);
+    req.contLen = 10;
+    tr->cliSendAndRecv(&req, &resp);
+    if (i > 2) {
+      tr->cliStop();
+      break;
+    }
+  }
+  taosMsleep(2000);
+  // conn broken
   //
 }
 TEST_F(TransEnv, cliPersistHandleExcept) {
-  // conn breken
+  tr->SetSrvContinueSend(processContinueSend);
+  tr->SetCliPersistFp(cliPersistHandle);
+  SRpcMsg resp = {0};
+  for (int i = 0; i < 5; i++) {
+    SRpcMsg req = {.handle = resp.handle};
+    req.msgType = 1;
+    req.pCont = rpcMallocCont(10);
+    req.contLen = 10;
+    tr->cliSendAndRecv(&req, &resp);
+    if (i > 2) {
+      tr->StopSrv();
+      break;
+    }
+  }
+  taosMsleep(2000);
+  // conn broken
+  //
 }
 
-TEST_F(TransEnv, multiCliPersisHandleExcept) {
-  // conn breken
-}
-TEST_F(TransEnv, multiSrvPersisHandleExcept) {
-  // conn breken
+TEST_F(TransEnv, multiCliPersistHandleExcept) {
+  // conn broken
 }
 TEST_F(TransEnv, queryExcept) {
+  tr->SetSrvExceptFp(handleExcept);
+
   // query and conn is broken
 }
 TEST_F(TransEnv, noResp) {
+  SRpcMsg resp = {0};
+  for (int i = 0; i < 5; i++) {
+    SRpcMsg req = {.noResp = 1};
+    req.msgType = 1;
+    req.pCont = rpcMallocCont(10);
+    req.contLen = 10;
+    tr->cliSendAndRecv(&req, &resp);
+  }
+  taosMsleep(2000);
+
   // no resp
 }
