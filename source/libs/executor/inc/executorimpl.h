@@ -242,6 +242,8 @@ typedef struct STaskAttr {
 
 struct SOperatorInfo;
 
+typedef void (*__optr_encode_fn_t)(struct SOperatorInfo* pOperator, char **result, int32_t *length);
+typedef bool (*__optr_decode_fn_t)(struct SOperatorInfo* pOperator, char *result, int32_t length);
 typedef int32_t (*__optr_open_fn_t)(struct SOperatorInfo* param);
 typedef SSDataBlock* (*__optr_fn_t)(struct SOperatorInfo* param, bool* newgroup);
 typedef void (*__optr_close_fn_t)(void* param, int32_t num);
@@ -331,6 +333,8 @@ typedef struct SOperatorInfo {
   __optr_fn_t            cleanupFn;
   __optr_close_fn_t      closeFn;
   __optr_open_fn_t       _openFn;          // DO NOT invoke this function directly
+  __optr_encode_fn_t     encodeResultRow;           //
+  __optr_decode_fn_t     decodeResultRow;           //
 } SOperatorInfo;
 
 typedef struct {
