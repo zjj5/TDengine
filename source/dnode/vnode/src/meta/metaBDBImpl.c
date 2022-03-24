@@ -33,7 +33,7 @@ typedef struct {
 
 struct SMetaDB {
 #if IMPL_WITH_LOCK
-  pthread_rwlock_t rwlock;
+  TdThreadRwlock rwlock;
 #endif
   // DB
   DB *pTbDB;
@@ -259,7 +259,7 @@ int metaSaveSmaToDB(SMeta *pMeta, STSma *pSmaCfg) {
   return 0;
 }
 
-int metaRemoveSmaFromDb(SMeta *pMeta, const char *indexName) {
+int metaRemoveSmaFromDb(SMeta *pMeta,  int64_t indexUid) {
   // TODO
 #if 0
   DBT key = {0};
@@ -317,7 +317,7 @@ static SMetaDB *metaNewDB() {
   }
 
 #if IMPL_WITH_LOCK
-  pthread_rwlock_init(&pDB->rwlock, NULL);
+  taosThreadRwlockInit(&pDB->rwlock, NULL);
 #endif
 
   return pDB;
@@ -326,7 +326,7 @@ static SMetaDB *metaNewDB() {
 static void metaFreeDB(SMetaDB *pDB) {
   if (pDB) {
 #if IMPL_WITH_LOCK
-    pthread_rwlock_destroy(&pDB->rwlock);
+    taosThreadRwlockDestroy(&pDB->rwlock);
 #endif
     free(pDB);
   }
@@ -507,7 +507,7 @@ static int metaEncodeTbInfo(void **buf, STbCfg *pTbCfg) {
   tsize += taosEncodeString(buf, pTbCfg->name);
   tsize += taosEncodeFixedU32(buf, pTbCfg->ttl);
   tsize += taosEncodeFixedU32(buf, pTbCfg->keep);
-  tsize += taosEncodeFixedU8(buf, pTbCfg->type);
+  tsize += taosEncodeFixedU8(buf, pTbCfg->info);
 
   if (pTbCfg->type == META_SUPER_TABLE) {
     SSchemaWrapper sw = {.nCols = pTbCfg->stbCfg.nTagCols, .pSchema = pTbCfg->stbCfg.pTagSchema};
@@ -527,7 +527,7 @@ static void *metaDecodeTbInfo(void *buf, STbCfg *pTbCfg) {
   buf = taosDecodeString(buf, &(pTbCfg->name));
   buf = taosDecodeFixedU32(buf, &(pTbCfg->ttl));
   buf = taosDecodeFixedU32(buf, &(pTbCfg->keep));
-  buf = taosDecodeFixedU8(buf, &(pTbCfg->type));
+  buf = taosDecodeFixedU8(buf, &(pTbCfg->info));
 
   if (pTbCfg->type == META_SUPER_TABLE) {
     SSchemaWrapper sw;
@@ -636,7 +636,7 @@ STSma *metaGetSmaInfoByIndex(SMeta *pMeta, int64_t indexUid) {
   }
 
   // Decode
-  pCfg = (STSma *)malloc(sizeof(STSma));
+  pCfg = (STSma *)calloc(1, sizeof(STSma));
   if (pCfg == NULL) {
     return NULL;
   }
@@ -703,6 +703,18 @@ SMTbCursor *metaOpenTbCursor(SMeta *pMeta) {
 #endif
 
   return pTbCur;
+}
+
+int metaGetTbNum(SMeta *pMeta) {
+  SMetaDB    *pDB = pMeta->pDB;
+
+  DB_BTREE_STAT *sp1;
+  pDB->pTbDB->stat(pDB->pNtbIdx, NULL, &sp1, 0);
+  
+  DB_BTREE_STAT *sp2;
+  pDB->pTbDB->stat(pDB->pCtbIdx, NULL, &sp2, 0);
+  
+  return sp1->bt_nkeys + sp2->bt_nkeys;
 }
 
 void metaCloseTbCursor(SMTbCursor *pTbCur) {
@@ -884,7 +896,7 @@ const char *metaSmaCursorNext(SMSmaCursor *pCur) {
 STSmaWrapper *metaGetSmaInfoByTable(SMeta *pMeta, tb_uid_t uid) {
   STSmaWrapper *pSW = NULL;
 
-  pSW = calloc(sizeof(*pSW), 1);
+  pSW = calloc(1, sizeof(*pSW));
   if (pSW == NULL) {
     return NULL;
   }
@@ -965,18 +977,18 @@ SArray *metaGetSmaTbUids(SMeta *pMeta, bool isDup) {
 
 static void metaDBWLock(SMetaDB *pDB) {
 #if IMPL_WITH_LOCK
-  pthread_rwlock_wrlock(&(pDB->rwlock));
+  taosThreadRwlockWrlock(&(pDB->rwlock));
 #endif
 }
 
 static void metaDBRLock(SMetaDB *pDB) {
 #if IMPL_WITH_LOCK
-  pthread_rwlock_rdlock(&(pDB->rwlock));
+  taosThreadRwlockRdlock(&(pDB->rwlock));
 #endif
 }
 
 static void metaDBULock(SMetaDB *pDB) {
 #if IMPL_WITH_LOCK
-  pthread_rwlock_unlock(&(pDB->rwlock));
+  taosThreadRwlockUnlock(&(pDB->rwlock));
 #endif
 }

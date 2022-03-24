@@ -49,6 +49,10 @@
 int32_t syncNodeAppendEntriesPeers(SSyncNode* pSyncNode) {
   assert(pSyncNode->state == TAOS_SYNC_STATE_LEADER);
 
+  syncIndexMgrLog2("==syncNodeAppendEntriesPeers== pNextIndex", pSyncNode->pNextIndex);
+  syncIndexMgrLog2("==syncNodeAppendEntriesPeers== pMatchIndex", pSyncNode->pMatchIndex);
+  logStoreSimpleLog2("==syncNodeAppendEntriesPeers==", pSyncNode->pLogStore);
+
   int32_t ret = 0;
   for (int i = 0; i < pSyncNode->peersNum; ++i) {
     SRaftId* pDestId = &(pSyncNode->peersId[i]);
@@ -73,7 +77,8 @@ int32_t syncNodeAppendEntriesPeers(SSyncNode* pSyncNode) {
     SyncAppendEntries* pMsg = NULL;
     SSyncRaftEntry*    pEntry = logStoreGetEntry(pSyncNode->pLogStore, nextIndex);
     if (pEntry != NULL) {
-      SyncAppendEntries* pMsg = syncAppendEntriesBuild(pEntry->bytes);
+      pMsg = syncAppendEntriesBuild(pEntry->bytes);
+      assert(pMsg != NULL);
 
       // add pEntry into msg
       uint32_t len;
@@ -86,15 +91,19 @@ int32_t syncNodeAppendEntriesPeers(SSyncNode* pSyncNode) {
 
     } else {
       // maybe overflow, send empty record
-      SyncAppendEntries* pMsg = syncAppendEntriesBuild(0);
+      pMsg = syncAppendEntriesBuild(0);
+      assert(pMsg != NULL);
     }
 
+    assert(pMsg != NULL);
     pMsg->srcId = pSyncNode->myRaftId;
     pMsg->destId = *pDestId;
     pMsg->term = pSyncNode->pRaftStore->currentTerm;
     pMsg->prevLogIndex = preLogIndex;
     pMsg->prevLogTerm = preLogTerm;
     pMsg->commitIndex = pSyncNode->commitIndex;
+
+    syncAppendEntriesLog2("==syncNodeAppendEntriesPeers==", pMsg);
 
     // send AppendEntries
     syncNodeAppendEntries(pSyncNode, pDestId, pMsg);

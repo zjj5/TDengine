@@ -27,7 +27,7 @@ extern "C" {
 typedef int32_t  VarDataOffsetT;
 typedef uint32_t TDRowLenT;
 typedef uint8_t  TDRowValT;
-typedef uint16_t col_id_t;
+typedef int16_t  col_id_t;
 typedef int8_t   col_type_t;
 
 #pragma pack(push, 1)
@@ -46,7 +46,7 @@ typedef struct {
 #define varDataCopy(dst, v)    memcpy((dst), (void *)(v), varDataTLen(v))
 #define varDataLenByData(v)    (*(VarDataLenT *)(((char *)(v)) - VARSTR_HEADER_SIZE))
 #define varDataSetLen(v, _len) (((VarDataLenT *)(v))[0] = (VarDataLenT)(_len))
-#define IS_VAR_DATA_TYPE(t)    (((t) == TSDB_DATA_TYPE_BINARY) || ((t) == TSDB_DATA_TYPE_NCHAR))
+#define IS_VAR_DATA_TYPE(t)    (((t) == TSDB_DATA_TYPE_VARCHAR) || ((t) == TSDB_DATA_TYPE_NCHAR))
 
 #define varDataNetLen(v)  (htons(((VarDataLenT *)(v))[0]))
 #define varDataNetTLen(v) (sizeof(VarDataLenT) + varDataNetLen(v))
