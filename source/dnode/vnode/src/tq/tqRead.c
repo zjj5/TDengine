@@ -17,7 +17,7 @@
 #include "vnode.h"
 
 STqReadHandle* tqInitSubmitMsgScanner(SMeta* pMeta) {
-  STqReadHandle* pReadHandle = malloc(sizeof(STqReadHandle));
+  STqReadHandle* pReadHandle = taosMemoryMalloc(sizeof(STqReadHandle));
   if (pReadHandle == NULL) {
     return NULL;
   }
@@ -44,7 +44,7 @@ int32_t tqReadHandleSetMsg(STqReadHandle* pReadHandle, SSubmitReq* pMsg, int64_t
     if (pReadHandle->pBlock == NULL) break;
 
     pReadHandle->pBlock->uid = htobe64(pReadHandle->pBlock->uid);
-    pReadHandle->pBlock->tid = htonl(pReadHandle->pBlock->tid);
+    pReadHandle->pBlock->suid = htobe64(pReadHandle->pBlock->suid);
     pReadHandle->pBlock->sversion = htonl(pReadHandle->pBlock->sversion);
     pReadHandle->pBlock->dataLen = htonl(pReadHandle->pBlock->dataLen);
     pReadHandle->pBlock->schemaLen = htonl(pReadHandle->pBlock->schemaLen);
@@ -143,7 +143,7 @@ SArray* tqRetrieveDataBlock(STqReadHandle* pHandle) {
       colInfo.info.colId = pColSchema->colId;
       colInfo.info.type = pColSchema->type;
 
-      colInfo.pData = calloc(1, sz);
+      colInfo.pData = taosMemoryCalloc(1, sz);
       if (colInfo.pData == NULL) {
         // TODO free
         taosArrayDestroy(pArray);
@@ -173,7 +173,7 @@ SArray* tqRetrieveDataBlock(STqReadHandle* pHandle) {
     colInfo.info.colId = colId;
     colInfo.info.type = pColSchema->type;
 
-    colInfo.pData = calloc(1, sz);
+    colInfo.pData = taosMemoryCalloc(1, sz);
     if (colInfo.pData == NULL) {
       // TODO free
       taosArrayDestroy(pArray);
