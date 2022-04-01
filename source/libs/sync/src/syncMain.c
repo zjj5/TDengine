@@ -155,6 +155,10 @@ SSyncNode* syncNodeOpen(const SSyncInfo* pSyncInfo) {
   assert(pSyncNode != NULL);
   memset(pSyncNode, 0, sizeof(SSyncNode));
 
+  if (taosDirExist((char*)(pSyncInfo->path))) {
+  } else {
+  }
+
   if (taosMkDir(pSyncInfo->path) != 0) {
     terrno = TAOS_SYSTEM_ERROR(errno);
     sError("failed to create dir:%s since %s", pSyncInfo->path, terrstr());
