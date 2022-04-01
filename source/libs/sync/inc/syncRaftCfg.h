@@ -39,7 +39,7 @@ int32_t   raftCfgPersist(SRaftCfg *pRaftCfg);
 
 cJSON * syncCfg2Json(SSyncCfg *pSyncCfg);
 char *  syncCfg2Str(SSyncCfg *pSyncCfg);
-int32_t syncCfgFromJson(const cJSON *pJson, SSyncCfg *pSyncCfg);
+int32_t syncCfgFromJson(const cJSON *pRoot, SSyncCfg *pSyncCfg);
 int32_t syncCfgFromStr(const char *s, SSyncCfg *pSyncCfg);
 
 cJSON *raftCfg2Json(SRaftCfg *pRaftCfg);

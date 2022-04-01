@@ -49,14 +49,54 @@ cJSON *syncCfg2Json(SSyncCfg *pSyncCfg) {
 
 char *syncCfg2Str(SSyncCfg *pSyncCfg) {
   cJSON *pJson = syncCfg2Json(pSyncCfg);
-  char * serialized = cJSON_Print(pJson);
+  char  *serialized = cJSON_Print(pJson);
   cJSON_Delete(pJson);
   return serialized;
 }
 
-int32_t syncCfgFromJson(const cJSON *pJson, SSyncCfg *pSyncCfg) {}
+int32_t syncCfgFromJson(const cJSON *pRoot, SSyncCfg *pSyncCfg) {
+  memset(pSyncCfg, 0, sizeof(SSyncCfg));
+  cJSON *pJson = cJSON_GetObjectItem(pRoot, "SSyncCfg");
 
-int32_t syncCfgFromStr(const char *s, SSyncCfg *pSyncCfg) {}
+  cJSON *pReplicaNum = cJSON_GetObjectItem(pJson, "replicaNum");
+  assert(cJSON_IsNumber(pReplicaNum));
+  pSyncCfg->replicaNum = cJSON_GetNumberValue(pReplicaNum);
+
+  cJSON *pMyIndex = cJSON_GetObjectItem(pJson, "myIndex");
+  assert(cJSON_IsNumber(pMyIndex));
+  pSyncCfg->myIndex = cJSON_GetNumberValue(pMyIndex);
+
+  cJSON *pNodeInfoArr = cJSON_GetObjectItem(pJson, "nodeInfo");
+  int    arraySize = cJSON_GetArraySize(pNodeInfoArr);
+  assert(arraySize == pSyncCfg->replicaNum);
+
+  for (int i = 0; i < arraySize; ++i) {
+    cJSON *pNodeInfo = cJSON_GetArrayItem(pNodeInfoArr, i);
+    assert(pNodeInfo != NULL);
+
+    cJSON *pNodePort = cJSON_GetObjectItem(pNodeInfo, "nodePort");
+    assert(cJSON_IsNumber(pNodePort));
+    ((pSyncCfg->nodeInfo)[i]).nodePort = cJSON_GetNumberValue(pNodePort);
+
+    cJSON *pNodeFqdn = cJSON_GetObjectItem(pNodeInfo, "nodeFqdn");
+    assert(cJSON_IsString(pNodeFqdn));
+    snprintf(((pSyncCfg->nodeInfo)[i]).nodeFqdn, sizeof(((pSyncCfg->nodeInfo)[i]).nodeFqdn), "%s",
+             pNodeFqdn->valuestring);
+  }
+
+  return 0;
+}
+
+int32_t syncCfgFromStr(const char *s, SSyncCfg *pSyncCfg) {
+  cJSON *pRoot = cJSON_Parse(s);
+  assert(pRoot != NULL);
+
+  int32_t ret = syncCfgFromJson(pRoot, pSyncCfg);
+  assert(ret == 0);
+
+  cJSON_Delete(pRoot);
+  return 0;
+}
 
 cJSON *raftCfg2Json(SRaftCfg *pRaftCfg) {}
 

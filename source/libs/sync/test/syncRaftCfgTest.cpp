@@ -35,6 +35,20 @@ void test1() {
   taosMemoryFree(pCfg);
 }
 
+void test2() {
+  SSyncCfg* pCfg = createSyncCfg();
+  char*     s = syncCfg2Str(pCfg);
+
+  SSyncCfg* pCfg2 = (SSyncCfg*)taosMemoryMalloc(sizeof(SSyncCfg));
+  int32_t   ret = syncCfgFromStr(s, pCfg2);
+  assert(ret == 0);
+  syncCfgPrint2((char*)__FUNCTION__, pCfg2);
+
+  taosMemoryFree(pCfg);
+  taosMemoryFree(s);
+  taosMemoryFree(pCfg2);
+}
+
 int main() {
   // taosInitLog((char *)"syncTest.log", 100000, 10);
   tsAsyncLog = 0;
@@ -42,6 +56,7 @@ int main() {
 
   logTest();
   test1();
+  test2();
 
   return 0;
 }
