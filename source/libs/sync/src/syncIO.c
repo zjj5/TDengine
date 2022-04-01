@@ -29,7 +29,7 @@ static int32_t  syncIODestroy(SSyncIO *io);
 static int32_t  syncIOStartInternal(SSyncIO *io);
 static int32_t  syncIOStopInternal(SSyncIO *io);
 
-static void   *syncIOConsumerFunc(void *param);
+static void *  syncIOConsumerFunc(void *param);
 static void    syncIOProcessRequest(void *pParent, SRpcMsg *pMsg, SEpSet *pEpSet);
 static void    syncIOProcessReply(void *pParent, SRpcMsg *pMsg, SEpSet *pEpSet);
 static int32_t syncIOAuth(void *parent, char *meterId, char *spi, char *encrypt, char *secret, char *ckey);
@@ -235,9 +235,9 @@ static int32_t syncIOStopInternal(SSyncIO *io) {
 }
 
 static void *syncIOConsumerFunc(void *param) {
-  SSyncIO   *io = param;
+  SSyncIO *  io = param;
   STaosQall *qall;
-  SRpcMsg   *pRpcMsg, rpcMsg;
+  SRpcMsg *  pRpcMsg, rpcMsg;
   qall = taosAllocateQall();
 
   while (1) {
@@ -252,7 +252,7 @@ static void *syncIOConsumerFunc(void *param) {
       syncRpcMsgLog2((char *)"==syncIOConsumerFunc==", pRpcMsg);
 
       // use switch case instead of if else
-      if (pRpcMsg->msgType == SYNC_PING) {
+      if (pRpcMsg->msgType == TDMT_VND_SYNC_PING) {
         if (io->FpOnSyncPing != NULL) {
           SyncPing *pSyncMsg = syncPingFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -260,7 +260,7 @@ static void *syncIOConsumerFunc(void *param) {
           syncPingDestroy(pSyncMsg);
         }
 
-      } else if (pRpcMsg->msgType == SYNC_PING_REPLY) {
+      } else if (pRpcMsg->msgType == TDMT_VND_SYNC_PING_REPLY) {
         if (io->FpOnSyncPingReply != NULL) {
           SyncPingReply *pSyncMsg = syncPingReplyFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);

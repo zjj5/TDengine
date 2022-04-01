@@ -31,8 +31,8 @@ extern "C" {
 typedef enum ESyncMessageType {
   SYNC_UNKNOWN = 9999,
   SYNC_TIMEOUT = 99,
-  SYNC_PING = 101,
-  SYNC_PING_REPLY = 103,
+  //  SYNC_PING = 101,
+  //  SYNC_PING_REPLY = 103,
   SYNC_CLIENT_REQUEST = 105,
   SYNC_CLIENT_REQUEST_REPLY = 107,
   SYNC_REQUEST_VOTE = 109,
@@ -75,13 +75,13 @@ SyncTimeout* syncTimeoutBuild2(ESyncTimeoutType timeoutType, uint64_t logicClock
 void         syncTimeoutDestroy(SyncTimeout* pMsg);
 void         syncTimeoutSerialize(const SyncTimeout* pMsg, char* buf, uint32_t bufLen);
 void         syncTimeoutDeserialize(const char* buf, uint32_t len, SyncTimeout* pMsg);
-char*        syncTimeoutSerialize2(const SyncTimeout* pMsg, uint32_t* len);  //
-SyncTimeout* syncTimeoutDeserialize2(const char* buf, uint32_t len);         //
+char*        syncTimeoutSerialize2(const SyncTimeout* pMsg, uint32_t* len);
+SyncTimeout* syncTimeoutDeserialize2(const char* buf, uint32_t len);
 void         syncTimeout2RpcMsg(const SyncTimeout* pMsg, SRpcMsg* pRpcMsg);
 void         syncTimeoutFromRpcMsg(const SRpcMsg* pRpcMsg, SyncTimeout* pMsg);
-SyncTimeout* syncTimeoutFromRpcMsg2(const SRpcMsg* pRpcMsg);  //
+SyncTimeout* syncTimeoutFromRpcMsg2(const SRpcMsg* pRpcMsg);
 cJSON*       syncTimeout2Json(const SyncTimeout* pMsg);
-char*        syncTimeout2Str(const SyncTimeout* pMsg);  //
+char*        syncTimeout2Str(const SyncTimeout* pMsg);
 
 // for debug ----------------------
 void syncTimeoutPrint(const SyncTimeout* pMsg);
@@ -108,6 +108,8 @@ void      syncPingSerialize(const SyncPing* pMsg, char* buf, uint32_t bufLen);
 void      syncPingDeserialize(const char* buf, uint32_t len, SyncPing* pMsg);
 char*     syncPingSerialize2(const SyncPing* pMsg, uint32_t* len);
 SyncPing* syncPingDeserialize2(const char* buf, uint32_t len);
+int32_t   syncPingSerialize3(const SyncPing* pMsg, char* buf, int32_t bufLen);
+SyncPing* syncPingDeserialize3(void* buf, int32_t bufLen);
 void      syncPing2RpcMsg(const SyncPing* pMsg, SRpcMsg* pRpcMsg);
 void      syncPingFromRpcMsg(const SRpcMsg* pRpcMsg, SyncPing* pMsg);
 SyncPing* syncPingFromRpcMsg2(const SRpcMsg* pRpcMsg);

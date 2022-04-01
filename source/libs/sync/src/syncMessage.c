@@ -27,12 +27,12 @@ cJSON* syncRpcMsg2Json(SRpcMsg* pRpcMsg) {
     pRoot = syncTimeout2Json(pSyncMsg);
     syncTimeoutDestroy(pSyncMsg);
 
-  } else if (pRpcMsg->msgType == SYNC_PING) {
+  } else if (pRpcMsg->msgType == TDMT_VND_SYNC_PING) {
     SyncPing* pSyncMsg = syncPingDeserialize2(pRpcMsg->pCont, pRpcMsg->contLen);
     pRoot = syncPing2Json(pSyncMsg);
     syncPingDestroy(pSyncMsg);
 
-  } else if (pRpcMsg->msgType == SYNC_PING_REPLY) {
+  } else if (pRpcMsg->msgType == TDMT_VND_SYNC_PING_REPLY) {
     SyncPingReply* pSyncMsg = syncPingReplyDeserialize2(pRpcMsg->pCont, pRpcMsg->contLen);
     pRoot = syncPingReply2Json(pSyncMsg);
     syncPingReplyDestroy(pSyncMsg);
@@ -271,7 +271,7 @@ SyncPing* syncPingBuild(uint32_t dataLen) {
   SyncPing* pMsg = taosMemoryMalloc(bytes);
   memset(pMsg, 0, bytes);
   pMsg->bytes = bytes;
-  pMsg->msgType = SYNC_PING;
+  pMsg->msgType = TDMT_VND_SYNC_PING;
   pMsg->dataLen = dataLen;
   return pMsg;
 }
@@ -323,6 +323,92 @@ SyncPing* syncPingDeserialize2(const char* buf, uint32_t len) {
   assert(pMsg != NULL);
   syncPingDeserialize(buf, len, pMsg);
   assert(len == pMsg->bytes);
+  return pMsg;
+}
+
+int32_t syncPingSerialize3(const SyncPing* pMsg, char* buf, int32_t bufLen) {
+  SCoder encoder = {0};
+  tCoderInit(&encoder, TD_LITTLE_ENDIAN, buf, bufLen, TD_ENCODER);
+  if (tStartEncode(&encoder) < 0) {
+    return -1;
+  }
+
+  if (tEncodeU32(&encoder, pMsg->bytes) < 0) {
+    return -1;
+  }
+  if (tEncodeU32(&encoder, pMsg->msgType) < 0) {
+    return -1;
+  }
+  if (tEncodeU64(&encoder, pMsg->srcId.addr) < 0) {
+    return -1;
+  }
+  if (tEncodeI32(&encoder, pMsg->srcId.vgId) < 0) {
+    return -1;
+  }
+  if (tEncodeU64(&encoder, pMsg->destId.addr) < 0) {
+    return -1;
+  }
+  if (tEncodeI32(&encoder, pMsg->destId.vgId) < 0) {
+    return -1;
+  }
+  if (tEncodeU32(&encoder, pMsg->dataLen) < 0) {
+    return -1;
+  }
+  if (tEncodeBinary(&encoder, pMsg->data, pMsg->dataLen)) {
+    return -1;
+  }
+
+  tEndEncode(&encoder);
+  int32_t tlen = encoder.pos;
+  tCoderClear(&encoder);
+  return tlen;
+}
+
+SyncPing* syncPingDeserialize3(void* buf, int32_t bufLen) {
+  SCoder decoder = {0};
+  tCoderInit(&decoder, TD_LITTLE_ENDIAN, buf, bufLen, TD_DECODER);
+  if (tStartDecode(&decoder) < 0) {
+    return NULL;
+  }
+
+  SyncPing* pMsg = NULL;
+  uint32_t  bytes;
+  if (tDecodeU32(&decoder, &bytes) < 0) {
+    return NULL;
+  }
+
+  pMsg = taosMemoryMalloc(bytes);
+  assert(pMsg != NULL);
+  pMsg->bytes = bytes;
+
+  if (tDecodeU32(&decoder, &pMsg->msgType) < 0) {
+    return NULL;
+  }
+  if (tDecodeU64(&decoder, &pMsg->srcId.addr) < 0) {
+    return NULL;
+  }
+  if (tDecodeI32(&decoder, &pMsg->srcId.vgId) < 0) {
+    return NULL;
+  }
+  if (tDecodeU64(&decoder, &pMsg->destId.addr) < 0) {
+    return NULL;
+  }
+  if (tDecodeI32(&decoder, &pMsg->destId.vgId) < 0) {
+    return NULL;
+  }
+  if (tDecodeU32(&decoder, &pMsg->dataLen) < 0) {
+    return NULL;
+  }
+  uint64_t len;
+  char*    data = NULL;
+  if (tDecodeBinary(&decoder, (const void**)(&data), &len) < 0) {
+    return NULL;
+  }
+  assert(len = pMsg->dataLen);
+  memcpy(pMsg->data, data, len);
+
+  tEndDecode(&decoder);
+  tCoderClear(&decoder);
   return pMsg;
 }
 
@@ -436,7 +522,7 @@ SyncPingReply* syncPingReplyBuild(uint32_t dataLen) {
   SyncPingReply* pMsg = taosMemoryMalloc(bytes);
   memset(pMsg, 0, bytes);
   pMsg->bytes = bytes;
-  pMsg->msgType = SYNC_PING_REPLY;
+  pMsg->msgType = TDMT_VND_SYNC_PING_REPLY;
   pMsg->dataLen = dataLen;
   return pMsg;
 }
