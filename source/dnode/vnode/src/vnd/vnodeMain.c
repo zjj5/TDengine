@@ -143,6 +143,11 @@ static int vnodeOpenImpl(SVnode *pVnode) {
     return -1;
   }
 
+  // Open Sync
+  if (vnodeSyncOpen(pVnode)) {
+    return -1;
+  }
+
   // TODO
   return 0;
 }
@@ -156,5 +161,6 @@ static void vnodeCloseImpl(SVnode *pVnode) {
     tqClose(pVnode->pTq);
     walClose(pVnode->pWal);
     vnodeQueryClose(pVnode);
+    vnodeSyncClose(pVnode);
   }
 }

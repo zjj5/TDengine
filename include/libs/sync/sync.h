@@ -158,6 +158,9 @@ typedef struct SSyncNode SSyncNode;
 int32_t syncInit();
 void    syncCleanUp();
 
+SSyncNode* syncNodeAcquire(int64_t rid);
+void       syncNodeRelease(SSyncNode* pNode);
+
 int64_t    syncStart(const SSyncInfo* pSyncInfo);
 void       syncStop(int64_t rid);
 int32_t    syncReconfig(int64_t rid, const SSyncCfg* pSyncCfg);

@@ -263,6 +263,7 @@ static void vmCleanup(SMgmtWrapper *pWrapper) {
   vmStopWorker(pMgmt);
   vnodeCleanup();
   // walCleanUp();
+  syncCleanUp();
   taosMemoryFree(pMgmt);
   pWrapper->pMgmt = NULL;
   dInfo("vnode-mgmt is cleaned up");
@@ -301,6 +302,11 @@ static int32_t vmInit(SMgmtWrapper *pWrapper) {
   if (walInit() != 0) {
     dError("failed to init wal since %s", terrstr());
     goto _OVER;
+  }
+
+  if (syncInit() != 0) {
+    dError("failed to open sync since %s", terrstr());
+    return -1;
   }
 
   if (vnodeInit() != 0) {

@@ -22,6 +22,7 @@
 #include "trpc.h"
 
 #include "meta.h"
+#include "sync.h"
 #include "tarray.h"
 #include "tfs.h"
 #include "tsdb.h"
@@ -55,6 +56,7 @@ typedef struct {
   SMetaCfg metaCfg;
   STqCfg   tqCfg;
   SWalCfg  walCfg;
+  SSyncCfg syncCfg;
   SMsgCb   msgCb;
   uint32_t hashBegin;
   uint32_t hashEnd;

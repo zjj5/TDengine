@@ -117,6 +117,7 @@ typedef struct SSyncNode {
   SSyncCfg    syncCfg;
   char        path[TSDB_FILENAME_LEN];
   char        raftStorePath[TSDB_FILENAME_LEN * 2];
+  char        configPath[TSDB_FILENAME_LEN * 2];
 
   // sync io
   SWal* pWal;

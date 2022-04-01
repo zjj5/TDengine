@@ -18,6 +18,7 @@
 
 #include "tmallocator.h"
 // #include "sync.h"
+#include "sync.h"
 #include "tcoding.h"
 #include "tdatablock.h"
 #include "tfs.h"
@@ -26,6 +27,7 @@
 #include "tmacro.h"
 #include "vnode.h"
 #include "vnodeQuery.h"
+#include "vnodeSync.h"
 #include "wal.h"
 
 #ifdef __cplusplus
@@ -93,6 +95,7 @@ struct SVnode {
   SQHandle*  pQuery;
   SMsgCb     msgCb;
   STfs*      pTfs;
+  int64_t    sync;
 };
 
 int vnodeScheduleTask(SVnodeTask* task);

@@ -41,6 +41,13 @@ static void vmGenerateVnodeCfg(SCreateVnodeReq *pCreate, SVnodeCfg *pCfg) {
   pCfg->hashBegin = pCreate->hashBegin;
   pCfg->hashEnd = pCreate->hashEnd;
   pCfg->hashMethod = pCreate->hashMethod;
+
+  pCfg->syncCfg.replicaNum = pCreate->replica;
+  for (int i = 0; i < pCreate->replica; ++i) {
+    memcpy(pCfg->syncCfg.nodeInfo[i].nodeFqdn, pCreate->replicas[i].fqdn, TSDB_FQDN_LEN);
+    pCfg->syncCfg.nodeInfo[i].nodePort = pCreate->replicas[i].port;
+  }
+  pCfg->syncCfg.myIndex = pCreate->selfIndex;
 }
 
 static void vmGenerateWrapperCfg(SVnodesMgmt *pMgmt, SCreateVnodeReq *pCreate, SWrapperCfg *pCfg) {
