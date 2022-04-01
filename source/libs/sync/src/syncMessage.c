@@ -577,6 +577,92 @@ SyncPingReply* syncPingReplyDeserialize2(const char* buf, uint32_t len) {
   return pMsg;
 }
 
+int32_t syncPingReplySerialize3(const SyncPingReply* pMsg, char* buf, int32_t bufLen) {
+  SCoder encoder = {0};
+  tCoderInit(&encoder, TD_LITTLE_ENDIAN, buf, bufLen, TD_ENCODER);
+  if (tStartEncode(&encoder) < 0) {
+    return -1;
+  }
+
+  if (tEncodeU32(&encoder, pMsg->bytes) < 0) {
+    return -1;
+  }
+  if (tEncodeU32(&encoder, pMsg->msgType) < 0) {
+    return -1;
+  }
+  if (tEncodeU64(&encoder, pMsg->srcId.addr) < 0) {
+    return -1;
+  }
+  if (tEncodeI32(&encoder, pMsg->srcId.vgId) < 0) {
+    return -1;
+  }
+  if (tEncodeU64(&encoder, pMsg->destId.addr) < 0) {
+    return -1;
+  }
+  if (tEncodeI32(&encoder, pMsg->destId.vgId) < 0) {
+    return -1;
+  }
+  if (tEncodeU32(&encoder, pMsg->dataLen) < 0) {
+    return -1;
+  }
+  if (tEncodeBinary(&encoder, pMsg->data, pMsg->dataLen)) {
+    return -1;
+  }
+
+  tEndEncode(&encoder);
+  int32_t tlen = encoder.pos;
+  tCoderClear(&encoder);
+  return tlen;
+}
+
+SyncPingReply* syncPingReplyDeserialize3(void* buf, int32_t bufLen) {
+  SCoder decoder = {0};
+  tCoderInit(&decoder, TD_LITTLE_ENDIAN, buf, bufLen, TD_DECODER);
+  if (tStartDecode(&decoder) < 0) {
+    return NULL;
+  }
+
+  SyncPingReply* pMsg = NULL;
+  uint32_t       bytes;
+  if (tDecodeU32(&decoder, &bytes) < 0) {
+    return NULL;
+  }
+
+  pMsg = taosMemoryMalloc(bytes);
+  assert(pMsg != NULL);
+  pMsg->bytes = bytes;
+
+  if (tDecodeU32(&decoder, &pMsg->msgType) < 0) {
+    return NULL;
+  }
+  if (tDecodeU64(&decoder, &pMsg->srcId.addr) < 0) {
+    return NULL;
+  }
+  if (tDecodeI32(&decoder, &pMsg->srcId.vgId) < 0) {
+    return NULL;
+  }
+  if (tDecodeU64(&decoder, &pMsg->destId.addr) < 0) {
+    return NULL;
+  }
+  if (tDecodeI32(&decoder, &pMsg->destId.vgId) < 0) {
+    return NULL;
+  }
+  if (tDecodeU32(&decoder, &pMsg->dataLen) < 0) {
+    return NULL;
+  }
+  uint64_t len;
+  char*    data = NULL;
+  if (tDecodeBinary(&decoder, (const void**)(&data), &len) < 0) {
+    return NULL;
+  }
+  assert(len = pMsg->dataLen);
+  memcpy(pMsg->data, data, len);
+
+  tEndDecode(&decoder);
+  tCoderClear(&decoder);
+  return pMsg;
+}
+
 void syncPingReply2RpcMsg(const SyncPingReply* pMsg, SRpcMsg* pRpcMsg) {
   memset(pRpcMsg, 0, sizeof(*pRpcMsg));
   pRpcMsg->msgType = pMsg->msgType;

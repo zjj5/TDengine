@@ -49,7 +49,7 @@ void test3() {
   uint32_t       len;
   char *         serialized = syncPingReplySerialize2(pMsg, &len);
   SyncPingReply *pMsg2 = syncPingReplyDeserialize2(serialized, len);
-  syncPingReplyPrint2((char *)"test3: syncPingReplySerialize3 -> syncPingReplyDeserialize2 ", pMsg2);
+  syncPingReplyPrint2((char *)"test3: syncPingReplySerialize2 -> syncPingReplyDeserialize2 ", pMsg2);
 
   taosMemoryFree(serialized);
   syncPingReplyDestroy(pMsg);
@@ -64,6 +64,7 @@ void test4() {
   syncPingReplyFromRpcMsg(&rpcMsg, pMsg2);
   syncPingReplyPrint2((char *)"test4: syncPingReply2RpcMsg -> syncPingReplyFromRpcMsg ", pMsg2);
 
+  rpcFreeCont(rpcMsg.pCont);
   syncPingReplyDestroy(pMsg);
   syncPingReplyDestroy(pMsg2);
 }
@@ -75,6 +76,21 @@ void test5() {
   SyncPingReply *pMsg2 = syncPingReplyFromRpcMsg2(&rpcMsg);
   syncPingReplyPrint2((char *)"test5: syncPingReply2RpcMsg -> syncPingReplyFromRpcMsg2 ", pMsg2);
 
+  rpcFreeCont(rpcMsg.pCont);
+  syncPingReplyDestroy(pMsg);
+  syncPingReplyDestroy(pMsg2);
+}
+
+void test6() {
+  SyncPingReply *pMsg = createMsg();
+  int32_t   bufLen = syncPingReplySerialize3(pMsg, NULL, 0);
+  char *    serialized = (char *)taosMemoryMalloc(bufLen);
+  syncPingReplySerialize3(pMsg, serialized, bufLen);
+  SyncPingReply *pMsg2 = syncPingReplyDeserialize3(serialized, bufLen);
+  assert(pMsg2 != NULL);
+  syncPingReplyPrint2((char *)"test6: syncPingReplySerialize3 -> syncPingReplyDeserialize3 ", pMsg2);
+
+  taosMemoryFree(serialized);
   syncPingReplyDestroy(pMsg);
   syncPingReplyDestroy(pMsg2);
 }
@@ -90,6 +106,7 @@ int main() {
   test3();
   test4();
   test5();
+  test6();
 
   return 0;
 }

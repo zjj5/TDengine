@@ -139,13 +139,15 @@ SyncPingReply* syncPingReplyBuild3(const SRaftId* srcId, const SRaftId* destId);
 void           syncPingReplyDestroy(SyncPingReply* pMsg);
 void           syncPingReplySerialize(const SyncPingReply* pMsg, char* buf, uint32_t bufLen);
 void           syncPingReplyDeserialize(const char* buf, uint32_t len, SyncPingReply* pMsg);
-char*          syncPingReplySerialize2(const SyncPingReply* pMsg, uint32_t* len);  //
-SyncPingReply* syncPingReplyDeserialize2(const char* buf, uint32_t len);           //
+char*          syncPingReplySerialize2(const SyncPingReply* pMsg, uint32_t* len);
+SyncPingReply* syncPingReplyDeserialize2(const char* buf, uint32_t len);
+int32_t        syncPingReplySerialize3(const SyncPingReply* pMsg, char* buf, int32_t bufLen);
+SyncPingReply* syncPingReplyDeserialize3(void* buf, int32_t bufLen);
 void           syncPingReply2RpcMsg(const SyncPingReply* pMsg, SRpcMsg* pRpcMsg);
 void           syncPingReplyFromRpcMsg(const SRpcMsg* pRpcMsg, SyncPingReply* pMsg);
-SyncPingReply* syncPingReplyFromRpcMsg2(const SRpcMsg* pRpcMsg);  //
+SyncPingReply* syncPingReplyFromRpcMsg2(const SRpcMsg* pRpcMsg);
 cJSON*         syncPingReply2Json(const SyncPingReply* pMsg);
-char*          syncPingReply2Str(const SyncPingReply* pMsg);  //
+char*          syncPingReply2Str(const SyncPingReply* pMsg);
 
 // for debug ----------------------
 void syncPingReplyPrint(const SyncPingReply* pMsg);
