@@ -155,14 +155,15 @@ SSyncNode* syncNodeOpen(const SSyncInfo* pSyncInfo) {
   assert(pSyncNode != NULL);
   memset(pSyncNode, 0, sizeof(SSyncNode));
 
-  if (taosDirExist((char*)(pSyncInfo->path))) {
-  } else {
-  }
+  if (!taosDirExist((char*)(pSyncInfo->path))) {
+    if (taosMkDir(pSyncInfo->path) != 0) {
+      terrno = TAOS_SYSTEM_ERROR(errno);
+      sError("failed to create dir:%s since %s", pSyncInfo->path, terrstr());
+      return NULL;
+    }
 
-  if (taosMkDir(pSyncInfo->path) != 0) {
-    terrno = TAOS_SYSTEM_ERROR(errno);
-    sError("failed to create dir:%s since %s", pSyncInfo->path, terrstr());
-    return NULL;
+    // create config file
+    snprintf(pSyncNode->configPath, sizeof(pSyncNode->configPath), "%s/raft_config.json", pSyncInfo->path);
   }
 
   // init by SSyncInfo
@@ -170,6 +171,7 @@ SSyncNode* syncNodeOpen(const SSyncInfo* pSyncInfo) {
   pSyncNode->syncCfg = pSyncInfo->syncCfg;
   memcpy(pSyncNode->path, pSyncInfo->path, sizeof(pSyncNode->path));
   snprintf(pSyncNode->raftStorePath, sizeof(pSyncNode->raftStorePath), "%s/raft_store.json", pSyncInfo->path);
+
   pSyncNode->pWal = pSyncInfo->pWal;
   pSyncNode->rpcClient = pSyncInfo->rpcClient;
   pSyncNode->FpSendMsg = pSyncInfo->FpSendMsg;

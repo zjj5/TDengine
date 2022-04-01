@@ -83,8 +83,8 @@ void test5() {
 
 void test6() {
   SyncPingReply *pMsg = createMsg();
-  int32_t   bufLen = syncPingReplySerialize3(pMsg, NULL, 0);
-  char *    serialized = (char *)taosMemoryMalloc(bufLen);
+  int32_t        bufLen = syncPingReplySerialize3(pMsg, NULL, 0);
+  char *         serialized = (char *)taosMemoryMalloc(bufLen);
   syncPingReplySerialize3(pMsg, serialized, bufLen);
   SyncPingReply *pMsg2 = syncPingReplyDeserialize3(serialized, bufLen);
   assert(pMsg2 != NULL);
