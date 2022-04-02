@@ -324,12 +324,14 @@ void syncNodeClose(SSyncNode* pSyncNode) {
   syncIndexMgrDestroy(pSyncNode->pNextIndex);
   syncIndexMgrDestroy(pSyncNode->pMatchIndex);
   logStoreDestory(pSyncNode->pLogStore);
+  raftCfgClose(pSyncNode->pRaftCfg);
 
   syncNodeStopPingTimer(pSyncNode);
   syncNodeStopElectTimer(pSyncNode);
   syncNodeStopHeartbeatTimer(pSyncNode);
 
-  taosMemoryFree(pSyncNode);
+  // free memory in syncFreeNode
+  // taosMemoryFree(pSyncNode);
 }
 
 // ping --------------
@@ -974,7 +976,8 @@ static int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg
 
 static void syncFreeNode(void* param) {
   SSyncNode* pNode = param;
-  syncNodePrint2((char*)"==syncFreeNode==", pNode);
+  // inner object already free
+  // syncNodePrint2((char*)"==syncFreeNode==", pNode);
 
   taosMemoryFree(pNode);
 }
