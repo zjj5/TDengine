@@ -45,16 +45,18 @@ int32_t syncCfgFromStr(const char *s, SSyncCfg *pSyncCfg);
 cJSON *raftCfg2Json(SRaftCfg *pRaftCfg);
 char * raftCfg2Str(SRaftCfg *pRaftCfg);
 
-int32_t raftCfgSerialize(SRaftCfg *pRaftCfg, char *buf, size_t len);
-int32_t raftCfgDeserialize(SRaftCfg *pRaftCfg, char *buf, size_t len);
-
-int32_t syncCfgCreateFile(SSyncCfg *cfg, const char *path);
+int32_t syncCfgCreateFile(SSyncCfg *pCfg, const char *path);
 
 // for debug ----------------------
 void syncCfgPrint(SSyncCfg *pCfg);
 void syncCfgPrint2(char *s, SSyncCfg *pCfg);
 void syncCfgLog(SSyncCfg *pCfg);
 void syncCfgLog2(char *s, SSyncCfg *pCfg);
+
+void raftCfgPrint(SRaftCfg *pCfg);
+void raftCfgPrint2(char *s, SRaftCfg *pCfg);
+void raftCfgLog(SRaftCfg *pCfg);
+void raftCfgLog2(char *s, SRaftCfg *pCfg);
 
 #ifdef __cplusplus
 }

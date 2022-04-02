@@ -49,6 +49,43 @@ void test2() {
   taosMemoryFree(pCfg2);
 }
 
+void test3() {
+  SSyncCfg* pCfg = createSyncCfg();
+  char*     s = (char*)"./test3_raft_cfg.json";
+
+  if (taosCheckExistFile(s)) {
+    printf("%s file: %s already exist! \n", (char*)__FUNCTION__, s);
+  } else {
+    syncCfgCreateFile(pCfg, s);
+    printf("%s create json file: %s \n", (char*)__FUNCTION__, s);
+  }
+
+  taosMemoryFree(pCfg);
+}
+
+void test4() {
+  SRaftCfg* pCfg = raftCfgOpen("./test3_raft_cfg.json");
+  assert(pCfg != NULL);
+
+  raftCfgPrint2((char*)__FUNCTION__, pCfg);
+
+  int32_t ret = raftCfgClose(pCfg);
+  assert(ret == 0);
+}
+
+void test5() {
+  SRaftCfg* pCfg = raftCfgOpen("./test3_raft_cfg.json");
+  assert(pCfg != NULL);
+
+  pCfg->cfg.myIndex = taosGetTimestampSec();
+  raftCfgPersist(pCfg);
+
+  printf("%s update json file: %s myIndex->%d \n", (char*)__FUNCTION__, "./test3_raft_cfg.json", pCfg->cfg.myIndex);
+
+  int32_t ret = raftCfgClose(pCfg);
+  assert(ret == 0);
+}
+
 int main() {
   // taosInitLog((char *)"syncTest.log", 100000, 10);
   tsAsyncLog = 0;
@@ -57,6 +94,9 @@ int main() {
   logTest();
   test1();
   test2();
+  test3();
+  test4();
+  test5();
 
   return 0;
 }

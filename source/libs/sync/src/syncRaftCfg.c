@@ -18,11 +18,45 @@
 #include "syncEnv.h"
 #include "syncUtil.h"
 
-SRaftCfg *raftCfgOpen(const char *path) {}
+// file must already exist!
+SRaftCfg *raftCfgOpen(const char *path) {
+  SRaftCfg *pCfg = taosMemoryMalloc(sizeof(SRaftCfg));
+  snprintf(pCfg->path, sizeof(pCfg->path), "%s", path);
 
-int32_t raftCfgClose(SRaftCfg *pRaftCfg) {}
+  pCfg->pFile = taosOpenFile(pCfg->path, TD_FILE_READ | TD_FILE_WRITE);
+  assert(pCfg->pFile != NULL);
 
-int32_t raftCfgPersist(SRaftCfg *pRaftCfg) {}
+  taosLSeekFile(pCfg->pFile, 0, SEEK_SET);
+
+  char buf[1024];
+  int  len = taosReadFile(pCfg->pFile, buf, sizeof(buf));
+  assert(len > 0);
+
+  int32_t ret = syncCfgFromStr(buf, &(pCfg->cfg));
+  assert(ret == 0);
+
+  return pCfg;
+}
+
+int32_t raftCfgClose(SRaftCfg *pRaftCfg) {
+  int64_t ret = taosCloseFile(&(pRaftCfg->pFile));
+  assert(ret == 0);
+  taosMemoryFree(pRaftCfg);
+  return 0;
+}
+
+int32_t raftCfgPersist(SRaftCfg *pRaftCfg) {
+  assert(pRaftCfg != NULL);
+
+  char *s = syncCfg2Str(&(pRaftCfg->cfg));
+  taosLSeekFile(pRaftCfg->pFile, 0, SEEK_SET);
+  int64_t ret = taosWriteFile(pRaftCfg->pFile, s, strlen(s) + 1);
+  assert(ret == strlen(s) + 1);
+  taosMemoryFree(s);
+
+  taosFsyncFile(pRaftCfg->pFile);
+  return 0;
+}
 
 cJSON *syncCfg2Json(SSyncCfg *pSyncCfg) {
   char   u64buf[128];
@@ -98,15 +132,30 @@ int32_t syncCfgFromStr(const char *s, SSyncCfg *pSyncCfg) {
   return 0;
 }
 
-cJSON *raftCfg2Json(SRaftCfg *pRaftCfg) {}
+cJSON *raftCfg2Json(SRaftCfg *pRaftCfg) {
+  cJSON *pJson = syncCfg2Json(&(pRaftCfg->cfg));
+  return pJson;
+}
 
-char *raftCfg2Str(SRaftCfg *pRaftCfg) {}
+char *raftCfg2Str(SRaftCfg *pRaftCfg) {
+  char *s = syncCfg2Str(&(pRaftCfg->cfg));
+  return s;
+}
 
-int32_t raftCfgSerialize(SRaftCfg *pRaftCfg, char *buf, size_t len) {}
+int32_t syncCfgCreateFile(SSyncCfg *pCfg, const char *path) {
+  assert(pCfg != NULL);
 
-int32_t raftCfgDeserialize(SRaftCfg *pRaftCfg, char *buf, size_t len) {}
+  TdFilePtr pFile = taosOpenFile(path, TD_FILE_CTEATE | TD_FILE_WRITE);
+  assert(pFile != NULL);
 
-int32_t syncCfgCreateFile(SSyncCfg *cfg, const char *path) {}
+  char   *s = syncCfg2Str(pCfg);
+  int64_t ret = taosWriteFile(pFile, s, strlen(s) + 1);
+  assert(ret == strlen(s) + 1);
+
+  taosMemoryFree(s);
+  taosCloseFile(&pFile);
+  return 0;
+}
 
 // for debug ----------------------
 void syncCfgPrint(SSyncCfg *pCfg) {
@@ -132,5 +181,31 @@ void syncCfgLog(SSyncCfg *pCfg) {
 void syncCfgLog2(char *s, SSyncCfg *pCfg) {
   char *serialized = syncCfg2Str(pCfg);
   sTrace("syncCfgLog2 | len:%lu | %s | %s", strlen(serialized), s, serialized);
+  taosMemoryFree(serialized);
+}
+
+void raftCfgPrint(SRaftCfg *pCfg) {
+  char *serialized = raftCfg2Str(pCfg);
+  printf("raftCfgPrint | len:%lu | %s \n", strlen(serialized), serialized);
+  fflush(NULL);
+  taosMemoryFree(serialized);
+}
+
+void raftCfgPrint2(char *s, SRaftCfg *pCfg) {
+  char *serialized = raftCfg2Str(pCfg);
+  printf("raftCfgPrint2 | len:%lu | %s | %s \n", strlen(serialized), s, serialized);
+  fflush(NULL);
+  taosMemoryFree(serialized);
+}
+
+void raftCfgLog(SRaftCfg *pCfg) {
+  char *serialized = raftCfg2Str(pCfg);
+  sTrace("raftCfgLog | len:%lu | %s", strlen(serialized), serialized);
+  taosMemoryFree(serialized);
+}
+
+void raftCfgLog2(char *s, SRaftCfg *pCfg) {
+  char *serialized = raftCfg2Str(pCfg);
+  sTrace("raftCfgLog2 | len:%lu | %s | %s", strlen(serialized), s, serialized);
   taosMemoryFree(serialized);
 }
