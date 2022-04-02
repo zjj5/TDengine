@@ -534,9 +534,7 @@ cJSON* syncNode2Json(const SSyncNode* pSyncNode) {
     // tla+ server vars
     cJSON_AddNumberToObject(pRoot, "state", pSyncNode->state);
     cJSON_AddStringToObject(pRoot, "state_str", syncUtilState2String(pSyncNode->state));
-    char tmpBuf[RAFT_STORE_BLOCK_SIZE];
-    raftStoreSerialize(pSyncNode->pRaftStore, tmpBuf, sizeof(tmpBuf));
-    cJSON_AddStringToObject(pRoot, "pRaftStore", tmpBuf);
+    cJSON_AddItemToObject(pRoot, "pRaftStore", raftStore2Json(pSyncNode->pRaftStore));
 
     // tla+ candidate vars
     cJSON_AddItemToObject(pRoot, "pVotesGranted", voteGranted2Json(pSyncNode->pVotesGranted));
