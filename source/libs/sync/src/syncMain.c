@@ -80,6 +80,8 @@ int64_t syncStart(const SSyncInfo* pSyncInfo) {
   SSyncNode* pSyncNode = syncNodeOpen(pSyncInfo);
   assert(pSyncNode != NULL);
 
+  syncNodePrint2("syncNodeOpen open success", pSyncNode);
+
   pSyncNode->rid = taosAddRef(tsNodeRefId, pSyncNode);
   if (pSyncNode->rid < 0) {
     syncFreeNode(pSyncNode);
@@ -451,6 +453,7 @@ int32_t syncNodeSendMsgById(const SRaftId* destRaftId, SSyncNode* pSyncNode, SRp
     pSyncNode->FpSendMsg(pSyncNode->rpcClient, &epSet, pMsg);
   } else {
     sTrace("syncNodeSendMsgById pSyncNode->FpSendMsg is NULL");
+    printf("syncNodeSendMsgById pSyncNode->FpSendMsg is NULL printf ----- \n");
   }
   return 0;
 }
@@ -462,6 +465,7 @@ int32_t syncNodeSendMsgByInfo(const SNodeInfo* nodeInfo, SSyncNode* pSyncNode, S
     pSyncNode->FpSendMsg(pSyncNode->rpcClient, &epSet, pMsg);
   } else {
     sTrace("syncNodeSendMsgByInfo pSyncNode->FpSendMsg is NULL");
+    printf("syncNodeSendMsgByInfo pSyncNode->FpSendMsg is NULL printf ----- \n");
   }
   return 0;
 }
@@ -811,6 +815,7 @@ static void syncNodeEqElectTimer(void* param, void* tmrId) {
       pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
     } else {
       sTrace("syncNodeEqElectTimer pSyncNode->FpEqMsg is NULL");
+      printf("syncNodeEqElectTimer pSyncNode->FpEqMsg is NULL --------- \n");
     }
     syncTimeoutDestroy(pSyncMsg);
 

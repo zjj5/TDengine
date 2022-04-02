@@ -33,6 +33,7 @@ SVnode *vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg) {
     cfg.hashBegin = pVnodeCfg->hashBegin;
     cfg.hashEnd = pVnodeCfg->hashEnd;
     cfg.hashMethod = pVnodeCfg->hashMethod;
+    cfg.syncCfg = pVnodeCfg->syncCfg;
   }
 
   // Validate options

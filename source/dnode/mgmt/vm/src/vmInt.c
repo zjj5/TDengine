@@ -307,6 +307,9 @@ static int32_t vmInit(SMgmtWrapper *pWrapper) {
   if (syncInit() != 0) {
     dError("failed to open sync since %s", terrstr());
     return -1;
+  } else {
+    dTrace("syncInit success! -------- ");
+    printf("printf syncInit success! -------- \n");
   }
 
   if (vnodeInit() != 0) {
