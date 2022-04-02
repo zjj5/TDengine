@@ -155,6 +155,7 @@ SSyncNode* syncNodeOpen(const SSyncInfo* pSyncInfo) {
   assert(pSyncNode != NULL);
   memset(pSyncNode, 0, sizeof(SSyncNode));
 
+  int32_t ret = 0;
   if (!taosDirExist((char*)(pSyncInfo->path))) {
     if (taosMkDir(pSyncInfo->path) != 0) {
       terrno = TAOS_SYSTEM_ERROR(errno);
@@ -164,13 +165,15 @@ SSyncNode* syncNodeOpen(const SSyncInfo* pSyncInfo) {
 
     // create config file
     snprintf(pSyncNode->configPath, sizeof(pSyncNode->configPath), "%s/raft_config.json", pSyncInfo->path);
+    ret = syncCfgCreateFile((SSyncCfg*)&(pSyncInfo->syncCfg), pSyncNode->configPath);
+    assert(ret == 0);
   }
 
   // init by SSyncInfo
   pSyncNode->vgId = pSyncInfo->vgId;
-  pSyncNode->syncCfg = pSyncInfo->syncCfg;
   memcpy(pSyncNode->path, pSyncInfo->path, sizeof(pSyncNode->path));
   snprintf(pSyncNode->raftStorePath, sizeof(pSyncNode->raftStorePath), "%s/raft_store.json", pSyncInfo->path);
+  snprintf(pSyncNode->configPath, sizeof(pSyncNode->configPath), "%s/raft_config.json", pSyncInfo->path);
 
   pSyncNode->pWal = pSyncInfo->pWal;
   pSyncNode->rpcClient = pSyncInfo->rpcClient;
@@ -178,32 +181,36 @@ SSyncNode* syncNodeOpen(const SSyncInfo* pSyncInfo) {
   pSyncNode->queue = pSyncInfo->queue;
   pSyncNode->FpEqMsg = pSyncInfo->FpEqMsg;
 
+  // init raft config
+  pSyncNode->pRaftCfg = raftCfgOpen(pSyncNode->configPath);
+  assert(pSyncNode->pRaftCfg != NULL);
+
   // init internal
-  pSyncNode->myNodeInfo = pSyncInfo->syncCfg.nodeInfo[pSyncInfo->syncCfg.myIndex];
-  syncUtilnodeInfo2raftId(&pSyncNode->myNodeInfo, pSyncInfo->vgId, &pSyncNode->myRaftId);
+  pSyncNode->myNodeInfo = pSyncNode->pRaftCfg->cfg.nodeInfo[pSyncNode->pRaftCfg->cfg.myIndex];
+  syncUtilnodeInfo2raftId(&pSyncNode->myNodeInfo, pSyncNode->vgId, &pSyncNode->myRaftId);
 
   // init peersNum, peers, peersId
-  pSyncNode->peersNum = pSyncInfo->syncCfg.replicaNum - 1;
+  pSyncNode->peersNum = pSyncNode->pRaftCfg->cfg.replicaNum - 1;
   int j = 0;
-  for (int i = 0; i < pSyncInfo->syncCfg.replicaNum; ++i) {
-    if (i != pSyncInfo->syncCfg.myIndex) {
-      pSyncNode->peersNodeInfo[j] = pSyncInfo->syncCfg.nodeInfo[i];
+  for (int i = 0; i < pSyncNode->pRaftCfg->cfg.replicaNum; ++i) {
+    if (i != pSyncNode->pRaftCfg->cfg.myIndex) {
+      pSyncNode->peersNodeInfo[j] = pSyncNode->pRaftCfg->cfg.nodeInfo[i];
       j++;
     }
   }
   for (int i = 0; i < pSyncNode->peersNum; ++i) {
-    syncUtilnodeInfo2raftId(&pSyncNode->peersNodeInfo[i], pSyncInfo->vgId, &pSyncNode->peersId[i]);
+    syncUtilnodeInfo2raftId(&pSyncNode->peersNodeInfo[i], pSyncNode->vgId, &pSyncNode->peersId[i]);
   }
 
   // init replicaNum, replicasId
-  pSyncNode->replicaNum = pSyncInfo->syncCfg.replicaNum;
-  for (int i = 0; i < pSyncInfo->syncCfg.replicaNum; ++i) {
-    syncUtilnodeInfo2raftId(&pSyncInfo->syncCfg.nodeInfo[i], pSyncInfo->vgId, &pSyncNode->replicasId[i]);
+  pSyncNode->replicaNum = pSyncNode->pRaftCfg->cfg.replicaNum;
+  for (int i = 0; i < pSyncNode->pRaftCfg->cfg.replicaNum; ++i) {
+    syncUtilnodeInfo2raftId(&pSyncNode->pRaftCfg->cfg.nodeInfo[i], pSyncNode->vgId, &pSyncNode->replicasId[i]);
   }
 
   // init raft algorithm
   pSyncNode->pFsm = pSyncInfo->pFsm;
-  pSyncNode->quorum = syncUtilQuorum(pSyncInfo->syncCfg.replicaNum);
+  pSyncNode->quorum = syncUtilQuorum(pSyncNode->pRaftCfg->cfg.replicaNum);
   pSyncNode->leaderCache = EMPTY_RAFT_ID;
 
   // init life cycle outside
@@ -357,9 +364,9 @@ int32_t syncNodePingPeers(SSyncNode* pSyncNode) {
 
 int32_t syncNodePingAll(SSyncNode* pSyncNode) {
   int32_t ret = 0;
-  for (int i = 0; i < pSyncNode->syncCfg.replicaNum; ++i) {
+  for (int i = 0; i < pSyncNode->pRaftCfg->cfg.replicaNum; ++i) {
     SRaftId destId;
-    syncUtilnodeInfo2raftId(&pSyncNode->syncCfg.nodeInfo[i], pSyncNode->vgId, &destId);
+    syncUtilnodeInfo2raftId(&pSyncNode->pRaftCfg->cfg.nodeInfo[i], pSyncNode->vgId, &destId);
     SyncPing* pMsg = syncPingBuild3(&pSyncNode->myRaftId, &destId);
     ret = syncNodePing(pSyncNode, &destId, pMsg);
     assert(ret == 0);
@@ -454,7 +461,11 @@ cJSON* syncNode2Json(const SSyncNode* pSyncNode) {
   if (pSyncNode != NULL) {
     // init by SSyncInfo
     cJSON_AddNumberToObject(pRoot, "vgId", pSyncNode->vgId);
+    cJSON_AddItemToObject(pRoot, "SRaftCfg", raftCfg2Json(pSyncNode->pRaftCfg));
     cJSON_AddStringToObject(pRoot, "path", pSyncNode->path);
+    cJSON_AddStringToObject(pRoot, "raftStorePath", pSyncNode->raftStorePath);
+    cJSON_AddStringToObject(pRoot, "configPath", pSyncNode->configPath);
+
     snprintf(u64buf, sizeof(u64buf), "%p", pSyncNode->pWal);
     cJSON_AddStringToObject(pRoot, "pWal", u64buf);
 

@@ -25,6 +25,7 @@ extern "C" {
 #include <stdlib.h>
 #include "cJSON.h"
 #include "sync.h"
+#include "syncRaftCfg.h"
 #include "taosdef.h"
 #include "tglobal.h"
 #include "tlog.h"
@@ -106,6 +107,9 @@ typedef struct SVotesRespond SVotesRespond;
 struct SSyncIndexMgr;
 typedef struct SSyncIndexMgr SSyncIndexMgr;
 
+struct SRaftCfg;
+typedef struct SRaftCfg SRaftCfg;
+
 typedef struct SRaftId {
   SyncNodeId  addr;  // typedef uint64_t SyncNodeId;
   SyncGroupId vgId;  // typedef int32_t  SyncGroupId;
@@ -114,7 +118,7 @@ typedef struct SRaftId {
 typedef struct SSyncNode {
   // init by SSyncInfo
   SyncGroupId vgId;
-  SSyncCfg    syncCfg;
+  SRaftCfg*   pRaftCfg;
   char        path[TSDB_FILENAME_LEN];
   char        raftStorePath[TSDB_FILENAME_LEN * 2];
   char        configPath[TSDB_FILENAME_LEN * 2];

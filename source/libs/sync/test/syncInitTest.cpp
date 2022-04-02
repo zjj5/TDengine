@@ -30,7 +30,7 @@ SSyncNode* syncNodeInit() {
   syncInfo.queue = gSyncIO->pMsgQ;
   syncInfo.FpEqMsg = syncIOEqMsg;
   syncInfo.pFsm = pFsm;
-  snprintf(syncInfo.path, sizeof(syncInfo.path), "%s", "./");
+  snprintf(syncInfo.path, sizeof(syncInfo.path), "%s", "./sync_init_test");
 
   SSyncCfg* pCfg = &syncInfo.syncCfg;
   pCfg->myIndex = myIndex;
@@ -90,6 +90,7 @@ int main(int argc, char** argv) {
 
   syncNodePrint2((char*)"syncInitTest", pSyncNode);
 
+  printf("\n---------------\n\n");
   initRaftId(pSyncNode);
 
   //--------------------------------------------------------------
