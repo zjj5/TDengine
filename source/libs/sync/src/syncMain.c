@@ -136,7 +136,11 @@ int32_t syncPropose2(int64_t rid, const SRpcMsg* pMsg, bool isWeak, uint64_t seq
     SyncClientRequest* pSyncMsg = syncClientRequestBuild2(pMsg, seqNum, isWeak);
     SRpcMsg            rpcMsg;
     syncClientRequest2RpcMsg(pSyncMsg, &rpcMsg);
-    pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
+    if (pSyncNode->FpEqMsg != NULL) {
+      pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
+    } else {
+      sTrace("syncPropose2 pSyncNode->FpEqMsg is NULL");
+    }
     syncClientRequestDestroy(pSyncMsg);
     ret = 0;
 
@@ -163,7 +167,7 @@ SSyncNode* syncNodeOpen(const SSyncInfo* pSyncInfo) {
       return NULL;
     }
 
-    // create config file
+    // create raft config file
     snprintf(pSyncNode->configPath, sizeof(pSyncNode->configPath), "%s/raft_config.json", pSyncInfo->path);
     ret = syncCfgCreateFile((SSyncCfg*)&(pSyncInfo->syncCfg), pSyncNode->configPath);
     assert(ret == 0);
@@ -443,14 +447,22 @@ int32_t syncNodeStopHeartbeatTimer(SSyncNode* pSyncNode) {
 int32_t syncNodeSendMsgById(const SRaftId* destRaftId, SSyncNode* pSyncNode, SRpcMsg* pMsg) {
   SEpSet epSet;
   syncUtilraftId2EpSet(destRaftId, &epSet);
-  pSyncNode->FpSendMsg(pSyncNode->rpcClient, &epSet, pMsg);
+  if (pSyncNode->FpSendMsg != NULL) {
+    pSyncNode->FpSendMsg(pSyncNode->rpcClient, &epSet, pMsg);
+  } else {
+    sTrace("syncNodeSendMsgById pSyncNode->FpSendMsg is NULL");
+  }
   return 0;
 }
 
 int32_t syncNodeSendMsgByInfo(const SNodeInfo* nodeInfo, SSyncNode* pSyncNode, SRpcMsg* pMsg) {
   SEpSet epSet;
   syncUtilnodeInfo2EpSet(nodeInfo, &epSet);
-  pSyncNode->FpSendMsg(pSyncNode->rpcClient, &epSet, pMsg);
+  if (pSyncNode->FpSendMsg != NULL) {
+    pSyncNode->FpSendMsg(pSyncNode->rpcClient, &epSet, pMsg);
+  } else {
+    sTrace("syncNodeSendMsgByInfo pSyncNode->FpSendMsg is NULL");
+  }
   return 0;
 }
 
@@ -772,7 +784,11 @@ static void syncNodeEqPingTimer(void* param, void* tmrId) {
     SRpcMsg      rpcMsg;
     syncTimeout2RpcMsg(pSyncMsg, &rpcMsg);
     syncRpcMsgLog2((char*)"==syncNodeEqPingTimer==", &rpcMsg);
-    pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
+    if (pSyncNode->FpEqMsg != NULL) {
+      pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
+    } else {
+      sTrace("syncNodeEqPingTimer pSyncNode->FpEqMsg is NULL");
+    }
     syncTimeoutDestroy(pSyncMsg);
 
     taosTmrReset(syncNodeEqPingTimer, pSyncNode->pingTimerMS, pSyncNode, gSyncEnv->pTimerManager,
@@ -791,7 +807,11 @@ static void syncNodeEqElectTimer(void* param, void* tmrId) {
     SRpcMsg      rpcMsg;
     syncTimeout2RpcMsg(pSyncMsg, &rpcMsg);
     syncRpcMsgLog2((char*)"==syncNodeEqElectTimer==", &rpcMsg);
-    pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
+    if (pSyncNode->FpEqMsg != NULL) {
+      pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
+    } else {
+      sTrace("syncNodeEqElectTimer pSyncNode->FpEqMsg is NULL");
+    }
     syncTimeoutDestroy(pSyncMsg);
 
     // reset timer ms
@@ -814,7 +834,11 @@ static void syncNodeEqHeartbeatTimer(void* param, void* tmrId) {
     SRpcMsg rpcMsg;
     syncTimeout2RpcMsg(pSyncMsg, &rpcMsg);
     syncRpcMsgLog2((char*)"==syncNodeEqHeartbeatTimer==", &rpcMsg);
-    pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
+    if (pSyncNode->FpEqMsg != NULL) {
+      pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
+    } else {
+      sTrace("syncNodeEqHeartbeatTimer pSyncNode->FpEqMsg is NULL");
+    }
     syncTimeoutDestroy(pSyncMsg);
 
     taosTmrReset(syncNodeEqHeartbeatTimer, pSyncNode->heartbeatTimerMS, pSyncNode, gSyncEnv->pTimerManager,
@@ -843,7 +867,11 @@ static int32_t syncNodeEqNoop(SSyncNode* ths) {
 
   SRpcMsg rpcMsg;
   syncClientRequest2RpcMsg(pSyncMsg, &rpcMsg);
-  ths->FpEqMsg(ths->queue, &rpcMsg);
+  if (ths->FpEqMsg != NULL) {
+    ths->FpEqMsg(ths->queue, &rpcMsg);
+  } else {
+    sTrace("syncNodeEqNoop pSyncNode->FpEqMsg is NULL");
+  }
 
   taosMemoryFree(serialized);
   syncClientRequestDestroy(pSyncMsg);
