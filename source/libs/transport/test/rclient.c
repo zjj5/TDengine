@@ -20,8 +20,9 @@
 #include "taoserror.h"
 #include "tglobal.h"
 #include "trpc.h"
+#include "tsched.h"
 #include "tutil.h"
-
+void *Qhandle = NULL;
 typedef struct {
   int      index;
   SEpSet   epSet;
@@ -33,16 +34,37 @@ typedef struct {
   TdThread thread;
   void *   pRpc;
 } SInfo;
-static void processResponse(void *pParent, SRpcMsg *pMsg, SEpSet *pEpSet) {
-  SInfo *pInfo = (SInfo *)pMsg->ahandle;
-  // tError("thread:%d, response is received, type:%d contLen:%d code:0x%x", pInfo->index, pMsg->msgType, pMsg->contLen,
-  //       pMsg->code);
 
-  if (pEpSet) pInfo->epSet = *pEpSet;
+static void doProcessResponse(SSchedMsg *pSchedMsg) {
+  SRpcMsg *pMsg = pSchedMsg->ahandle;
+  SInfo *  pInfo = (SInfo *)pMsg->ahandle;
 
   rpcFreeCont(pMsg->pCont);
+  taosMemoryFree(pSchedMsg->thandle);
+
   // tsem_post(&pInfo->rspSem);
   tsem_post(&pInfo->rspSem);
+}
+
+static void processResponse(void *pParent, SRpcMsg *pMsg, SEpSet *pEpSet) {
+  SSchedMsg schedMsg = {0};
+
+  schedMsg.fp = doProcessResponse;
+
+  SRpcMsg *rpcMsgCopy = taosMemoryCalloc(1, sizeof(SRpcMsg));
+  memcpy(rpcMsgCopy, pMsg, sizeof(struct SRpcMsg));
+  schedMsg.ahandle = (void *)rpcMsgCopy;
+
+  SEpSet *pEpSetCopy = NULL;
+  if (pEpSet != NULL) {
+    pEpSetCopy = taosMemoryCalloc(1, sizeof(SEpSet));
+    memcpy(pEpSetCopy, pEpSet, sizeof(SEpSet));
+  }
+
+  schedMsg.thandle = (void *)pEpSetCopy;
+  schedMsg.msg = NULL;
+
+  taosScheduleTask(Qhandle, &schedMsg);
 }
 
 static int tcount = 0;
@@ -106,6 +128,9 @@ int main(int argc, char *argv[]) {
   int64_t        startTime, endTime;
   TdThreadAttr   thattr;
 
+  int queueSize = 128;
+  int numOfThreads = 5;
+  Qhandle = taosInitScheduler(queueSize, numOfThreads, "tsc");
   // server info
   epSet.inUse = 0;
   addEpIntoEpSet(&epSet, serverIp, 7000);
