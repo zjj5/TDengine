@@ -73,6 +73,11 @@ int32_t vmOpenVnode(SVnodesMgmt *pMgmt, SWrapperCfg *pCfg, SVnode *pImpl) {
     return -1;
   }
 
+  // sync
+  vnodeSyncSetQ(pImpl, pVnode->pSyncQ);
+  int32_t ret = vnodeSyncStart(pImpl);
+  assert(ret == 0);
+
   taosWLockLatch(&pMgmt->latch);
   int32_t code = taosHashPut(pMgmt->hash, &pVnode->vgId, sizeof(int32_t), &pVnode, sizeof(SVnodeObj *));
   taosWUnLockLatch(&pMgmt->latch);

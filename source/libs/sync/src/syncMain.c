@@ -91,7 +91,15 @@ int64_t syncOpen(const SSyncInfo* pSyncInfo) {
   return pSyncNode->rid;
 }
 
-void syncStart(int64_t rid) {}
+void syncStart(int64_t rid) {
+  SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
+  if (pSyncNode == NULL) {
+    return;
+  }
+  syncNodeStart(pSyncNode);
+
+  taosReleaseRef(tsNodeRefId, pSyncNode->rid);
+}
 
 void syncStop(int64_t rid) {
   SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
@@ -129,6 +137,17 @@ ESyncState syncGetMyRole(int64_t rid) {
 
   taosReleaseRef(tsNodeRefId, pSyncNode->rid);
   return state;
+}
+
+void syncSetQ(int64_t rid, void* queue) {
+  SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
+  if (pSyncNode == NULL) {
+    return;
+  }
+  assert(rid == pSyncNode->rid);
+  pSyncNode->queue = queue;
+
+  taosReleaseRef(tsNodeRefId, pSyncNode->rid);
 }
 
 void setPingTimerMS(int64_t rid, int32_t pingTimerMS) {

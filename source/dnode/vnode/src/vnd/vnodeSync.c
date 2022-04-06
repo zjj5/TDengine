@@ -32,7 +32,7 @@ int32_t vnodeSyncOpen(SVnode *pVnode) {
   syncInfo.rpcClient = NULL;
   syncInfo.FpSendMsg = NULL;
   syncInfo.queue = NULL;
-  syncInfo.FpEqMsg = NULL;
+  syncInfo.FpEqMsg = vnodeSyncEqMsg;
 
   pVnode->sync = syncOpen(&syncInfo);
   assert(pVnode->sync > 0);
@@ -45,7 +45,28 @@ int32_t vnodeSyncOpen(SVnode *pVnode) {
   return 0;
 }
 
+int32_t vnodeSyncStart(SVnode *pVnode) {
+  syncStart(pVnode->sync);
+  return 0;
+}
+
 void vnodeSyncClose(SVnode *pVnode) {
   // stop by ref id
   syncStop(pVnode->sync);
+}
+
+void vnodeSyncSetQ(SVnode *pVnode, void *q) { syncSetQ(pVnode->sync, q); }
+
+int32_t vnodeSyncEqMsg(void *queue, SRpcMsg *pMsg) {
+  int32_t ret = 0;
+  char    logBuf[128];
+
+  SRpcMsg *pTemp;
+  pTemp = taosAllocateQitem(sizeof(SRpcMsg));
+  memcpy(pTemp, pMsg, sizeof(SRpcMsg));
+
+  STaosQueue *pMsgQ = queue;
+  taosWriteQitem(pMsgQ, pTemp);
+
+  return ret;
 }

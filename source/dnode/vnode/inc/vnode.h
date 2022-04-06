@@ -265,6 +265,10 @@ int     tqRetrieveDataBlockInfo(STqReadHandle *pHandle, SDataBlockInfo *pBlockIn
 // return SArray<SColumnInfoData>
 SArray *tqRetrieveDataBlock(STqReadHandle *pHandle);
 
+// sync
+void    vnodeSyncSetQ(SVnode *pVnode, void *q);
+int32_t vnodeSyncStart(SVnode *pVnode);
+
 #ifdef __cplusplus
 }
 #endif

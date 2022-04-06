@@ -168,6 +168,9 @@ int32_t    syncReconfig(int64_t rid, const SSyncCfg* pSyncCfg);
 int32_t    syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak);
 ESyncState syncGetMyRole(int64_t rid);
 
+// control
+void syncSetQ(int64_t rid, void* queue);
+
 // set timer ms
 void setPingTimerMS(int64_t rid, int32_t pingTimerMS);
 void setElectTimerMS(int64_t rid, int32_t electTimerMS);

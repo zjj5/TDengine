@@ -42,5 +42,8 @@ int32_t vnodeGetLoad(SVnode *pVnode, SVnodeLoad *pLoad) {
 
 int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
   /*vInfo("sync message is processed");*/
+
+  printf("=== vnodeProcessSyncReq === type : %d ----------\n", pMsg->msgType);
+
   return 0;
 }
