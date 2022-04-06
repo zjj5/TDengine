@@ -123,7 +123,43 @@ ESyncState syncGetMyRole(int64_t rid) {
     return TAOS_SYNC_STATE_ERROR;
   }
   assert(rid == pSyncNode->rid);
-  return pSyncNode->state;
+  ESyncState state = pSyncNode->state;
+
+  taosReleaseRef(tsNodeRefId, pSyncNode->rid);
+  return state;
+}
+
+void setPingTimerMS(int64_t rid, int32_t pingTimerMS) {
+  SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
+  if (pSyncNode == NULL) {
+    return;
+  }
+  assert(rid == pSyncNode->rid);
+  pSyncNode->pingTimerMS = pingTimerMS;
+
+  taosReleaseRef(tsNodeRefId, pSyncNode->rid);
+}
+
+void setElectTimerMS(int64_t rid, int32_t electTimerMS) {
+  SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
+  if (pSyncNode == NULL) {
+    return;
+  }
+  assert(rid == pSyncNode->rid);
+  pSyncNode->electTimerMS = electTimerMS;
+
+  taosReleaseRef(tsNodeRefId, pSyncNode->rid);
+}
+
+void setHeartbeatTimerMS(int64_t rid, int32_t hbTimerMS) {
+  SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
+  if (pSyncNode == NULL) {
+    return;
+  }
+  assert(rid == pSyncNode->rid);
+  pSyncNode->heartbeatTimerMS = hbTimerMS;
+
+  taosReleaseRef(tsNodeRefId, pSyncNode->rid);
 }
 
 int32_t syncPropose2(int64_t rid, const SRpcMsg* pMsg, bool isWeak, uint64_t seqNum) {
@@ -309,6 +345,10 @@ SSyncNode* syncNodeOpen(const SSyncInfo* pSyncInfo) {
   // start raft
   syncNodeBecomeFollower(pSyncNode);
 
+  // for test
+  ret = syncNodeStartPingTimer(pSyncNode);
+  assert(ret == 0);
+
   return pSyncNode;
 }
 
@@ -455,7 +495,6 @@ int32_t syncNodeSendMsgById(const SRaftId* destRaftId, SSyncNode* pSyncNode, SRp
     pSyncNode->FpSendMsg(pSyncNode->rpcClient, &epSet, pMsg);
   } else {
     sTrace("syncNodeSendMsgById pSyncNode->FpSendMsg is NULL");
-    printf("syncNodeSendMsgById pSyncNode->FpSendMsg is NULL printf ----- \n");
   }
   return 0;
 }
@@ -467,7 +506,6 @@ int32_t syncNodeSendMsgByInfo(const SNodeInfo* nodeInfo, SSyncNode* pSyncNode, S
     pSyncNode->FpSendMsg(pSyncNode->rpcClient, &epSet, pMsg);
   } else {
     sTrace("syncNodeSendMsgByInfo pSyncNode->FpSendMsg is NULL");
-    printf("syncNodeSendMsgByInfo pSyncNode->FpSendMsg is NULL printf ----- \n");
   }
   return 0;
 }
@@ -815,14 +853,13 @@ static void syncNodeEqElectTimer(void* param, void* tmrId) {
       pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
     } else {
       sTrace("syncNodeEqElectTimer pSyncNode->FpEqMsg is NULL");
-      printf("syncNodeEqElectTimer pSyncNode->FpEqMsg is NULL --------- \n");
     }
     syncTimeoutDestroy(pSyncMsg);
 
     // reset timer ms
     pSyncNode->electTimerMS = syncUtilElectRandomMS(pSyncNode->electBaseLine, 2 * pSyncNode->electBaseLine);
-    taosTmrReset(syncNodeEqPingTimer, pSyncNode->pingTimerMS, pSyncNode, gSyncEnv->pTimerManager,
-                 &pSyncNode->pPingTimer);
+    taosTmrReset(syncNodeEqElectTimer, pSyncNode->electTimerMS, pSyncNode, gSyncEnv->pTimerManager,
+                 &pSyncNode->pElectTimer);
   } else {
     sTrace("==syncNodeEqElectTimer== electTimerLogicClock:%" PRIu64 ", electTimerLogicClockUser:%" PRIu64 "",
            pSyncNode->electTimerLogicClock, pSyncNode->electTimerLogicClockUser);
