@@ -34,7 +34,7 @@ int32_t vnodeSyncOpen(SVnode *pVnode) {
   syncInfo.queue = NULL;
   syncInfo.FpEqMsg = NULL;
 
-  pVnode->sync = syncStart(&syncInfo);
+  pVnode->sync = syncOpen(&syncInfo);
   assert(pVnode->sync > 0);
 
   // for test

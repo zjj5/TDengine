@@ -99,8 +99,9 @@ int64_t syncNodeInit() {
     // taosGetFqdn(pCfg->nodeInfo[0].nodeFqdn);
   }
 
-  int64_t rid = syncStart(&syncInfo);
+  int64_t rid = syncOpen(&syncInfo);
   assert(rid > 0);
+  syncStart(rid);
 
   SSyncNode *pSyncNode = (SSyncNode *)syncNodeAcquire(rid);
   assert(pSyncNode != NULL);

@@ -76,7 +76,7 @@ void syncCleanUp() {
   }
 }
 
-int64_t syncStart(const SSyncInfo* pSyncInfo) {
+int64_t syncOpen(const SSyncInfo* pSyncInfo) {
   SSyncNode* pSyncNode = syncNodeOpen(pSyncInfo);
   assert(pSyncNode != NULL);
 
@@ -90,6 +90,8 @@ int64_t syncStart(const SSyncInfo* pSyncInfo) {
 
   return pSyncNode->rid;
 }
+
+void syncStart(int64_t rid) {}
 
 void syncStop(int64_t rid) {
   SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
@@ -342,14 +344,20 @@ SSyncNode* syncNodeOpen(const SSyncInfo* pSyncInfo) {
   pSyncNode->FpOnAppendEntriesReply = syncNodeOnAppendEntriesReplyCb;
   pSyncNode->FpOnTimeout = syncNodeOnTimeoutCb;
 
+  // start in syncNodeStart
+  // start raft
+  // syncNodeBecomeFollower(pSyncNode);
+
+  return pSyncNode;
+}
+
+void syncNodeStart(SSyncNode* pSyncNode) {
   // start raft
   syncNodeBecomeFollower(pSyncNode);
 
   // for test
-  ret = syncNodeStartPingTimer(pSyncNode);
+  int32_t ret = syncNodeStartPingTimer(pSyncNode);
   assert(ret == 0);
-
-  return pSyncNode;
 }
 
 void syncNodeClose(SSyncNode* pSyncNode) {
