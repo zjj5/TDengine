@@ -150,8 +150,10 @@ SyncTimeout* syncTimeoutBuild() {
   return pMsg;
 }
 
-SyncTimeout* syncTimeoutBuild2(ESyncTimeoutType timeoutType, uint64_t logicClock, int32_t timerMS, void* data) {
+SyncTimeout* syncTimeoutBuild2(ESyncTimeoutType timeoutType, uint64_t logicClock, int32_t timerMS, int32_t vgId,
+                               void* data) {
   SyncTimeout* pMsg = syncTimeoutBuild();
+  pMsg->vgId = vgId;
   pMsg->timeoutType = timeoutType;
   pMsg->logicClock = logicClock;
   pMsg->timerMS = timerMS;
@@ -217,6 +219,7 @@ cJSON* syncTimeout2Json(const SyncTimeout* pMsg) {
 
   if (pMsg != NULL) {
     cJSON_AddNumberToObject(pRoot, "bytes", pMsg->bytes);
+    cJSON_AddNumberToObject(pRoot, "vgId", pMsg->vgId);
     cJSON_AddNumberToObject(pRoot, "msgType", pMsg->msgType);
     cJSON_AddNumberToObject(pRoot, "timeoutType", pMsg->timeoutType);
     snprintf(u64buf, sizeof(u64buf), "%lu", pMsg->logicClock);

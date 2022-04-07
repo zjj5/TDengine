@@ -849,7 +849,7 @@ static void syncNodeEqPingTimer(void* param, void* tmrId) {
   SSyncNode* pSyncNode = (SSyncNode*)param;
   if (atomic_load_64(&pSyncNode->pingTimerLogicClockUser) <= atomic_load_64(&pSyncNode->pingTimerLogicClock)) {
     SyncTimeout* pSyncMsg = syncTimeoutBuild2(SYNC_TIMEOUT_PING, atomic_load_64(&pSyncNode->pingTimerLogicClock),
-                                              pSyncNode->pingTimerMS, pSyncNode);
+                                              pSyncNode->pingTimerMS, pSyncNode->vgId, pSyncNode);
     SRpcMsg      rpcMsg;
     syncTimeout2RpcMsg(pSyncMsg, &rpcMsg);
     syncRpcMsgLog2((char*)"==syncNodeEqPingTimer==", &rpcMsg);
@@ -872,7 +872,7 @@ static void syncNodeEqElectTimer(void* param, void* tmrId) {
   SSyncNode* pSyncNode = (SSyncNode*)param;
   if (atomic_load_64(&pSyncNode->electTimerLogicClockUser) <= atomic_load_64(&pSyncNode->electTimerLogicClock)) {
     SyncTimeout* pSyncMsg = syncTimeoutBuild2(SYNC_TIMEOUT_ELECTION, atomic_load_64(&pSyncNode->electTimerLogicClock),
-                                              pSyncNode->electTimerMS, pSyncNode);
+                                              pSyncNode->electTimerMS, pSyncNode->vgId, pSyncNode);
     SRpcMsg      rpcMsg;
     syncTimeout2RpcMsg(pSyncMsg, &rpcMsg);
     syncRpcMsgLog2((char*)"==syncNodeEqElectTimer==", &rpcMsg);
@@ -899,7 +899,7 @@ static void syncNodeEqHeartbeatTimer(void* param, void* tmrId) {
       atomic_load_64(&pSyncNode->heartbeatTimerLogicClock)) {
     SyncTimeout* pSyncMsg =
         syncTimeoutBuild2(SYNC_TIMEOUT_HEARTBEAT, atomic_load_64(&pSyncNode->heartbeatTimerLogicClock),
-                          pSyncNode->heartbeatTimerMS, pSyncNode);
+                          pSyncNode->heartbeatTimerMS, pSyncNode->vgId, pSyncNode);
     SRpcMsg rpcMsg;
     syncTimeout2RpcMsg(pSyncMsg, &rpcMsg);
     syncRpcMsgLog2((char*)"==syncNodeEqHeartbeatTimer==", &rpcMsg);

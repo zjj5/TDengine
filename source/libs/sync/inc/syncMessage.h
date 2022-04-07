@@ -63,6 +63,7 @@ typedef enum ESyncTimeoutType {
 
 typedef struct SyncTimeout {
   uint32_t         bytes;
+  int32_t          vgId;
   uint32_t         msgType;
   ESyncTimeoutType timeoutType;
   uint64_t         logicClock;
@@ -71,7 +72,8 @@ typedef struct SyncTimeout {
 } SyncTimeout;
 
 SyncTimeout* syncTimeoutBuild();
-SyncTimeout* syncTimeoutBuild2(ESyncTimeoutType timeoutType, uint64_t logicClock, int32_t timerMS, void* data);
+SyncTimeout* syncTimeoutBuild2(ESyncTimeoutType timeoutType, uint64_t logicClock, int32_t timerMS, int32_t vgId,
+                               void* data);
 void         syncTimeoutDestroy(SyncTimeout* pMsg);
 void         syncTimeoutSerialize(const SyncTimeout* pMsg, char* buf, uint32_t bufLen);
 void         syncTimeoutDeserialize(const char* buf, uint32_t len, SyncTimeout* pMsg);

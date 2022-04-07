@@ -16,7 +16,6 @@
 #define _DEFAULT_SOURCE
 #include "sync.h"
 #include "vnd.h"
-// #include "vnodeInt.h"
 
 int32_t vnodeAlter(SVnode *pVnode, const SVnodeCfg *pCfg) { return 0; }
 
@@ -44,6 +43,7 @@ int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
   /*vInfo("sync message is processed");*/
 
   printf("=== vnodeProcessSyncReq === type : %d ----------\n", pMsg->msgType);
+  fflush(NULL);
 
   return 0;
 }

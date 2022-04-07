@@ -287,6 +287,10 @@ static int32_t vmPutRpcMsgToQueue(SMgmtWrapper *pWrapper, SRpcMsg *pRpc, EQueueT
         dTrace("msg:%p, will be put into vnode-merge queue", pMsg);
         taosWriteQitem(pVnode->pMergeQ, pMsg);
         break;
+      case SYNC_QUEUE:
+        dTrace("msg:%p, will be put into vnode-sync queue", pMsg);
+        taosWriteQitem(pVnode->pSyncQ, pMsg);
+        break;
       default:
         code = -1;
         terrno = TSDB_CODE_INVALID_PARA;
@@ -311,6 +315,10 @@ int32_t vmPutMsgToApplyQueue(SMgmtWrapper *pWrapper, SRpcMsg *pRpc) {
 
 int32_t vmPutMsgToMergeQueue(SMgmtWrapper *pWrapper, SRpcMsg *pRpc) {
   return vmPutRpcMsgToQueue(pWrapper, pRpc, MERGE_QUEUE);
+}
+
+int32_t vmPutMsgToSyncQueue(SMgmtWrapper *pWrapper, SRpcMsg *pRpc) {
+  return vmPutRpcMsgToQueue(pWrapper, pRpc, SYNC_QUEUE);
 }
 
 int32_t vmGetQueueSize(SMgmtWrapper *pWrapper, int32_t vgId, EQueueType qtype) {

@@ -17,7 +17,7 @@ void logTest() {
 int gg = 0;
 
 SyncTimeout *createMsg() {
-  SyncTimeout *pMsg = syncTimeoutBuild2(SYNC_TIMEOUT_PING, 999, 333, &gg);
+  SyncTimeout *pMsg = syncTimeoutBuild2(SYNC_TIMEOUT_PING, 999, 333, 1000, &gg);
   return pMsg;
 }
 

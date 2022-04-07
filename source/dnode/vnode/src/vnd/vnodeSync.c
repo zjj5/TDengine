@@ -14,6 +14,7 @@
  */
 
 #include "vnodeSync.h"
+#include "tmsgcb.h"
 #include "vnd.h"
 
 int32_t vnodeSyncOpen(SVnode *pVnode) {
@@ -55,8 +56,9 @@ void vnodeSyncClose(SVnode *pVnode) {
   syncStop(pVnode->sync);
 }
 
-void vnodeSyncSetQ(SVnode *pVnode, void *q) { syncSetQ(pVnode->sync, q); }
+void vnodeSyncSetQ(SVnode *pVnode, void *qHandle) { syncSetQ(pVnode->sync, (void *)(&(pVnode->msgCb))); }
 
+/*
 int32_t vnodeSyncEqMsg(void *queue, SRpcMsg *pMsg) {
   int32_t ret = 0;
   char    logBuf[128];
@@ -67,6 +69,14 @@ int32_t vnodeSyncEqMsg(void *queue, SRpcMsg *pMsg) {
 
   STaosQueue *pMsgQ = queue;
   taosWriteQitem(pMsgQ, pTemp);
+
+  return ret;
+}
+*/
+
+int32_t vnodeSyncEqMsg(void *qHandle, SRpcMsg *pMsg) {
+  int32_t ret = 0;
+  tmsgPutToQueue(qHandle, SYNC_QUEUE, pMsg);
 
   return ret;
 }
