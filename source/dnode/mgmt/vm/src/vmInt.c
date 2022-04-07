@@ -74,7 +74,9 @@ int32_t vmOpenVnode(SVnodesMgmt *pMgmt, SWrapperCfg *pCfg, SVnode *pImpl) {
   }
 
   // sync
-  vnodeSyncSetQ(pImpl, pVnode->pSyncQ);
+  vnodeSyncSetQ(pImpl, NULL);
+  vnodeSyncSetRpc(pImpl, NULL);
+
   int32_t ret = vnodeSyncStart(pImpl);
   assert(ret == 0);
 

@@ -279,17 +279,18 @@ SyncPing* syncPingBuild(uint32_t dataLen) {
   return pMsg;
 }
 
-SyncPing* syncPingBuild2(const SRaftId* srcId, const SRaftId* destId, const char* str) {
+SyncPing* syncPingBuild2(const SRaftId* srcId, const SRaftId* destId, int32_t vgId, const char* str) {
   uint32_t  dataLen = strlen(str) + 1;
   SyncPing* pMsg = syncPingBuild(dataLen);
+  pMsg->vgId = vgId;
   pMsg->srcId = *srcId;
   pMsg->destId = *destId;
   snprintf(pMsg->data, pMsg->dataLen, "%s", str);
   return pMsg;
 }
 
-SyncPing* syncPingBuild3(const SRaftId* srcId, const SRaftId* destId) {
-  SyncPing* pMsg = syncPingBuild2(srcId, destId, "ping");
+SyncPing* syncPingBuild3(const SRaftId* srcId, const SRaftId* destId, int32_t vgId) {
+  SyncPing* pMsg = syncPingBuild2(srcId, destId, vgId, "ping");
   return pMsg;
 }
 
@@ -339,6 +340,9 @@ int32_t syncPingSerialize3(const SyncPing* pMsg, char* buf, int32_t bufLen) {
   if (tEncodeU32(&encoder, pMsg->bytes) < 0) {
     return -1;
   }
+  if (tEncodeI32(&encoder, pMsg->vgId) < 0) {
+    return -1;
+  }
   if (tEncodeU32(&encoder, pMsg->msgType) < 0) {
     return -1;
   }
@@ -384,6 +388,9 @@ SyncPing* syncPingDeserialize3(void* buf, int32_t bufLen) {
   assert(pMsg != NULL);
   pMsg->bytes = bytes;
 
+  if (tDecodeI32(&decoder, &pMsg->vgId) < 0) {
+    return NULL;
+  }
   if (tDecodeU32(&decoder, &pMsg->msgType) < 0) {
     return NULL;
   }
@@ -438,6 +445,7 @@ cJSON* syncPing2Json(const SyncPing* pMsg) {
 
   if (pMsg != NULL) {
     cJSON_AddNumberToObject(pRoot, "bytes", pMsg->bytes);
+    cJSON_AddNumberToObject(pRoot, "vgId", pMsg->vgId);
     cJSON_AddNumberToObject(pRoot, "msgType", pMsg->msgType);
 
     cJSON* pSrcId = cJSON_CreateObject();
@@ -530,17 +538,18 @@ SyncPingReply* syncPingReplyBuild(uint32_t dataLen) {
   return pMsg;
 }
 
-SyncPingReply* syncPingReplyBuild2(const SRaftId* srcId, const SRaftId* destId, const char* str) {
+SyncPingReply* syncPingReplyBuild2(const SRaftId* srcId, const SRaftId* destId, int32_t vgId, const char* str) {
   uint32_t       dataLen = strlen(str) + 1;
   SyncPingReply* pMsg = syncPingReplyBuild(dataLen);
+  pMsg->vgId = vgId;
   pMsg->srcId = *srcId;
   pMsg->destId = *destId;
   snprintf(pMsg->data, pMsg->dataLen, "%s", str);
   return pMsg;
 }
 
-SyncPingReply* syncPingReplyBuild3(const SRaftId* srcId, const SRaftId* destId) {
-  SyncPingReply* pMsg = syncPingReplyBuild2(srcId, destId, "pang");
+SyncPingReply* syncPingReplyBuild3(const SRaftId* srcId, const SRaftId* destId, int32_t vgId) {
+  SyncPingReply* pMsg = syncPingReplyBuild2(srcId, destId, vgId, "pang");
   return pMsg;
 }
 
@@ -590,6 +599,9 @@ int32_t syncPingReplySerialize3(const SyncPingReply* pMsg, char* buf, int32_t bu
   if (tEncodeU32(&encoder, pMsg->bytes) < 0) {
     return -1;
   }
+  if (tEncodeI32(&encoder, pMsg->vgId) < 0) {
+    return -1;
+  }
   if (tEncodeU32(&encoder, pMsg->msgType) < 0) {
     return -1;
   }
@@ -635,6 +647,9 @@ SyncPingReply* syncPingReplyDeserialize3(void* buf, int32_t bufLen) {
   assert(pMsg != NULL);
   pMsg->bytes = bytes;
 
+  if (tDecodeI32(&decoder, &pMsg->vgId) < 0) {
+    return NULL;
+  }
   if (tDecodeU32(&decoder, &pMsg->msgType) < 0) {
     return NULL;
   }
@@ -689,6 +704,7 @@ cJSON* syncPingReply2Json(const SyncPingReply* pMsg) {
 
   if (pMsg != NULL) {
     cJSON_AddNumberToObject(pRoot, "bytes", pMsg->bytes);
+    cJSON_AddNumberToObject(pRoot, "vgId", pMsg->vgId);
     cJSON_AddNumberToObject(pRoot, "msgType", pMsg->msgType);
 
     cJSON* pSrcId = cJSON_CreateObject();

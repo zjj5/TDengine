@@ -408,7 +408,7 @@ static void syncIOTickQ(void *param, void *tmrId) {
   srcId.vgId = -1;
   destId.addr = syncUtilAddr2U64(io->myAddr.eps[0].fqdn, io->myAddr.eps[0].port);
   destId.vgId = -1;
-  SyncPingReply *pMsg = syncPingReplyBuild2(&srcId, &destId, "syncIOTickQ");
+  SyncPingReply *pMsg = syncPingReplyBuild2(&srcId, &destId, -1, "syncIOTickQ");
 
   SRpcMsg rpcMsg;
   syncPingReply2RpcMsg(pMsg, &rpcMsg);
@@ -430,7 +430,7 @@ static void syncIOTickPing(void *param, void *tmrId) {
   srcId.vgId = -1;
   destId.addr = syncUtilAddr2U64(io->myAddr.eps[0].fqdn, io->myAddr.eps[0].port);
   destId.vgId = -1;
-  SyncPing *pMsg = syncPingBuild2(&srcId, &destId, "syncIOTickPing");
+  SyncPing *pMsg = syncPingBuild2(&srcId, &destId, -1, "syncIOTickPing");
   // SyncPing *pMsg = syncPingBuild3(&srcId, &destId);
 
   SRpcMsg rpcMsg;

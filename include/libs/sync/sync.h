@@ -22,6 +22,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <tdatablock.h>
+#include "cJSON.h"
 #include "taosdef.h"
 #include "trpc.h"
 #include "wal.h"
@@ -169,7 +170,8 @@ int32_t    syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak);
 ESyncState syncGetMyRole(int64_t rid);
 
 // control
-void syncSetQ(int64_t rid, void* queue);
+void syncSetQ(int64_t rid, void* queueHandle);
+void syncSetRpc(int64_t rid, void* rpcHandle);
 
 // set timer ms
 void setPingTimerMS(int64_t rid, int32_t pingTimerMS);
@@ -182,7 +184,132 @@ int32_t syncPropose2(int64_t rid, const SRpcMsg* pMsg, bool isWeak, uint64_t seq
 // for compatibility, the same as syncPropose
 int32_t syncForwardToPeer(int64_t rid, const SRpcMsg* pMsg, bool isWeak);
 
+// for debug ----------------------
+void syncRpcMsgPrint(SRpcMsg* pMsg);
+void syncRpcMsgPrint2(char* s, SRpcMsg* pMsg);
+void syncRpcMsgLog(SRpcMsg* pMsg);
+void syncRpcMsgLog2(char* s, SRpcMsg* pMsg);
+
 extern int32_t sDebugFlag;
+
+//====================================
+typedef struct SRaftId {
+  SyncNodeId  addr;  // typedef uint64_t SyncNodeId;
+  SyncGroupId vgId;  // typedef int32_t  SyncGroupId;
+} SRaftId;
+
+typedef struct SyncPing {
+  uint32_t bytes;
+  int32_t  vgId;
+  uint32_t msgType;
+  SRaftId  srcId;
+  SRaftId  destId;
+  // private data
+  uint32_t dataLen;
+  char     data[];
+} SyncPing;
+
+SyncPing* syncPingBuild(uint32_t dataLen);
+SyncPing* syncPingBuild2(const SRaftId* srcId, const SRaftId* destId, int32_t vgId, const char* str);
+SyncPing* syncPingBuild3(const SRaftId* srcId, const SRaftId* destId, int32_t vgId);
+void      syncPingDestroy(SyncPing* pMsg);
+void      syncPingSerialize(const SyncPing* pMsg, char* buf, uint32_t bufLen);
+void      syncPingDeserialize(const char* buf, uint32_t len, SyncPing* pMsg);
+char*     syncPingSerialize2(const SyncPing* pMsg, uint32_t* len);
+SyncPing* syncPingDeserialize2(const char* buf, uint32_t len);
+int32_t   syncPingSerialize3(const SyncPing* pMsg, char* buf, int32_t bufLen);
+SyncPing* syncPingDeserialize3(void* buf, int32_t bufLen);
+void      syncPing2RpcMsg(const SyncPing* pMsg, SRpcMsg* pRpcMsg);
+void      syncPingFromRpcMsg(const SRpcMsg* pRpcMsg, SyncPing* pMsg);
+SyncPing* syncPingFromRpcMsg2(const SRpcMsg* pRpcMsg);
+cJSON*    syncPing2Json(const SyncPing* pMsg);
+char*     syncPing2Str(const SyncPing* pMsg);
+
+// for debug ----------------------
+void syncPingPrint(const SyncPing* pMsg);
+void syncPingPrint2(char* s, const SyncPing* pMsg);
+void syncPingLog(const SyncPing* pMsg);
+void syncPingLog2(char* s, const SyncPing* pMsg);
+
+// ---------------------------------------------
+
+typedef struct SyncPingReply {
+  uint32_t bytes;
+  int32_t  vgId;
+  uint32_t msgType;
+  SRaftId  srcId;
+  SRaftId  destId;
+  // private data
+  uint32_t dataLen;
+  char     data[];
+} SyncPingReply;
+
+SyncPingReply* syncPingReplyBuild(uint32_t dataLen);
+SyncPingReply* syncPingReplyBuild2(const SRaftId* srcId, const SRaftId* destId, int32_t vgId, const char* str);
+SyncPingReply* syncPingReplyBuild3(const SRaftId* srcId, const SRaftId* destId, int32_t vgId);
+void           syncPingReplyDestroy(SyncPingReply* pMsg);
+void           syncPingReplySerialize(const SyncPingReply* pMsg, char* buf, uint32_t bufLen);
+void           syncPingReplyDeserialize(const char* buf, uint32_t len, SyncPingReply* pMsg);
+char*          syncPingReplySerialize2(const SyncPingReply* pMsg, uint32_t* len);
+SyncPingReply* syncPingReplyDeserialize2(const char* buf, uint32_t len);
+int32_t        syncPingReplySerialize3(const SyncPingReply* pMsg, char* buf, int32_t bufLen);
+SyncPingReply* syncPingReplyDeserialize3(void* buf, int32_t bufLen);
+void           syncPingReply2RpcMsg(const SyncPingReply* pMsg, SRpcMsg* pRpcMsg);
+void           syncPingReplyFromRpcMsg(const SRpcMsg* pRpcMsg, SyncPingReply* pMsg);
+SyncPingReply* syncPingReplyFromRpcMsg2(const SRpcMsg* pRpcMsg);
+cJSON*         syncPingReply2Json(const SyncPingReply* pMsg);
+char*          syncPingReply2Str(const SyncPingReply* pMsg);
+
+// for debug ----------------------
+void syncPingReplyPrint(const SyncPingReply* pMsg);
+void syncPingReplyPrint2(char* s, const SyncPingReply* pMsg);
+void syncPingReplyLog(const SyncPingReply* pMsg);
+void syncPingReplyLog2(char* s, const SyncPingReply* pMsg);
+
+// ---------------------------------------------
+typedef enum ESyncTimeoutType {
+  SYNC_TIMEOUT_PING = 100,
+  SYNC_TIMEOUT_ELECTION,
+  SYNC_TIMEOUT_HEARTBEAT,
+} ESyncTimeoutType;
+
+typedef struct SyncTimeout {
+  uint32_t         bytes;
+  int32_t          vgId;
+  uint32_t         msgType;
+  ESyncTimeoutType timeoutType;
+  uint64_t         logicClock;
+  int32_t          timerMS;
+  void*            data;  // need optimized
+} SyncTimeout;
+
+SyncTimeout* syncTimeoutBuild();
+SyncTimeout* syncTimeoutBuild2(ESyncTimeoutType timeoutType, uint64_t logicClock, int32_t timerMS, int32_t vgId,
+                               void* data);
+void         syncTimeoutDestroy(SyncTimeout* pMsg);
+void         syncTimeoutSerialize(const SyncTimeout* pMsg, char* buf, uint32_t bufLen);
+void         syncTimeoutDeserialize(const char* buf, uint32_t len, SyncTimeout* pMsg);
+char*        syncTimeoutSerialize2(const SyncTimeout* pMsg, uint32_t* len);
+SyncTimeout* syncTimeoutDeserialize2(const char* buf, uint32_t len);
+void         syncTimeout2RpcMsg(const SyncTimeout* pMsg, SRpcMsg* pRpcMsg);
+void         syncTimeoutFromRpcMsg(const SRpcMsg* pRpcMsg, SyncTimeout* pMsg);
+SyncTimeout* syncTimeoutFromRpcMsg2(const SRpcMsg* pRpcMsg);
+cJSON*       syncTimeout2Json(const SyncTimeout* pMsg);
+char*        syncTimeout2Str(const SyncTimeout* pMsg);
+
+// for debug ----------------------
+void syncTimeoutPrint(const SyncTimeout* pMsg);
+void syncTimeoutPrint2(char* s, const SyncTimeout* pMsg);
+void syncTimeoutLog(const SyncTimeout* pMsg);
+void syncTimeoutLog2(char* s, const SyncTimeout* pMsg);
+
+//---------------------
+
+int32_t syncNodeOnPingCb(SSyncNode* ths, SyncPing* pMsg);
+int32_t syncNodeOnPingReplyCb(SSyncNode* ths, SyncPingReply* pMsg);
+int32_t syncNodeOnTimeoutCb(SSyncNode* ths, SyncTimeout* pMsg);
+
+//----------
 
 #ifdef __cplusplus
 }

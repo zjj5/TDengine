@@ -27,8 +27,8 @@ int32_t vnodeSyncOpen(SVnode *pVnode);
 int32_t vnodeSyncStart(SVnode *pVnode);
 void    vnodeSyncClose(SVnode *pVnode);
 
-void    vnodeSyncSetQ(SVnode *pVnode, void *qHandle);
-int32_t vnodeSyncEqMsg(void *queue, SRpcMsg *pMsg);
+int32_t vnodeSyncEqMsg(void *qHandle, SRpcMsg *pMsg);
+int32_t vnodeSendMsg(void *rpcHandle, const SEpSet *pEpSet, SRpcMsg *pMsg);
 
 #ifdef __cplusplus
 }

@@ -20,7 +20,7 @@ SyncPing *createMsg() {
   srcId.vgId = 100;
   destId.addr = syncUtilAddr2U64("127.0.0.1", 5678);
   destId.vgId = 100;
-  SyncPing *pMsg = syncPingBuild3(&srcId, &destId);
+  SyncPing *pMsg = syncPingBuild3(&srcId, &destId, 1000);
   return pMsg;
 }
 

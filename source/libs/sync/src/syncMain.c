@@ -44,9 +44,9 @@ static int32_t syncNodeEqNoop(SSyncNode* ths);
 static int32_t syncNodeAppendNoop(SSyncNode* ths);
 
 // process message ----
-static int32_t syncNodeOnPingCb(SSyncNode* ths, SyncPing* pMsg);
-static int32_t syncNodeOnPingReplyCb(SSyncNode* ths, SyncPingReply* pMsg);
-static int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg);
+int32_t syncNodeOnPingCb(SSyncNode* ths, SyncPing* pMsg);
+int32_t syncNodeOnPingReplyCb(SSyncNode* ths, SyncPingReply* pMsg);
+int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg);
 
 // life cycle
 static void syncFreeNode(void* param);
@@ -150,13 +150,24 @@ void syncSetQ(int64_t rid, void* queue) {
   taosReleaseRef(tsNodeRefId, pSyncNode->rid);
 }
 
+void syncSetRpc(int64_t rid, void* rpcHandle) {
+  SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
+  if (pSyncNode == NULL) {
+    return;
+  }
+  assert(rid == pSyncNode->rid);
+  pSyncNode->rpcClient = rpcHandle;
+
+  taosReleaseRef(tsNodeRefId, pSyncNode->rid);
+}
+
 void setPingTimerMS(int64_t rid, int32_t pingTimerMS) {
   SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
   if (pSyncNode == NULL) {
     return;
   }
   assert(rid == pSyncNode->rid);
-  pSyncNode->pingTimerMS = pingTimerMS;
+  pSyncNode->pingBaseLine = pingTimerMS;
 
   taosReleaseRef(tsNodeRefId, pSyncNode->rid);
 }
@@ -167,7 +178,7 @@ void setElectTimerMS(int64_t rid, int32_t electTimerMS) {
     return;
   }
   assert(rid == pSyncNode->rid);
-  pSyncNode->electTimerMS = electTimerMS;
+  pSyncNode->electBaseLine = electTimerMS;
 
   taosReleaseRef(tsNodeRefId, pSyncNode->rid);
 }
@@ -178,7 +189,7 @@ void setHeartbeatTimerMS(int64_t rid, int32_t hbTimerMS) {
     return;
   }
   assert(rid == pSyncNode->rid);
-  pSyncNode->heartbeatTimerMS = hbTimerMS;
+  pSyncNode->hbBaseLine = hbTimerMS;
 
   taosReleaseRef(tsNodeRefId, pSyncNode->rid);
 }
@@ -375,7 +386,8 @@ void syncNodeStart(SSyncNode* pSyncNode) {
   syncNodeBecomeFollower(pSyncNode);
 
   // for test
-  int32_t ret = syncNodeStartPingTimer(pSyncNode);
+  int32_t ret = 0;
+  ret = syncNodeStartPingTimer(pSyncNode);
   assert(ret == 0);
 }
 
@@ -410,13 +422,18 @@ int32_t syncNodePing(SSyncNode* pSyncNode, const SRaftId* destRaftId, SyncPing* 
   syncPing2RpcMsg(pMsg, &rpcMsg);
   syncRpcMsgLog2((char*)"==syncNodePing==", &rpcMsg);
 
+  // ntohl
+  SMsgHead* pHead = rpcMsg.pCont;
+  pHead->contLen = htonl(pHead->contLen);
+  pHead->vgId = htonl(pHead->vgId);
+
   ret = syncNodeSendMsgById(destRaftId, pSyncNode, &rpcMsg);
   return ret;
 }
 
 int32_t syncNodePingSelf(SSyncNode* pSyncNode) {
   int32_t   ret = 0;
-  SyncPing* pMsg = syncPingBuild3(&pSyncNode->myRaftId, &pSyncNode->myRaftId);
+  SyncPing* pMsg = syncPingBuild3(&pSyncNode->myRaftId, &pSyncNode->myRaftId, pSyncNode->vgId);
   ret = syncNodePing(pSyncNode, &pMsg->destId, pMsg);
   assert(ret == 0);
 
@@ -429,7 +446,7 @@ int32_t syncNodePingPeers(SSyncNode* pSyncNode) {
   for (int i = 0; i < pSyncNode->peersNum; ++i) {
     SRaftId destId;
     syncUtilnodeInfo2raftId(&pSyncNode->peersNodeInfo[i], pSyncNode->vgId, &destId);
-    SyncPing* pMsg = syncPingBuild3(&pSyncNode->myRaftId, &destId);
+    SyncPing* pMsg = syncPingBuild3(&pSyncNode->myRaftId, &destId, pSyncNode->vgId);
     ret = syncNodePing(pSyncNode, &destId, pMsg);
     assert(ret == 0);
     syncPingDestroy(pMsg);
@@ -442,7 +459,7 @@ int32_t syncNodePingAll(SSyncNode* pSyncNode) {
   for (int i = 0; i < pSyncNode->pRaftCfg->cfg.replicaNum; ++i) {
     SRaftId destId;
     syncUtilnodeInfo2raftId(&pSyncNode->pRaftCfg->cfg.nodeInfo[i], pSyncNode->vgId, &destId);
-    SyncPing* pMsg = syncPingBuild3(&pSyncNode->myRaftId, &destId);
+    SyncPing* pMsg = syncPingBuild3(&pSyncNode->myRaftId, &destId, pSyncNode->vgId);
     ret = syncNodePing(pSyncNode, &destId, pMsg);
     assert(ret == 0);
     syncPingDestroy(pMsg);
@@ -965,18 +982,24 @@ static int32_t syncNodeAppendNoop(SSyncNode* ths) {
 }
 
 // on message ----
-static int32_t syncNodeOnPingCb(SSyncNode* ths, SyncPing* pMsg) {
+int32_t syncNodeOnPingCb(SSyncNode* ths, SyncPing* pMsg) {
   int32_t ret = 0;
   syncPingLog2("==syncNodeOnPingCb==", pMsg);
-  SyncPingReply* pMsgReply = syncPingReplyBuild3(&ths->myRaftId, &pMsg->srcId);
+  SyncPingReply* pMsgReply = syncPingReplyBuild3(&ths->myRaftId, &pMsg->srcId, ths->vgId);
   SRpcMsg        rpcMsg;
   syncPingReply2RpcMsg(pMsgReply, &rpcMsg);
+
+  // ntohl
+  SMsgHead* pHead = rpcMsg.pCont;
+  pHead->contLen = htonl(pHead->contLen);
+  pHead->vgId = htonl(pHead->vgId);
+
   syncNodeSendMsgById(&pMsgReply->destId, ths, &rpcMsg);
 
   return ret;
 }
 
-static int32_t syncNodeOnPingReplyCb(SSyncNode* ths, SyncPingReply* pMsg) {
+int32_t syncNodeOnPingReplyCb(SSyncNode* ths, SyncPingReply* pMsg) {
   int32_t ret = 0;
   syncPingReplyLog2("==syncNodeOnPingReplyCb==", pMsg);
   return ret;
@@ -992,7 +1015,7 @@ static int32_t syncNodeOnPingReplyCb(SSyncNode* ths, SyncPingReply* pMsg) {
 //     /\ UNCHANGED <<messages, serverVars, candidateVars,
 //                    leaderVars, commitIndex>>
 //
-static int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg) {
+int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg) {
   int32_t ret = 0;
   syncClientRequestLog2("==syncNodeOnClientRequestCb==", pMsg);
 

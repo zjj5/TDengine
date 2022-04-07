@@ -266,7 +266,8 @@ int     tqRetrieveDataBlockInfo(STqReadHandle *pHandle, SDataBlockInfo *pBlockIn
 SArray *tqRetrieveDataBlock(STqReadHandle *pHandle);
 
 // sync
-void    vnodeSyncSetQ(SVnode *pVnode, void *q);
+void    vnodeSyncSetQ(SVnode *pVnode, void *qHandle);
+void    vnodeSyncSetRpc(SVnode *pVnode, void *rpcHandle);
 int32_t vnodeSyncStart(SVnode *pVnode);
 
 #ifdef __cplusplus

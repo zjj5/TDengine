@@ -83,7 +83,7 @@ cJSON *syncCfg2Json(SSyncCfg *pSyncCfg) {
 
 char *syncCfg2Str(SSyncCfg *pSyncCfg) {
   cJSON *pJson = syncCfg2Json(pSyncCfg);
-  char  *serialized = cJSON_Print(pJson);
+  char * serialized = cJSON_Print(pJson);
   cJSON_Delete(pJson);
   return serialized;
 }
@@ -148,7 +148,7 @@ int32_t syncCfgCreateFile(SSyncCfg *pCfg, const char *path) {
   TdFilePtr pFile = taosOpenFile(path, TD_FILE_CTEATE | TD_FILE_WRITE);
   assert(pFile != NULL);
 
-  char   *s = syncCfg2Str(pCfg);
+  char *  s = syncCfg2Str(pCfg);
   int64_t ret = taosWriteFile(pFile, s, strlen(s) + 1);
   assert(ret == strlen(s) + 1);
 

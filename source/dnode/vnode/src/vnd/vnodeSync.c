@@ -31,7 +31,7 @@ int32_t vnodeSyncOpen(SVnode *pVnode) {
 
   syncInfo.pFsm = NULL;
   syncInfo.rpcClient = NULL;
-  syncInfo.FpSendMsg = NULL;
+  syncInfo.FpSendMsg = vnodeSendMsg;
   syncInfo.queue = NULL;
   syncInfo.FpEqMsg = vnodeSyncEqMsg;
 
@@ -58,6 +58,8 @@ void vnodeSyncClose(SVnode *pVnode) {
 
 void vnodeSyncSetQ(SVnode *pVnode, void *qHandle) { syncSetQ(pVnode->sync, (void *)(&(pVnode->msgCb))); }
 
+void vnodeSyncSetRpc(SVnode *pVnode, void *rpcHandle) { syncSetRpc(pVnode->sync, (void *)(&(pVnode->msgCb))); }
+
 /*
 int32_t vnodeSyncEqMsg(void *queue, SRpcMsg *pMsg) {
   int32_t ret = 0;
@@ -77,6 +79,13 @@ int32_t vnodeSyncEqMsg(void *queue, SRpcMsg *pMsg) {
 int32_t vnodeSyncEqMsg(void *qHandle, SRpcMsg *pMsg) {
   int32_t ret = 0;
   tmsgPutToQueue(qHandle, SYNC_QUEUE, pMsg);
+
+  return ret;
+}
+
+int32_t vnodeSendMsg(void *rpcHandle, const SEpSet *pEpSet, SRpcMsg *pMsg) {
+  int32_t ret = 0;
+  tmsgSendReq(rpcHandle, pEpSet, pMsg);
 
   return ret;
 }
