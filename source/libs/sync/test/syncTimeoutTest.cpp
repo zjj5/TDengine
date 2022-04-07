@@ -61,6 +61,7 @@ void test4() {
   syncTimeoutFromRpcMsg(&rpcMsg, pMsg2);
   syncTimeoutPrint2((char *)"test4: syncTimeout2RpcMsg -> syncTimeoutFromRpcMsg ", pMsg2);
 
+  rpcFreeCont(rpcMsg.pCont);
   syncTimeoutDestroy(pMsg);
   syncTimeoutDestroy(pMsg2);
 }
@@ -72,6 +73,7 @@ void test5() {
   SyncTimeout *pMsg2 = syncTimeoutFromRpcMsg2(&rpcMsg);
   syncTimeoutPrint2((char *)"test5: syncTimeout2RpcMsg -> syncTimeoutFromRpcMsg2 ", pMsg2);
 
+  rpcFreeCont(rpcMsg.pCont);
   syncTimeoutDestroy(pMsg);
   syncTimeoutDestroy(pMsg2);
 }

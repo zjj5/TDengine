@@ -22,7 +22,7 @@ cJSON* syncRpcMsg2Json(SRpcMsg* pRpcMsg) {
   cJSON* pRoot;
 
   // in compiler optimization, switch case = if else constants
-  if (pRpcMsg->msgType == SYNC_TIMEOUT) {
+  if (pRpcMsg->msgType == TDMT_VND_SYNC_TIMEOUT) {
     SyncTimeout* pSyncMsg = syncTimeoutDeserialize2(pRpcMsg->pCont, pRpcMsg->contLen);
     pRoot = syncTimeout2Json(pSyncMsg);
     syncTimeoutDestroy(pSyncMsg);
@@ -146,7 +146,7 @@ SyncTimeout* syncTimeoutBuild() {
   SyncTimeout* pMsg = taosMemoryMalloc(bytes);
   memset(pMsg, 0, bytes);
   pMsg->bytes = bytes;
-  pMsg->msgType = SYNC_TIMEOUT;
+  pMsg->msgType = TDMT_VND_SYNC_TIMEOUT;
   return pMsg;
 }
 
