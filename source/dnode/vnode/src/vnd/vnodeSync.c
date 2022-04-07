@@ -78,7 +78,11 @@ int32_t vnodeSyncEqMsg(void *queue, SRpcMsg *pMsg) {
 
 int32_t vnodeSyncEqMsg(void *qHandle, SRpcMsg *pMsg) {
   int32_t ret = 0;
-  tmsgPutToQueue(qHandle, SYNC_QUEUE, pMsg);
+
+  SMsgCb *pMsgCb = qHandle;
+  if (pMsgCb->queueFps[SYNC_QUEUE] != NULL) {
+    tmsgPutToQueue(qHandle, SYNC_QUEUE, pMsg);
+  }
 
   return ret;
 }
