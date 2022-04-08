@@ -20,8 +20,10 @@ static void    vnodeFree(SVnode *pVnode);
 static int     vnodeOpenImpl(SVnode *pVnode);
 static void    vnodeCloseImpl(SVnode *pVnode);
 
-SVnode *vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg) {
+int vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg, SVnode **ppVnode) {
   SVnode *pVnode = NULL;
+
+  *ppVnode = NULL;
 
   // Set default options
   SVnodeCfg cfg = defaultVnodeOptions;
@@ -38,14 +40,14 @@ SVnode *vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg) {
   // Validate options
   if (vnodeValidateOptions(&cfg) < 0) {
     // TODO
-    return NULL;
+    return -1;
   }
 
   // Create the handle
   pVnode = vnodeNew(path, &cfg);
   if (pVnode == NULL) {
     // TODO: handle error
-    return NULL;
+    return -1;
   }
 
   taosMkDir(path);
@@ -53,10 +55,11 @@ SVnode *vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg) {
   // Open the vnode
   if (vnodeOpenImpl(pVnode) < 0) {
     // TODO: handle error
-    return NULL;
+    return -1;
   }
 
-  return pVnode;
+  *ppVnode = pVnode;
+  return 0;
 }
 
 void vnodeClose(SVnode *pVnode) {

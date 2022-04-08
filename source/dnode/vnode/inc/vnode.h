@@ -25,20 +25,76 @@
 #include "tfs.h"
 #include "wal.h"
 
+#include "tcommon.h"
+#include "tfs.h"
 #include "tmallocator.h"
 #include "tmsg.h"
 #include "trow.h"
-#include "tmallocator.h"
-#include "tcommon.h"
-#include "tfs.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+typedef struct SVnode    SVnode;
+typedef struct SVnodeCfg SVnodeCfg;
+
+typedef struct SMetaCfg {
+  /// LRU cache size
+  uint64_t lruSize;
+} SMetaCfg;
+
+typedef struct {
+  // TODO
+  int32_t reserved;
+} STqCfg;
+
+typedef struct STsdbCfg {
+  int8_t   precision;
+  int8_t   update;
+  int8_t   compression;
+  int32_t  daysPerFile;
+  int32_t  minRowsPerFileBlock;
+  int32_t  maxRowsPerFileBlock;
+  int32_t  keep;
+  int32_t  keep1;
+  int32_t  keep2;
+  uint64_t lruCacheSize;
+  SArray  *retentions;
+} STsdbCfg;
+
+struct SVnodeCfg {
+  int32_t  vgId;
+  uint64_t dbId;
+  STfs    *pTfs;
+  uint64_t wsize;
+  uint64_t ssize;
+  uint64_t lsize;
+  bool     isHeapAllocator;
+  uint32_t ttl;
+  uint32_t keep;
+  int8_t   streamMode;
+  bool     isWeak;
+  STsdbCfg tsdbCfg;
+  SMetaCfg metaCfg;
+  STqCfg   tqCfg;
+  SWalCfg  walCfg;
+  SMsgCb   msgCb;
+  uint32_t hashBegin;
+  uint32_t hashEnd;
+  int8_t   hashMethod;
+};
+
+// vnode
+int  vnodeInit();
+void vnodeCleanup();
+int  vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg, SVnode **ppVnode);
+void vnodeClose(SVnode *pVnode);
+void vnodeDestroy(const char *path);
+void vnodeProcessWMsgs(SVnode *pVnode, SArray *pMsgs);
+
+#if 1
 /* ------------------------ TYPES EXPOSED ------------------------ */
 typedef struct SMgmtWrapper SMgmtWrapper;
-typedef struct SVnode       SVnode;
 
 #define META_SUPER_TABLE  TD_SUPER_TABLE
 #define META_CHILD_TABLE  TD_CHILD_TABLE
@@ -46,11 +102,6 @@ typedef struct SVnode       SVnode;
 
 // Types exported
 typedef struct SMeta SMeta;
-
-typedef struct SMetaCfg {
-  /// LRU cache size
-  uint64_t lruSize;
-} SMetaCfg;
 
 typedef struct SMTbCursor  SMTbCursor;
 typedef struct SMCtbCursor SMCtbCursor;
@@ -71,7 +122,7 @@ typedef struct SDataStatis {
 
 typedef struct STsdbQueryCond {
   STimeWindow  twindow;
-  int32_t      order;             // desc|asc order to iterate the data block
+  int32_t      order;  // desc|asc order to iterate the data block
   int32_t      numOfCols;
   SColumnInfo *colList;
   bool         loadExternalRows;  // load external rows or not
@@ -83,64 +134,21 @@ typedef struct {
   uint64_t uid;
 } STableKeyInfo;
 
-
 typedef struct STable {
   uint64_t  tid;
   uint64_t  uid;
   STSchema *pSchema;
 } STable;
 
-#define BLOCK_LOAD_OFFSET_SEQ_ORDER   1
-#define BLOCK_LOAD_TABLE_SEQ_ORDER    2
-#define BLOCK_LOAD_TABLE_RR_ORDER     3
+#define BLOCK_LOAD_OFFSET_SEQ_ORDER 1
+#define BLOCK_LOAD_TABLE_SEQ_ORDER  2
+#define BLOCK_LOAD_TABLE_RR_ORDER   3
 
 #define TABLE_TID(t) (t)->tid
 #define TABLE_UID(t) (t)->uid
 
 // TYPES EXPOSED
 typedef struct STsdb STsdb;
-
-typedef struct STsdbCfg {
-  int8_t   precision;
-  int8_t   update;
-  int8_t   compression;
-  int32_t  daysPerFile;
-  int32_t  minRowsPerFileBlock;
-  int32_t  maxRowsPerFileBlock;
-  int32_t  keep;
-  int32_t  keep1;
-  int32_t  keep2;
-  uint64_t lruCacheSize;
-  SArray  *retentions;
-} STsdbCfg;
-
-
-typedef struct {
-  // TODO
-  int32_t reserved;
-} STqCfg;
-
-typedef struct {
-  int32_t  vgId;
-  uint64_t dbId;
-  STfs    *pTfs;
-  uint64_t wsize;
-  uint64_t ssize;
-  uint64_t lsize;
-  bool     isHeapAllocator;
-  uint32_t ttl;
-  uint32_t keep;
-  int8_t   streamMode;
-  bool     isWeak;
-  STsdbCfg tsdbCfg;
-  SMetaCfg metaCfg;
-  STqCfg   tqCfg;
-  SWalCfg  walCfg;
-  SMsgCb   msgCb;
-  uint32_t hashBegin;
-  uint32_t hashEnd;
-  int8_t   hashMethod;
-} SVnodeCfg;
 
 typedef struct {
   int64_t           ver;
@@ -156,51 +164,6 @@ typedef struct {
   SSchemaWrapper   *pSchemaWrapper;
   STSchema         *pSchema;
 } STqReadHandle;
-
-/* ------------------------ SVnode ------------------------ */
-/**
- * @brief Initialize the vnode module
- *
- * @return int 0 for success and -1 for failure
- */
-int vnodeInit();
-
-/**
- * @brief Cleanup the vnode module
- *
- */
-void vnodeCleanup();
-
-/**
- * @brief Open a VNODE.
- *
- * @param path path of the vnode
- * @param pVnodeCfg options of the vnode
- * @return SVnode* The vnode object
- */
-SVnode *vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg);
-
-/**
- * @brief Close a VNODE
- *
- * @param pVnode The vnode object to close
- */
-void vnodeClose(SVnode *pVnode);
-
-/**
- * @brief Destroy a VNODE.
- *
- * @param path Path of the VNODE.
- */
-void vnodeDestroy(const char *path);
-
-/**
- * @brief Process an array of write messages.
- *
- * @param pVnode The vnode object.
- * @param pMsgs The array of SRpcMsg
- */
-void vnodeProcessWMsgs(SVnode *pVnode, SArray *pMsgs);
 
 /**
  * @brief Apply a write request message.
@@ -378,13 +341,13 @@ void metaOptionsClear(SMetaCfg *pMetaCfg);
 
 // query condition to build multi-table data block iterator
 // STsdb
-STsdb *tsdbOpen(const char *path, int32_t vgId, const STsdbCfg *pTsdbCfg, SMemAllocatorFactory *pMAF, SMeta *pMeta, STfs *pTfs);
+STsdb *tsdbOpen(const char *path, int32_t vgId, const STsdbCfg *pTsdbCfg, SMemAllocatorFactory *pMAF, SMeta *pMeta,
+                STfs *pTfs);
 void   tsdbClose(STsdb *);
 void   tsdbRemove(const char *path);
 int    tsdbInsertData(STsdb *pTsdb, SSubmitReq *pMsg, SSubmitRsp *pRsp);
 int    tsdbPrepareCommit(STsdb *pTsdb);
 int    tsdbCommit(STsdb *pTsdb);
-
 
 int32_t tsdbInitSma(STsdb *pTsdb);
 int32_t tsdbCreateTSma(STsdb *pTsdb, char *pMsg);
@@ -410,10 +373,10 @@ int32_t tsdbInsertTSmaData(STsdb *pTsdb, int64_t indexUid, const char *msg);
 
 /**
  * @brief Drop tSma data and local cache.
- * 
- * @param pTsdb 
- * @param indexUid 
- * @return int32_t 
+ *
+ * @param pTsdb
+ * @param indexUid
+ * @return int32_t
  */
 int32_t tsdbDropTSmaData(STsdb *pTsdb, int64_t indexUid);
 
@@ -429,13 +392,13 @@ int32_t tsdbInsertRSmaData(STsdb *pTsdb, char *msg);
 // TODO: This is the basic params, and should wrap the params to a queryHandle.
 /**
  * @brief Get tSma(Time-range-wise SMA) data.
- * 
- * @param pTsdb 
- * @param pData 
- * @param indexUid 
- * @param querySKey 
- * @param nMaxResult 
- * @return int32_t 
+ *
+ * @param pTsdb
+ * @param pData
+ * @param indexUid
+ * @param querySKey
+ * @param nMaxResult
+ * @return int32_t
  */
 int32_t tsdbGetTSmaData(STsdb *pTsdb, char *pData, int64_t indexUid, TSKEY querySKey, int32_t nMaxResult);
 
@@ -443,7 +406,7 @@ int32_t tsdbGetTSmaData(STsdb *pTsdb, char *pData, int64_t indexUid, TSKEY query
 int  tsdbOptionsInit(STsdbCfg *);
 void tsdbOptionsClear(STsdbCfg *);
 
-typedef void* tsdbReaderT;
+typedef void *tsdbReaderT;
 
 /**
  * Get the data block iterator, starting from position according to the query condition
@@ -455,7 +418,8 @@ typedef void* tsdbReaderT;
  * @param qinfo      query info handle from query processor
  * @return
  */
-tsdbReaderT *tsdbQueryTables(STsdb *tsdb, STsdbQueryCond *pCond, STableGroupInfo *tableInfoGroup, uint64_t qId, uint64_t taskId);
+tsdbReaderT *tsdbQueryTables(STsdb *tsdb, STsdbQueryCond *pCond, STableGroupInfo *tableInfoGroup, uint64_t qId,
+                             uint64_t taskId);
 
 /**
  * Get the last row of the given query time window for all the tables in STableGroupInfo object.
@@ -467,15 +431,15 @@ tsdbReaderT *tsdbQueryTables(STsdb *tsdb, STsdbQueryCond *pCond, STableGroupInfo
  * @param tableInfo  table list.
  * @return
  */
-//tsdbReaderT tsdbQueryLastRow(STsdbRepo *tsdb, STsdbQueryCond *pCond, STableGroupInfo *tableInfo, uint64_t qId,
-//                                  SMemRef *pRef);
+// tsdbReaderT tsdbQueryLastRow(STsdbRepo *tsdb, STsdbQueryCond *pCond, STableGroupInfo *tableInfo, uint64_t qId,
+//                                   SMemRef *pRef);
 
+tsdbReaderT tsdbQueryCacheLast(STsdb *tsdb, STsdbQueryCond *pCond, STableGroupInfo *groupList, uint64_t qId,
+                               void *pMemRef);
 
-tsdbReaderT tsdbQueryCacheLast(STsdb *tsdb, STsdbQueryCond *pCond, STableGroupInfo *groupList, uint64_t qId, void* pMemRef);
+int32_t tsdbGetFileBlocksDistInfo(tsdbReaderT *pReader, STableBlockDistInfo *pTableBlockInfo);
 
-int32_t tsdbGetFileBlocksDistInfo(tsdbReaderT* pReader, STableBlockDistInfo* pTableBlockInfo);
-
-bool isTsdbCacheLastRow(tsdbReaderT* pReader);
+bool isTsdbCacheLastRow(tsdbReaderT *pReader);
 
 /**
  *
@@ -492,9 +456,9 @@ bool isTsdbCacheLastRow(tsdbReaderT* pReader);
  * @param reqId
  * @return
  */
-int32_t tsdbQuerySTableByTagCond(void* pMeta, uint64_t uid, TSKEY skey, const char* pTagCond, size_t len,
-                                 int16_t tagNameRelType, const char* tbnameCond, STableGroupInfo* pGroupInfo,
-                                 SColIndex* pColIndex, int32_t numOfCols, uint64_t reqId, uint64_t taskId);
+int32_t tsdbQuerySTableByTagCond(void *pMeta, uint64_t uid, TSKEY skey, const char *pTagCond, size_t len,
+                                 int16_t tagNameRelType, const char *tbnameCond, STableGroupInfo *pGroupInfo,
+                                 SColIndex *pColIndex, int32_t numOfCols, uint64_t reqId, uint64_t taskId);
 /**
  * get num of rows in mem table
  *
@@ -502,7 +466,7 @@ int32_t tsdbQuerySTableByTagCond(void* pMeta, uint64_t uid, TSKEY skey, const ch
  * @return row size
  */
 
-int64_t tsdbGetNumOfRowsInMemTable(tsdbReaderT* pHandle);
+int64_t tsdbGetNumOfRowsInMemTable(tsdbReaderT *pHandle);
 
 /**
  * move to next block if exists
@@ -577,7 +541,7 @@ int32_t tsdbGetTableGroupFromIdList(STsdb *tsdb, SArray *pTableIdList, STableGro
 void tsdbCleanupReadHandle(tsdbReaderT queryHandle);
 
 int32_t tdScanAndConvertSubmitMsg(SSubmitReq *pMsg);
-
+#endif
 
 #ifdef __cplusplus
 }

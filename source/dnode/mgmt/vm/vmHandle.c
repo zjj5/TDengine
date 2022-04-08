@@ -56,6 +56,8 @@ static void vmGenerateWrapperCfg(SVnodesMgmt *pMgmt, SCreateVnodeReq *pCreate, S
 int32_t vmProcessCreateVnodeReq(SVnodesMgmt *pMgmt, SNodeMsg *pMsg) {
   SRpcMsg        *pReq = &pMsg->rpcMsg;
   SCreateVnodeReq createReq = {0};
+  SVnode         *pImpl;
+
   if (tDeserializeSCreateVnodeReq(pReq->pCont, pReq->contLen, &createReq) != 0) {
     terrno = TSDB_CODE_INVALID_MSG;
     return -1;
@@ -88,8 +90,7 @@ int32_t vmProcessCreateVnodeReq(SVnodesMgmt *pMgmt, SNodeMsg *pMsg) {
   vnodeCfg.msgCb = msgCb;
   vnodeCfg.pTfs = pMgmt->pTfs;
   vnodeCfg.dbId = wrapperCfg.dbUid;
-  SVnode *pImpl = vnodeOpen(wrapperCfg.path, &vnodeCfg);
-  if (pImpl == NULL) {
+  if (vnodeOpen(wrapperCfg.path, &vnodeCfg, &pImpl) < 0) {
     tFreeSCreateVnodeReq(&createReq);
     dError("vgId:%d, failed to create vnode since %s", createReq.vgId, terrstr());
     return -1;

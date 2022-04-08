@@ -116,6 +116,7 @@ static void *vmOpenVnodeFunc(void *param) {
   SVnodeThread *pThread = param;
   SVnodesMgmt  *pMgmt = pThread->pMgmt;
   SDnode       *pDnode = pMgmt->pDnode;
+  SVnode       *pImpl;
 
   dDebug("thread:%d, start to open %d vnodes", pThread->threadIndex, pThread->vnodeNum);
   setThreadName("open-vnodes");
@@ -135,8 +136,7 @@ static void *vmOpenVnodeFunc(void *param) {
     msgCb.queueFps[APPLY_QUEUE] = vmPutMsgToApplyQueue;
     msgCb.qsizeFp = vmGetQueueSize;
     SVnodeCfg cfg = {.msgCb = msgCb, .pTfs = pMgmt->pTfs, .vgId = pCfg->vgId, .dbId = pCfg->dbUid};
-    SVnode   *pImpl = vnodeOpen(pCfg->path, &cfg);
-    if (pImpl == NULL) {
+    if (vnodeOpen(pCfg->path, &cfg, &pImpl) < 0) {
       dError("vgId:%d, failed to open vnode by thread:%d", pCfg->vgId, pThread->threadIndex);
       pThread->failed++;
     } else {
