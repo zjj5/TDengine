@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
   }
 
   for (int i = 0; i < replicaNum; ++i) {
-    SyncRequestVoteReply* reply = syncRequestVoteReplyBuild();
+    SyncRequestVoteReply* reply = syncRequestVoteReplyBuild(1000);
     reply->destId = pSyncNode->myRaftId;
     reply->srcId = ids[i];
     reply->term = term;

@@ -927,11 +927,12 @@ void syncClientRequestLog2(char* s, const SyncClientRequest* pMsg) {
 }
 
 // ---- message process SyncRequestVote----
-SyncRequestVote* syncRequestVoteBuild() {
+SyncRequestVote* syncRequestVoteBuild(int32_t vgId) {
   uint32_t         bytes = sizeof(SyncRequestVote);
   SyncRequestVote* pMsg = taosMemoryMalloc(bytes);
   memset(pMsg, 0, bytes);
   pMsg->bytes = bytes;
+  pMsg->vgId = vgId;
   pMsg->msgType = SYNC_REQUEST_VOTE;
   return pMsg;
 }
@@ -994,6 +995,7 @@ cJSON* syncRequestVote2Json(const SyncRequestVote* pMsg) {
 
   if (pMsg != NULL) {
     cJSON_AddNumberToObject(pRoot, "bytes", pMsg->bytes);
+    cJSON_AddNumberToObject(pRoot, "vgId", pMsg->vgId);
     cJSON_AddNumberToObject(pRoot, "msgType", pMsg->msgType);
 
     cJSON* pSrcId = cJSON_CreateObject();
@@ -1073,11 +1075,12 @@ void syncRequestVoteLog2(char* s, const SyncRequestVote* pMsg) {
 }
 
 // ---- message process SyncRequestVoteReply----
-SyncRequestVoteReply* syncRequestVoteReplyBuild() {
+SyncRequestVoteReply* syncRequestVoteReplyBuild(int32_t vgId) {
   uint32_t              bytes = sizeof(SyncRequestVoteReply);
   SyncRequestVoteReply* pMsg = taosMemoryMalloc(bytes);
   memset(pMsg, 0, bytes);
   pMsg->bytes = bytes;
+  pMsg->vgId = vgId;
   pMsg->msgType = SYNC_REQUEST_VOTE_REPLY;
   return pMsg;
 }
@@ -1140,6 +1143,7 @@ cJSON* syncRequestVoteReply2Json(const SyncRequestVoteReply* pMsg) {
 
   if (pMsg != NULL) {
     cJSON_AddNumberToObject(pRoot, "bytes", pMsg->bytes);
+    cJSON_AddNumberToObject(pRoot, "vgId", pMsg->vgId);
     cJSON_AddNumberToObject(pRoot, "msgType", pMsg->msgType);
 
     cJSON* pSrcId = cJSON_CreateObject();
@@ -1216,11 +1220,12 @@ void syncRequestVoteReplyLog2(char* s, const SyncRequestVoteReply* pMsg) {
 }
 
 // ---- message process SyncAppendEntries----
-SyncAppendEntries* syncAppendEntriesBuild(uint32_t dataLen) {
+SyncAppendEntries* syncAppendEntriesBuild(uint32_t dataLen, int32_t vgId) {
   uint32_t           bytes = sizeof(SyncAppendEntries) + dataLen;
   SyncAppendEntries* pMsg = taosMemoryMalloc(bytes);
   memset(pMsg, 0, bytes);
   pMsg->bytes = bytes;
+  pMsg->vgId = vgId;
   pMsg->msgType = SYNC_APPEND_ENTRIES;
   pMsg->dataLen = dataLen;
   return pMsg;
@@ -1285,6 +1290,7 @@ cJSON* syncAppendEntries2Json(const SyncAppendEntries* pMsg) {
 
   if (pMsg != NULL) {
     cJSON_AddNumberToObject(pRoot, "bytes", pMsg->bytes);
+    cJSON_AddNumberToObject(pRoot, "vgId", pMsg->vgId);
     cJSON_AddNumberToObject(pRoot, "msgType", pMsg->msgType);
 
     cJSON* pSrcId = cJSON_CreateObject();
@@ -1379,11 +1385,12 @@ void syncAppendEntriesLog2(char* s, const SyncAppendEntries* pMsg) {
 }
 
 // ---- message process SyncAppendEntriesReply----
-SyncAppendEntriesReply* syncAppendEntriesReplyBuild() {
+SyncAppendEntriesReply* syncAppendEntriesReplyBuild(int32_t vgId) {
   uint32_t                bytes = sizeof(SyncAppendEntriesReply);
   SyncAppendEntriesReply* pMsg = taosMemoryMalloc(bytes);
   memset(pMsg, 0, bytes);
   pMsg->bytes = bytes;
+  pMsg->vgId = vgId;
   pMsg->msgType = SYNC_APPEND_ENTRIES_REPLY;
   return pMsg;
 }
@@ -1446,6 +1453,7 @@ cJSON* syncAppendEntriesReply2Json(const SyncAppendEntriesReply* pMsg) {
 
   if (pMsg != NULL) {
     cJSON_AddNumberToObject(pRoot, "bytes", pMsg->bytes);
+    cJSON_AddNumberToObject(pRoot, "vgId", pMsg->vgId);
     cJSON_AddNumberToObject(pRoot, "msgType", pMsg->msgType);
 
     cJSON* pSrcId = cJSON_CreateObject();

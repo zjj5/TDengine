@@ -822,7 +822,7 @@ void syncNodeVoteForTerm(SSyncNode* pSyncNode, SyncTerm term, SRaftId* pRaftId) 
 void syncNodeVoteForSelf(SSyncNode* pSyncNode) {
   syncNodeVoteForTerm(pSyncNode, pSyncNode->pRaftStore->currentTerm, &(pSyncNode->myRaftId));
 
-  SyncRequestVoteReply* pMsg = syncRequestVoteReplyBuild();
+  SyncRequestVoteReply* pMsg = syncRequestVoteReplyBuild(pSyncNode->vgId);
   pMsg->srcId = pSyncNode->myRaftId;
   pMsg->destId = pSyncNode->myRaftId;
   pMsg->term = pSyncNode->pRaftStore->currentTerm;

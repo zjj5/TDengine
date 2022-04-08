@@ -208,6 +208,7 @@ void syncClientRequestLog2(char* s, const SyncClientRequest* pMsg);
 // ---------------------------------------------
 typedef struct SyncClientRequestReply {
   uint32_t bytes;
+  int32_t  vgId;
   uint32_t msgType;
   int32_t  errCode;
   SRaftId  leaderHint;
@@ -216,6 +217,7 @@ typedef struct SyncClientRequestReply {
 // ---------------------------------------------
 typedef struct SyncRequestVote {
   uint32_t bytes;
+  int32_t  vgId;
   uint32_t msgType;
   SRaftId  srcId;
   SRaftId  destId;
@@ -225,7 +227,7 @@ typedef struct SyncRequestVote {
   SyncTerm  lastLogTerm;
 } SyncRequestVote;
 
-SyncRequestVote* syncRequestVoteBuild();
+SyncRequestVote* syncRequestVoteBuild(int32_t vgId);
 void             syncRequestVoteDestroy(SyncRequestVote* pMsg);
 void             syncRequestVoteSerialize(const SyncRequestVote* pMsg, char* buf, uint32_t bufLen);
 void             syncRequestVoteDeserialize(const char* buf, uint32_t len, SyncRequestVote* pMsg);
@@ -246,6 +248,7 @@ void syncRequestVoteLog2(char* s, const SyncRequestVote* pMsg);
 // ---------------------------------------------
 typedef struct SyncRequestVoteReply {
   uint32_t bytes;
+  int32_t  vgId;
   uint32_t msgType;
   SRaftId  srcId;
   SRaftId  destId;
@@ -254,7 +257,7 @@ typedef struct SyncRequestVoteReply {
   bool     voteGranted;
 } SyncRequestVoteReply;
 
-SyncRequestVoteReply* syncRequestVoteReplyBuild();
+SyncRequestVoteReply* syncRequestVoteReplyBuild(int32_t vgId);
 void                  syncRequestVoteReplyDestroy(SyncRequestVoteReply* pMsg);
 void                  syncRequestVoteReplySerialize(const SyncRequestVoteReply* pMsg, char* buf, uint32_t bufLen);
 void                  syncRequestVoteReplyDeserialize(const char* buf, uint32_t len, SyncRequestVoteReply* pMsg);
@@ -275,6 +278,7 @@ void syncRequestVoteReplyLog2(char* s, const SyncRequestVoteReply* pMsg);
 // ---------------------------------------------
 typedef struct SyncAppendEntries {
   uint32_t bytes;
+  int32_t  vgId;
   uint32_t msgType;
   SRaftId  srcId;
   SRaftId  destId;
@@ -287,7 +291,7 @@ typedef struct SyncAppendEntries {
   char      data[];
 } SyncAppendEntries;
 
-SyncAppendEntries* syncAppendEntriesBuild(uint32_t dataLen);
+SyncAppendEntries* syncAppendEntriesBuild(uint32_t dataLen, int32_t vgId);
 void               syncAppendEntriesDestroy(SyncAppendEntries* pMsg);
 void               syncAppendEntriesSerialize(const SyncAppendEntries* pMsg, char* buf, uint32_t bufLen);
 void               syncAppendEntriesDeserialize(const char* buf, uint32_t len, SyncAppendEntries* pMsg);
@@ -308,6 +312,7 @@ void syncAppendEntriesLog2(char* s, const SyncAppendEntries* pMsg);
 // ---------------------------------------------
 typedef struct SyncAppendEntriesReply {
   uint32_t bytes;
+  int32_t  vgId;
   uint32_t msgType;
   SRaftId  srcId;
   SRaftId  destId;
@@ -317,7 +322,7 @@ typedef struct SyncAppendEntriesReply {
   SyncIndex matchIndex;
 } SyncAppendEntriesReply;
 
-SyncAppendEntriesReply* syncAppendEntriesReplyBuild();
+SyncAppendEntriesReply* syncAppendEntriesReplyBuild(int32_t vgId);
 void                    syncAppendEntriesReplyDestroy(SyncAppendEntriesReply* pMsg);
 void                    syncAppendEntriesReplySerialize(const SyncAppendEntriesReply* pMsg, char* buf, uint32_t bufLen);
 void                    syncAppendEntriesReplyDeserialize(const char* buf, uint32_t len, SyncAppendEntriesReply* pMsg);

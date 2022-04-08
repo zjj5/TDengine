@@ -125,7 +125,7 @@ int32_t syncNodeOnAppendEntriesCb(SSyncNode* ths, SyncAppendEntries* pMsg) {
         "logOK:%d",
         pMsg->term, ths->pRaftStore->currentTerm, ths->state, logOK);
 
-    SyncAppendEntriesReply* pReply = syncAppendEntriesReplyBuild();
+    SyncAppendEntriesReply* pReply = syncAppendEntriesReplyBuild(ths->vgId);
     pReply->srcId = ths->myRaftId;
     pReply->destId = pMsg->srcId;
     pReply->term = ths->pRaftStore->currentTerm;
@@ -261,7 +261,7 @@ int32_t syncNodeOnAppendEntriesCb(SSyncNode* ths, SyncAppendEntries* pMsg) {
       assert(0);
     }
 
-    SyncAppendEntriesReply* pReply = syncAppendEntriesReplyBuild();
+    SyncAppendEntriesReply* pReply = syncAppendEntriesReplyBuild(ths->vgId);
     pReply->srcId = ths->myRaftId;
     pReply->destId = pMsg->srcId;
     pReply->term = ths->pRaftStore->currentTerm;

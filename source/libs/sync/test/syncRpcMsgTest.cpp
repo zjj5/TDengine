@@ -52,7 +52,7 @@ SyncClientRequest *createSyncClientRequest() {
 }
 
 SyncRequestVote *createSyncRequestVote() {
-  SyncRequestVote *pMsg = syncRequestVoteBuild();
+  SyncRequestVote *pMsg = syncRequestVoteBuild(1000);
   pMsg->srcId.addr = syncUtilAddr2U64("127.0.0.1", 1234);
   pMsg->srcId.vgId = 100;
   pMsg->destId.addr = syncUtilAddr2U64("127.0.0.1", 5678);
@@ -64,7 +64,7 @@ SyncRequestVote *createSyncRequestVote() {
 }
 
 SyncRequestVoteReply *createSyncRequestVoteReply() {
-  SyncRequestVoteReply *pMsg = syncRequestVoteReplyBuild();
+  SyncRequestVoteReply *pMsg = syncRequestVoteReplyBuild(1000);
   pMsg->srcId.addr = syncUtilAddr2U64("127.0.0.1", 1234);
   pMsg->srcId.vgId = 100;
   pMsg->destId.addr = syncUtilAddr2U64("127.0.0.1", 5678);
@@ -75,7 +75,7 @@ SyncRequestVoteReply *createSyncRequestVoteReply() {
 }
 
 SyncAppendEntries *createSyncAppendEntries() {
-  SyncAppendEntries *pMsg = syncAppendEntriesBuild(20);
+  SyncAppendEntries *pMsg = syncAppendEntriesBuild(20, 1000);
   pMsg->srcId.addr = syncUtilAddr2U64("127.0.0.1", 1234);
   pMsg->srcId.vgId = 100;
   pMsg->destId.addr = syncUtilAddr2U64("127.0.0.1", 5678);
@@ -88,7 +88,7 @@ SyncAppendEntries *createSyncAppendEntries() {
 }
 
 SyncAppendEntriesReply *createSyncAppendEntriesReply() {
-  SyncAppendEntriesReply *pMsg = syncAppendEntriesReplyBuild();
+  SyncAppendEntriesReply *pMsg = syncAppendEntriesReplyBuild(1000);
   pMsg->srcId.addr = syncUtilAddr2U64("127.0.0.1", 1234);
   pMsg->srcId.vgId = 100;
   pMsg->destId.addr = syncUtilAddr2U64("127.0.0.1", 5678);

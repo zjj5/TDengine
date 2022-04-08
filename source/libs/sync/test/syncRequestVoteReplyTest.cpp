@@ -15,7 +15,7 @@ void logTest() {
 }
 
 SyncRequestVoteReply *createMsg() {
-  SyncRequestVoteReply *pMsg = syncRequestVoteReplyBuild();
+  SyncRequestVoteReply *pMsg = syncRequestVoteReplyBuild(1000);
   pMsg->srcId.addr = syncUtilAddr2U64("127.0.0.1", 1234);
   pMsg->srcId.vgId = 100;
   pMsg->destId.addr = syncUtilAddr2U64("127.0.0.1", 5678);
@@ -36,7 +36,7 @@ void test2() {
   uint32_t              len = pMsg->bytes;
   char *                serialized = (char *)taosMemoryMalloc(len);
   syncRequestVoteReplySerialize(pMsg, serialized, len);
-  SyncRequestVoteReply *pMsg2 = syncRequestVoteReplyBuild();
+  SyncRequestVoteReply *pMsg2 = syncRequestVoteReplyBuild(1000);
   syncRequestVoteReplyDeserialize(serialized, len, pMsg2);
   syncRequestVoteReplyPrint2((char *)"test2: syncRequestVoteReplySerialize -> syncRequestVoteReplyDeserialize ", pMsg2);
 
@@ -62,10 +62,11 @@ void test4() {
   SyncRequestVoteReply *pMsg = createMsg();
   SRpcMsg               rpcMsg;
   syncRequestVoteReply2RpcMsg(pMsg, &rpcMsg);
-  SyncRequestVoteReply *pMsg2 = syncRequestVoteReplyBuild();
+  SyncRequestVoteReply *pMsg2 = syncRequestVoteReplyBuild(1000);
   syncRequestVoteReplyFromRpcMsg(&rpcMsg, pMsg2);
   syncRequestVoteReplyPrint2((char *)"test4: syncRequestVoteReply2RpcMsg -> syncRequestVoteReplyFromRpcMsg ", pMsg2);
 
+  rpcFreeCont(rpcMsg.pCont);
   syncRequestVoteReplyDestroy(pMsg);
   syncRequestVoteReplyDestroy(pMsg2);
 }
@@ -77,6 +78,7 @@ void test5() {
   SyncRequestVoteReply *pMsg2 = syncRequestVoteReplyFromRpcMsg2(&rpcMsg);
   syncRequestVoteReplyPrint2((char *)"test5: syncRequestVoteReply2RpcMsg -> syncRequestVoteReplyFromRpcMsg2 ", pMsg2);
 
+  rpcFreeCont(rpcMsg.pCont);
   syncRequestVoteReplyDestroy(pMsg);
   syncRequestVoteReplyDestroy(pMsg2);
 }

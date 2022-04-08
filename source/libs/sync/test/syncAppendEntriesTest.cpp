@@ -15,7 +15,7 @@ void logTest() {
 }
 
 SyncAppendEntries *createMsg() {
-  SyncAppendEntries *pMsg = syncAppendEntriesBuild(20);
+  SyncAppendEntries *pMsg = syncAppendEntriesBuild(20, 1000);
   pMsg->srcId.addr = syncUtilAddr2U64("127.0.0.1", 1234);
   pMsg->srcId.vgId = 100;
   pMsg->destId.addr = syncUtilAddr2U64("127.0.0.1", 5678);
@@ -38,7 +38,7 @@ void test2() {
   uint32_t           len = pMsg->bytes;
   char *             serialized = (char *)taosMemoryMalloc(len);
   syncAppendEntriesSerialize(pMsg, serialized, len);
-  SyncAppendEntries *pMsg2 = syncAppendEntriesBuild(pMsg->dataLen);
+  SyncAppendEntries *pMsg2 = syncAppendEntriesBuild(pMsg->dataLen, 1000);
   syncAppendEntriesDeserialize(serialized, len, pMsg2);
   syncAppendEntriesPrint2((char *)"test2: syncAppendEntriesSerialize -> syncAppendEntriesDeserialize ", pMsg2);
 
@@ -67,6 +67,7 @@ void test4() {
   syncAppendEntriesFromRpcMsg(&rpcMsg, pMsg2);
   syncAppendEntriesPrint2((char *)"test4: syncAppendEntries2RpcMsg -> syncAppendEntriesFromRpcMsg ", pMsg2);
 
+  rpcFreeCont(rpcMsg.pCont);
   syncAppendEntriesDestroy(pMsg);
   syncAppendEntriesDestroy(pMsg2);
 }
@@ -78,6 +79,7 @@ void test5() {
   SyncAppendEntries *pMsg2 = syncAppendEntriesFromRpcMsg2(&rpcMsg);
   syncAppendEntriesPrint2((char *)"test5: syncAppendEntries2RpcMsg -> syncAppendEntriesFromRpcMsg2 ", pMsg2);
 
+  rpcFreeCont(rpcMsg.pCont);
   syncAppendEntriesDestroy(pMsg);
   syncAppendEntriesDestroy(pMsg2);
 }
