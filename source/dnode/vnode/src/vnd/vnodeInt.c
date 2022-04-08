@@ -77,7 +77,63 @@ int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
     syncNodeRelease(pSyncNode);
     syncPingReplyDestroy(pSyncMsg);
 
+  } else if (pRpcMsg->msgType == TDMT_VND_SYNC_CLIENT_REQUEST) {
+    SyncClientRequest *pSyncMsg = syncClientRequestFromRpcMsg2(pRpcMsg);
+    assert(pSyncMsg != NULL);
+
+    SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
+    assert(pSyncNode != NULL);
+
+    syncNodeOnClientRequestCb(pSyncNode, pSyncMsg);
+    syncNodeRelease(pSyncNode);
+    syncClientRequestDestroy(pSyncMsg);
+
+  } else if (pRpcMsg->msgType == TDMT_VND_SYNC_REQUEST_VOTE) {
+    SyncRequestVote *pSyncMsg = syncRequestVoteFromRpcMsg2(pRpcMsg);
+    assert(pSyncMsg != NULL);
+
+    SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
+    assert(pSyncNode != NULL);
+
+    syncNodeOnRequestVoteCb(pSyncNode, pSyncMsg);
+    syncNodeRelease(pSyncNode);
+    syncRequestVoteDestroy(pSyncMsg);
+
+  } else if (pRpcMsg->msgType == TDMT_VND_SYNC_REQUEST_VOTE_REPLY) {
+    SyncRequestVoteReply *pSyncMsg = syncRequestVoteReplyFromRpcMsg2(pRpcMsg);
+    assert(pSyncMsg != NULL);
+
+    SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
+    assert(pSyncNode != NULL);
+
+    syncNodeOnRequestVoteReplyCb(pSyncNode, pSyncMsg);
+    syncNodeRelease(pSyncNode);
+    syncRequestVoteReplyDestroy(pSyncMsg);
+
+  } else if (pRpcMsg->msgType == TDMT_VND_SYNC_APPEND_ENTRIES) {
+    SyncAppendEntries *pSyncMsg = syncAppendEntriesFromRpcMsg2(pRpcMsg);
+    assert(pSyncMsg != NULL);
+
+    SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
+    assert(pSyncNode != NULL);
+
+    syncNodeOnAppendEntriesCb(pSyncNode, pSyncMsg);
+    syncNodeRelease(pSyncNode);
+    syncAppendEntriesDestroy(pSyncMsg);
+
+  } else if (pRpcMsg->msgType == TDMT_VND_SYNC_APPEND_ENTRIES_REPLY) {
+    SyncAppendEntriesReply *pSyncMsg = syncAppendEntriesReplyFromRpcMsg2(pRpcMsg);
+    assert(pSyncMsg != NULL);
+
+    SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
+    assert(pSyncNode != NULL);
+
+    syncNodeOnAppendEntriesReplyCb(pSyncNode, pSyncMsg);
+    syncNodeRelease(pSyncNode);
+    syncAppendEntriesReplyDestroy(pSyncMsg);
+
   } else {
+    vError("==vnodeProcessSyncReq== error msg type:%d", pRpcMsg->msgType);
   }
 
   return 0;

@@ -173,6 +173,7 @@ void syncPingReplyLog2(char* s, const SyncPingReply* pMsg);
 
 #endif
 
+#if 0
 // ---------------------------------------------
 typedef struct SyncClientRequest {
   uint32_t bytes;
@@ -339,6 +340,8 @@ void syncAppendEntriesReplyPrint(const SyncAppendEntriesReply* pMsg);
 void syncAppendEntriesReplyPrint2(char* s, const SyncAppendEntriesReply* pMsg);
 void syncAppendEntriesReplyLog(const SyncAppendEntriesReply* pMsg);
 void syncAppendEntriesReplyLog2(char* s, const SyncAppendEntriesReply* pMsg);
+
+#endif
 
 #ifdef __cplusplus
 }

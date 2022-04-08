@@ -431,8 +431,6 @@ int32_t syncNodePing(SSyncNode* pSyncNode, const SRaftId* destRaftId, SyncPing* 
   pHead->vgId = htonl(pHead->vgId);
   */
 
-  syncUtilMsgHtoN(rpcMsg.pCont);
-
   ret = syncNodeSendMsgById(destRaftId, pSyncNode, &rpcMsg);
   return ret;
 }
@@ -570,6 +568,9 @@ int32_t syncNodeSendMsgById(const SRaftId* destRaftId, SSyncNode* pSyncNode, SRp
   SEpSet epSet;
   syncUtilraftId2EpSet(destRaftId, &epSet);
   if (pSyncNode->FpSendMsg != NULL) {
+    // htonl
+    syncUtilMsgHtoN(pMsg->pCont);
+
     pSyncNode->FpSendMsg(pSyncNode->rpcClient, &epSet, pMsg);
   } else {
     sTrace("syncNodeSendMsgById pSyncNode->FpSendMsg is NULL");
@@ -822,7 +823,11 @@ void syncNodeCandidate2Leader(SSyncNode* pSyncNode) {
   syncNodeBecomeLeader(pSyncNode);
 
   // Raft 3.6.2 Committing entries from previous terms
-  syncNodeAppendNoop(pSyncNode);
+
+  // use this now
+  // syncNodeAppendNoop(pSyncNode);
+
+  // do not use this
   // syncNodeEqNoop(pSyncNode);
 }
 
@@ -1017,16 +1022,26 @@ static int32_t syncNodeAppendNoop(SSyncNode* ths) {
 
 // on message ----
 int32_t syncNodeOnPingCb(SSyncNode* ths, SyncPing* pMsg) {
+  // log state
+  char logBuf[1024];
+  snprintf(logBuf, sizeof(logBuf),
+           "==syncNodeOnPingCb== vgId:%d, state: %d, %s, term:%lu electTimerLogicClock:%lu, "
+           "electTimerLogicClockUser:%lu, electTimerMS:%d",
+           ths->vgId, ths->state, syncUtilState2String(ths->state), ths->pRaftStore->currentTerm,
+           ths->electTimerLogicClock, ths->electTimerLogicClockUser, ths->electTimerMS);
+
   int32_t ret = 0;
-  syncPingLog2("==syncNodeOnPingCb==", pMsg);
+  syncPingLog2(logBuf, pMsg);
   SyncPingReply* pMsgReply = syncPingReplyBuild3(&ths->myRaftId, &pMsg->srcId, ths->vgId);
   SRpcMsg        rpcMsg;
   syncPingReply2RpcMsg(pMsgReply, &rpcMsg);
 
-  // ntohl
-  SMsgHead* pHead = rpcMsg.pCont;
-  pHead->contLen = htonl(pHead->contLen);
-  pHead->vgId = htonl(pHead->vgId);
+  /*
+    // htonl
+    SMsgHead* pHead = rpcMsg.pCont;
+    pHead->contLen = htonl(pHead->contLen);
+    pHead->vgId = htonl(pHead->vgId);
+  */
 
   syncNodeSendMsgById(&pMsgReply->destId, ths, &rpcMsg);
 
