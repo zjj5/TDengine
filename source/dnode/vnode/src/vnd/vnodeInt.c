@@ -52,9 +52,7 @@ int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
     assert(pSyncNode != NULL);
 
     syncNodeOnTimeoutCb(pSyncNode, pSyncMsg);
-
     syncNodeRelease(pSyncNode);
-
     syncTimeoutDestroy(pSyncMsg);
 
   } else if (pRpcMsg->msgType == TDMT_VND_SYNC_PING) {
@@ -65,10 +63,9 @@ int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
     assert(pSyncNode != NULL);
 
     syncNodeOnPingCb(pSyncNode, pSyncMsg);
-
     syncNodeRelease(pSyncNode);
-
     syncPingDestroy(pSyncMsg);
+
   } else if (pRpcMsg->msgType == TDMT_VND_SYNC_PING_REPLY) {
     SyncPingReply *pSyncMsg = syncPingReplyFromRpcMsg2(pRpcMsg);
     assert(pSyncMsg != NULL);
@@ -77,9 +74,7 @@ int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
     assert(pSyncNode != NULL);
 
     syncNodeOnPingReplyCb(pSyncNode, pSyncMsg);
-
     syncNodeRelease(pSyncNode);
-
     syncPingReplyDestroy(pSyncMsg);
 
   } else {

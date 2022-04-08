@@ -425,9 +425,13 @@ int32_t syncNodePing(SSyncNode* pSyncNode, const SRaftId* destRaftId, SyncPing* 
   syncRpcMsgLog2((char*)"==syncNodePing==", &rpcMsg);
 
   // htonl
+  /*
   SMsgHead* pHead = rpcMsg.pCont;
   pHead->contLen = htonl(pHead->contLen);
   pHead->vgId = htonl(pHead->vgId);
+  */
+
+  syncUtilMsgHtoN(rpcMsg.pCont);
 
   ret = syncNodeSendMsgById(destRaftId, pSyncNode, &rpcMsg);
   return ret;
@@ -443,6 +447,7 @@ int32_t syncNodePingSelf(SSyncNode* pSyncNode) {
   return ret;
 }
 
+/*
 int32_t syncNodePingPeers(SSyncNode* pSyncNode) {
   int32_t ret = 0;
   for (int i = 0; i < pSyncNode->peersNum; ++i) {
@@ -455,7 +460,21 @@ int32_t syncNodePingPeers(SSyncNode* pSyncNode) {
   }
   return ret;
 }
+*/
 
+int32_t syncNodePingPeers(SSyncNode* pSyncNode) {
+  int32_t ret = 0;
+  for (int i = 0; i < pSyncNode->peersNum; ++i) {
+    SRaftId*  destId = &(pSyncNode->peersId[i]);
+    SyncPing* pMsg = syncPingBuild3(&pSyncNode->myRaftId, destId, pSyncNode->vgId);
+    ret = syncNodePing(pSyncNode, destId, pMsg);
+    assert(ret == 0);
+    syncPingDestroy(pMsg);
+  }
+  return ret;
+}
+
+/*
 int32_t syncNodePingAll(SSyncNode* pSyncNode) {
   int32_t ret = 0;
   for (int i = 0; i < pSyncNode->pRaftCfg->cfg.replicaNum; ++i) {
@@ -463,6 +482,19 @@ int32_t syncNodePingAll(SSyncNode* pSyncNode) {
     syncUtilnodeInfo2raftId(&pSyncNode->pRaftCfg->cfg.nodeInfo[i], pSyncNode->vgId, &destId);
     SyncPing* pMsg = syncPingBuild3(&pSyncNode->myRaftId, &destId, pSyncNode->vgId);
     ret = syncNodePing(pSyncNode, &destId, pMsg);
+    assert(ret == 0);
+    syncPingDestroy(pMsg);
+  }
+  return ret;
+}
+*/
+
+int32_t syncNodePingAll(SSyncNode* pSyncNode) {
+  int32_t ret = 0;
+  for (int i = 0; i < pSyncNode->pRaftCfg->cfg.replicaNum; ++i) {
+    SRaftId*  destId = &(pSyncNode->replicasId[i]);
+    SyncPing* pMsg = syncPingBuild3(&pSyncNode->myRaftId, destId, pSyncNode->vgId);
+    ret = syncNodePing(pSyncNode, destId, pMsg);
     assert(ret == 0);
     syncPingDestroy(pMsg);
   }
