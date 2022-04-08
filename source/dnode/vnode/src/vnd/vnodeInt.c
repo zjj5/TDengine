@@ -43,8 +43,12 @@ int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
   SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
   assert(pSyncNode != NULL);
 
+  ESyncState state = syncGetMyRole(pVnode->sync);
+  SyncTerm   currentTerm = syncGetMyTerm(pVnode->sync);
+
   char logBuf[128];
-  snprintf(logBuf, sizeof(logBuf), "==vnodeProcessSyncReq== msgType:%d", pMsg->msgType);
+  snprintf(logBuf, sizeof(logBuf), "==vnodeProcessSyncReq== msgType:%d, state:%d, %s, term:%lu", pMsg->msgType, state,
+           syncUtilState2String(state), currentTerm);
   syncRpcMsgLog2(logBuf, pMsg);
 
   SRpcMsg *pRpcMsg = pMsg;

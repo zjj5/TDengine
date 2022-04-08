@@ -40,8 +40,8 @@ int32_t vnodeSyncOpen(SVnode *pVnode) {
 
   // for test
   setPingTimerMS(pVnode->sync, 1000);
-  setElectTimerMS(pVnode->sync, 1500);
-  setHeartbeatTimerMS(pVnode->sync, 300);
+  setElectTimerMS(pVnode->sync, 500);
+  setHeartbeatTimerMS(pVnode->sync, 100);
 
   return 0;
 }

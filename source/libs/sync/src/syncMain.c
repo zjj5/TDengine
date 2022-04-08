@@ -139,6 +139,23 @@ ESyncState syncGetMyRole(int64_t rid) {
   return state;
 }
 
+const char* syncGetMyRoleStr(int64_t rid) {
+  const char* s = syncUtilState2String(syncGetMyRole(rid));
+  return s;
+}
+
+SyncTerm syncGetMyTerm(int64_t rid) {
+  SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
+  if (pSyncNode == NULL) {
+    return TAOS_SYNC_STATE_ERROR;
+  }
+  assert(rid == pSyncNode->rid);
+  SyncTerm term = pSyncNode->pRaftStore->currentTerm;
+
+  taosReleaseRef(tsNodeRefId, pSyncNode->rid);
+  return term;
+}
+
 void syncSetQ(int64_t rid, void* queue) {
   SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
   if (pSyncNode == NULL) {
@@ -170,6 +187,7 @@ void setPingTimerMS(int64_t rid, int32_t pingTimerMS) {
   }
   assert(rid == pSyncNode->rid);
   pSyncNode->pingBaseLine = pingTimerMS;
+  pSyncNode->pingTimerMS = pingTimerMS;
 
   taosReleaseRef(tsNodeRefId, pSyncNode->rid);
 }
@@ -192,6 +210,7 @@ void setHeartbeatTimerMS(int64_t rid, int32_t hbTimerMS) {
   }
   assert(rid == pSyncNode->rid);
   pSyncNode->hbBaseLine = hbTimerMS;
+  pSyncNode->heartbeatTimerMS = hbTimerMS;
 
   taosReleaseRef(tsNodeRefId, pSyncNode->rid);
 }
@@ -389,7 +408,7 @@ void syncNodeStart(SSyncNode* pSyncNode) {
 
   // for test
   int32_t ret = 0;
-  ret = syncNodeStartPingTimer(pSyncNode);
+  // ret = syncNodeStartPingTimer(pSyncNode);
   assert(ret == 0);
 }
 
@@ -667,6 +686,11 @@ cJSON* syncNode2Json(const SSyncNode* pSyncNode) {
     cJSON_AddItemToObject(pRoot, "pLogStore", logStore2Json(pSyncNode->pLogStore));
     snprintf(u64buf, sizeof(u64buf), "%" PRId64 "", pSyncNode->commitIndex);
     cJSON_AddStringToObject(pRoot, "commitIndex", u64buf);
+
+    // timer ms init
+    cJSON_AddNumberToObject(pRoot, "pingBaseLine", pSyncNode->pingBaseLine);
+    cJSON_AddNumberToObject(pRoot, "electBaseLine", pSyncNode->electBaseLine);
+    cJSON_AddNumberToObject(pRoot, "hbBaseLine", pSyncNode->hbBaseLine);
 
     // ping timer
     snprintf(u64buf, sizeof(u64buf), "%p", pSyncNode->pPingTimer);

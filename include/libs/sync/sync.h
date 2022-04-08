@@ -162,12 +162,14 @@ void    syncCleanUp();
 SSyncNode* syncNodeAcquire(int64_t rid);
 void       syncNodeRelease(SSyncNode* pNode);
 
-int64_t    syncOpen(const SSyncInfo* pSyncInfo);
-void       syncStart(int64_t rid);
-void       syncStop(int64_t rid);
-int32_t    syncReconfig(int64_t rid, const SSyncCfg* pSyncCfg);
-int32_t    syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak);
-ESyncState syncGetMyRole(int64_t rid);
+int64_t     syncOpen(const SSyncInfo* pSyncInfo);
+void        syncStart(int64_t rid);
+void        syncStop(int64_t rid);
+int32_t     syncReconfig(int64_t rid, const SSyncCfg* pSyncCfg);
+int32_t     syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak);
+ESyncState  syncGetMyRole(int64_t rid);
+const char* syncGetMyRoleStr(int64_t rid);
+SyncTerm    syncGetMyTerm(int64_t rid);
 
 // control
 void syncSetQ(int64_t rid, void* queueHandle);
