@@ -37,30 +37,30 @@ cJSON* syncRpcMsg2Json(SRpcMsg* pRpcMsg) {
     pRoot = syncPingReply2Json(pSyncMsg);
     syncPingReplyDestroy(pSyncMsg);
 
-  } else if (pRpcMsg->msgType == SYNC_CLIENT_REQUEST) {
+  } else if (pRpcMsg->msgType == TDMT_VND_SYNC_CLIENT_REQUEST) {
     SyncClientRequest* pSyncMsg = syncClientRequestDeserialize2(pRpcMsg->pCont, pRpcMsg->contLen);
     pRoot = syncClientRequest2Json(pSyncMsg);
     syncClientRequestDestroy(pSyncMsg);
 
-  } else if (pRpcMsg->msgType == SYNC_CLIENT_REQUEST_REPLY) {
+  } else if (pRpcMsg->msgType == TDMT_VND_SYNC_CLIENT_REQUEST_REPLY) {
     pRoot = syncRpcUnknownMsg2Json();
 
-  } else if (pRpcMsg->msgType == SYNC_REQUEST_VOTE) {
+  } else if (pRpcMsg->msgType == TDMT_VND_SYNC_REQUEST_VOTE) {
     SyncRequestVote* pSyncMsg = syncRequestVoteDeserialize2(pRpcMsg->pCont, pRpcMsg->contLen);
     pRoot = syncRequestVote2Json(pSyncMsg);
     syncRequestVoteDestroy(pSyncMsg);
 
-  } else if (pRpcMsg->msgType == SYNC_REQUEST_VOTE_REPLY) {
+  } else if (pRpcMsg->msgType == TDMT_VND_SYNC_REQUEST_VOTE_REPLY) {
     SyncRequestVoteReply* pSyncMsg = syncRequestVoteReplyDeserialize2(pRpcMsg->pCont, pRpcMsg->contLen);
     pRoot = syncRequestVoteReply2Json(pSyncMsg);
     syncRequestVoteReplyDestroy(pSyncMsg);
 
-  } else if (pRpcMsg->msgType == SYNC_APPEND_ENTRIES) {
+  } else if (pRpcMsg->msgType == TDMT_VND_SYNC_APPEND_ENTRIES) {
     SyncAppendEntries* pSyncMsg = syncAppendEntriesDeserialize2(pRpcMsg->pCont, pRpcMsg->contLen);
     pRoot = syncAppendEntries2Json(pSyncMsg);
     syncAppendEntriesDestroy(pSyncMsg);
 
-  } else if (pRpcMsg->msgType == SYNC_APPEND_ENTRIES_REPLY) {
+  } else if (pRpcMsg->msgType == TDMT_VND_SYNC_APPEND_ENTRIES_REPLY) {
     SyncAppendEntriesReply* pSyncMsg = syncAppendEntriesReplyDeserialize2(pRpcMsg->pCont, pRpcMsg->contLen);
     pRoot = syncAppendEntriesReply2Json(pSyncMsg);
     syncAppendEntriesReplyDestroy(pSyncMsg);
@@ -792,7 +792,7 @@ SyncClientRequest* syncClientRequestBuild(uint32_t dataLen) {
   SyncClientRequest* pMsg = taosMemoryMalloc(bytes);
   memset(pMsg, 0, bytes);
   pMsg->bytes = bytes;
-  pMsg->msgType = SYNC_CLIENT_REQUEST;
+  pMsg->msgType = TDMT_VND_SYNC_CLIENT_REQUEST;
   pMsg->seqNum = 0;
   pMsg->isWeak = false;
   pMsg->dataLen = dataLen;
@@ -933,7 +933,7 @@ SyncRequestVote* syncRequestVoteBuild(int32_t vgId) {
   memset(pMsg, 0, bytes);
   pMsg->bytes = bytes;
   pMsg->vgId = vgId;
-  pMsg->msgType = SYNC_REQUEST_VOTE;
+  pMsg->msgType = TDMT_VND_SYNC_REQUEST_VOTE;
   return pMsg;
 }
 
@@ -1081,7 +1081,7 @@ SyncRequestVoteReply* syncRequestVoteReplyBuild(int32_t vgId) {
   memset(pMsg, 0, bytes);
   pMsg->bytes = bytes;
   pMsg->vgId = vgId;
-  pMsg->msgType = SYNC_REQUEST_VOTE_REPLY;
+  pMsg->msgType = TDMT_VND_SYNC_REQUEST_VOTE_REPLY;
   return pMsg;
 }
 
@@ -1226,7 +1226,7 @@ SyncAppendEntries* syncAppendEntriesBuild(uint32_t dataLen, int32_t vgId) {
   memset(pMsg, 0, bytes);
   pMsg->bytes = bytes;
   pMsg->vgId = vgId;
-  pMsg->msgType = SYNC_APPEND_ENTRIES;
+  pMsg->msgType = TDMT_VND_SYNC_APPEND_ENTRIES;
   pMsg->dataLen = dataLen;
   return pMsg;
 }
@@ -1391,7 +1391,7 @@ SyncAppendEntriesReply* syncAppendEntriesReplyBuild(int32_t vgId) {
   memset(pMsg, 0, bytes);
   pMsg->bytes = bytes;
   pMsg->vgId = vgId;
-  pMsg->msgType = SYNC_APPEND_ENTRIES_REPLY;
+  pMsg->msgType = TDMT_VND_SYNC_APPEND_ENTRIES_REPLY;
   return pMsg;
 }
 

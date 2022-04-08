@@ -422,7 +422,7 @@ int32_t syncNodePing(SSyncNode* pSyncNode, const SRaftId* destRaftId, SyncPing* 
   syncPing2RpcMsg(pMsg, &rpcMsg);
   syncRpcMsgLog2((char*)"==syncNodePing==", &rpcMsg);
 
-  // ntohl
+  // htonl
   SMsgHead* pHead = rpcMsg.pCont;
   pHead->contLen = htonl(pHead->contLen);
   pHead->vgId = htonl(pHead->vgId);

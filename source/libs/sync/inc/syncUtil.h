@@ -55,6 +55,7 @@ char*       syncUtilprintBin(char* ptr, uint32_t len);
 char*       syncUtilprintBin2(char* ptr, uint32_t len);
 SyncIndex   syncUtilMinIndex(SyncIndex a, SyncIndex b);
 SyncIndex   syncUtilMaxIndex(SyncIndex a, SyncIndex b);
+void        syncUtilMsgHtoN(void* msg);
 
 #ifdef __cplusplus
 }

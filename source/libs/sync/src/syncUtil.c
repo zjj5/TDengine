@@ -197,3 +197,10 @@ SyncIndex syncUtilMaxIndex(SyncIndex a, SyncIndex b) {
   SyncIndex r = a > b ? a : b;
   return r;
 }
+
+void syncUtilMsgHtoN(void* msg) {
+  // htonl
+  SMsgHead* pHead = msg;
+  pHead->contLen = htonl(pHead->contLen);
+  pHead->vgId = htonl(pHead->vgId);
+}

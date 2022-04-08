@@ -29,7 +29,7 @@ static int32_t  syncIODestroy(SSyncIO *io);
 static int32_t  syncIOStartInternal(SSyncIO *io);
 static int32_t  syncIOStopInternal(SSyncIO *io);
 
-static void *  syncIOConsumerFunc(void *param);
+static void   *syncIOConsumerFunc(void *param);
 static void    syncIOProcessRequest(void *pParent, SRpcMsg *pMsg, SEpSet *pEpSet);
 static void    syncIOProcessReply(void *pParent, SRpcMsg *pMsg, SEpSet *pEpSet);
 static int32_t syncIOAuth(void *parent, char *meterId, char *spi, char *encrypt, char *secret, char *ckey);
@@ -235,9 +235,9 @@ static int32_t syncIOStopInternal(SSyncIO *io) {
 }
 
 static void *syncIOConsumerFunc(void *param) {
-  SSyncIO *  io = param;
+  SSyncIO   *io = param;
   STaosQall *qall;
-  SRpcMsg *  pRpcMsg, rpcMsg;
+  SRpcMsg   *pRpcMsg, rpcMsg;
   qall = taosAllocateQall();
 
   while (1) {
@@ -268,7 +268,7 @@ static void *syncIOConsumerFunc(void *param) {
           syncPingReplyDestroy(pSyncMsg);
         }
 
-      } else if (pRpcMsg->msgType == SYNC_CLIENT_REQUEST) {
+      } else if (pRpcMsg->msgType == TDMT_VND_SYNC_CLIENT_REQUEST) {
         if (io->FpOnSyncClientRequest != NULL) {
           SyncClientRequest *pSyncMsg = syncClientRequestFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -276,7 +276,7 @@ static void *syncIOConsumerFunc(void *param) {
           syncClientRequestDestroy(pSyncMsg);
         }
 
-      } else if (pRpcMsg->msgType == SYNC_REQUEST_VOTE) {
+      } else if (pRpcMsg->msgType == TDMT_VND_SYNC_REQUEST_VOTE) {
         if (io->FpOnSyncRequestVote != NULL) {
           SyncRequestVote *pSyncMsg = syncRequestVoteFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -284,7 +284,7 @@ static void *syncIOConsumerFunc(void *param) {
           syncRequestVoteDestroy(pSyncMsg);
         }
 
-      } else if (pRpcMsg->msgType == SYNC_REQUEST_VOTE_REPLY) {
+      } else if (pRpcMsg->msgType == TDMT_VND_SYNC_REQUEST_VOTE_REPLY) {
         if (io->FpOnSyncRequestVoteReply != NULL) {
           SyncRequestVoteReply *pSyncMsg = syncRequestVoteReplyFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -292,7 +292,7 @@ static void *syncIOConsumerFunc(void *param) {
           syncRequestVoteReplyDestroy(pSyncMsg);
         }
 
-      } else if (pRpcMsg->msgType == SYNC_APPEND_ENTRIES) {
+      } else if (pRpcMsg->msgType == TDMT_VND_SYNC_APPEND_ENTRIES) {
         if (io->FpOnSyncAppendEntries != NULL) {
           SyncAppendEntries *pSyncMsg = syncAppendEntriesFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -300,7 +300,7 @@ static void *syncIOConsumerFunc(void *param) {
           syncAppendEntriesDestroy(pSyncMsg);
         }
 
-      } else if (pRpcMsg->msgType == SYNC_APPEND_ENTRIES_REPLY) {
+      } else if (pRpcMsg->msgType == TDMT_VND_SYNC_APPEND_ENTRIES_REPLY) {
         if (io->FpOnSyncAppendEntriesReply != NULL) {
           SyncAppendEntriesReply *pSyncMsg = syncAppendEntriesReplyFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
