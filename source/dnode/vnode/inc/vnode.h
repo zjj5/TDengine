@@ -55,7 +55,7 @@ typedef struct STsdbCfg {
   int32_t  daysPerFile;
   int32_t  minRowsPerFileBlock;
   int32_t  maxRowsPerFileBlock;
-  int32_t  keep;
+  int32_t  keep0;
   int32_t  keep1;
   int32_t  keep2;
   uint64_t lruCacheSize;

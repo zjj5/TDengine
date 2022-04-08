@@ -342,9 +342,9 @@ TEST(testCase, tSma_Data_Insert_Query_Test) {
   pTsdb->pMeta = pMeta;
   pTsdb->vgId = 2;
   pTsdb->config.daysPerFile = 10;  // default days is 10
-  pTsdb->config.keep1 = 30;
-  pTsdb->config.keep2 = 90;
-  pTsdb->config.keep = 365;
+  pTsdb->config.keep0 = 30;
+  pTsdb->config.keep1 = 90;
+  pTsdb->config.keep2 = 365;
   pTsdb->config.precision = TSDB_TIME_PRECISION_MILLI;
   pTsdb->config.update = TD_ROW_OVERWRITE_UPDATE;
   pTsdb->config.compression = TWO_STAGE_COMP;
