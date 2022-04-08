@@ -17,6 +17,7 @@
 #define _TD_VNODE_DEF_H_
 
 #include "executor.h"
+#include "os.h"
 #include "qworker.h"
 #include "tchecksum.h"
 #include "tcoding.h"
@@ -67,6 +68,8 @@ struct SVnode {
   SMsgCb     msgCb;
   STfs*      pTfs;
 };
+
+#define TD_VNODE_ID(PVNODE) (PVNODE)->vgId
 
 // sma
 void smaHandleRes(void* pVnode, int64_t smaId, const SArray* data);

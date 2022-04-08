@@ -308,8 +308,6 @@ int     tqRetrieveDataBlockInfo(STqReadHandle *pHandle, SDataBlockInfo *pBlockIn
 SArray *tqRetrieveDataBlock(STqReadHandle *pHandle);
 
 // meta.h
-SMeta          *metaOpen(const char *path, const SMetaCfg *pMetaCfg, SMemAllocatorFactory *pMAF);
-void            metaClose(SMeta *pMeta);
 void            metaRemove(const char *path);
 int             metaCreateTable(SMeta *pMeta, STbCfg *pTbCfg);
 int             metaDropTable(SMeta *pMeta, tb_uid_t uid);

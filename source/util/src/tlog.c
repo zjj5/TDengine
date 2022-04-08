@@ -38,27 +38,27 @@
 #define LOG_BUF_MUTEX(x)  ((x)->buffMutex)
 
 typedef struct {
-  char           *buffer;
-  int32_t         buffStart;
-  int32_t         buffEnd;
-  int32_t         buffSize;
-  int32_t         minBuffSize;
-  TdFilePtr       pFile;
-  int32_t         stop;
-  TdThread       asyncThread;
+  char         *buffer;
+  int32_t       buffStart;
+  int32_t       buffEnd;
+  int32_t       buffSize;
+  int32_t       minBuffSize;
+  TdFilePtr     pFile;
+  int32_t       stop;
+  TdThread      asyncThread;
   TdThreadMutex buffMutex;
-  tsem_t          buffNotEmpty;
+  tsem_t        buffNotEmpty;
 } SLogBuff;
 
 typedef struct {
-  int32_t         fileNum;
-  int32_t         maxLines;
-  int32_t         lines;
-  int32_t         flag;
-  int32_t         openInProgress;
-  pid_t           pid;
-  char            logName[LOG_FILE_NAME_LEN];
-  SLogBuff       *logHandle;
+  int32_t       fileNum;
+  int32_t       maxLines;
+  int32_t       lines;
+  int32_t       flag;
+  int32_t       openInProgress;
+  pid_t         pid;
+  char          logName[LOG_FILE_NAME_LEN];
+  SLogBuff     *logHandle;
   TdThreadMutex logMutex;
 } SLogObj;
 
@@ -89,6 +89,7 @@ int32_t rpcDebugFlag = 131;
 int32_t qDebugFlag = 131;
 int32_t wDebugFlag = 135;
 int32_t sDebugFlag = 135;
+int32_t metaDebugFlag = 135;
 int32_t tsdbDebugFlag = 131;
 int32_t tqDebugFlag = 135;
 int32_t fsDebugFlag = 135;
@@ -231,7 +232,7 @@ static int32_t taosOpenNewLogFile() {
     tsLogObj.openInProgress = 1;
 
     uInfo("open new log file ......");
-    TdThread      thread;
+    TdThread     thread;
     TdThreadAttr attr;
     taosThreadAttrInit(&attr);
     taosThreadAttrSetDetachState(&attr, PTHREAD_CREATE_DETACHED);
