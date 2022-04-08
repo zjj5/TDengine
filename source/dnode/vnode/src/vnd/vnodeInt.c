@@ -40,7 +40,12 @@ int32_t vnodeGetLoad(SVnode *pVnode, SVnodeLoad *pLoad) {
 }
 
 int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
-  syncRpcMsgLog2((char *)"==vnodeProcessSyncReq==", pMsg);
+  SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
+  assert(pSyncNode != NULL);
+
+  char logBuf[128];
+  snprintf(logBuf, sizeof(logBuf), "==vnodeProcessSyncReq== msgType:%d", pMsg->msgType);
+  syncRpcMsgLog2(logBuf, pMsg);
 
   SRpcMsg *pRpcMsg = pMsg;
 
@@ -48,93 +53,63 @@ int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
     SyncTimeout *pSyncMsg = syncTimeoutFromRpcMsg2(pRpcMsg);
     assert(pSyncMsg != NULL);
 
-    SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
-    assert(pSyncNode != NULL);
-
     syncNodeOnTimeoutCb(pSyncNode, pSyncMsg);
-    syncNodeRelease(pSyncNode);
     syncTimeoutDestroy(pSyncMsg);
 
   } else if (pRpcMsg->msgType == TDMT_VND_SYNC_PING) {
     SyncPing *pSyncMsg = syncPingFromRpcMsg2(pRpcMsg);
     assert(pSyncMsg != NULL);
 
-    SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
-    assert(pSyncNode != NULL);
-
     syncNodeOnPingCb(pSyncNode, pSyncMsg);
-    syncNodeRelease(pSyncNode);
     syncPingDestroy(pSyncMsg);
 
   } else if (pRpcMsg->msgType == TDMT_VND_SYNC_PING_REPLY) {
     SyncPingReply *pSyncMsg = syncPingReplyFromRpcMsg2(pRpcMsg);
     assert(pSyncMsg != NULL);
 
-    SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
-    assert(pSyncNode != NULL);
-
     syncNodeOnPingReplyCb(pSyncNode, pSyncMsg);
-    syncNodeRelease(pSyncNode);
     syncPingReplyDestroy(pSyncMsg);
 
   } else if (pRpcMsg->msgType == TDMT_VND_SYNC_CLIENT_REQUEST) {
     SyncClientRequest *pSyncMsg = syncClientRequestFromRpcMsg2(pRpcMsg);
     assert(pSyncMsg != NULL);
 
-    SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
-    assert(pSyncNode != NULL);
-
     syncNodeOnClientRequestCb(pSyncNode, pSyncMsg);
-    syncNodeRelease(pSyncNode);
     syncClientRequestDestroy(pSyncMsg);
 
   } else if (pRpcMsg->msgType == TDMT_VND_SYNC_REQUEST_VOTE) {
     SyncRequestVote *pSyncMsg = syncRequestVoteFromRpcMsg2(pRpcMsg);
     assert(pSyncMsg != NULL);
 
-    SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
-    assert(pSyncNode != NULL);
-
     syncNodeOnRequestVoteCb(pSyncNode, pSyncMsg);
-    syncNodeRelease(pSyncNode);
     syncRequestVoteDestroy(pSyncMsg);
 
   } else if (pRpcMsg->msgType == TDMT_VND_SYNC_REQUEST_VOTE_REPLY) {
     SyncRequestVoteReply *pSyncMsg = syncRequestVoteReplyFromRpcMsg2(pRpcMsg);
     assert(pSyncMsg != NULL);
 
-    SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
-    assert(pSyncNode != NULL);
-
     syncNodeOnRequestVoteReplyCb(pSyncNode, pSyncMsg);
-    syncNodeRelease(pSyncNode);
     syncRequestVoteReplyDestroy(pSyncMsg);
 
   } else if (pRpcMsg->msgType == TDMT_VND_SYNC_APPEND_ENTRIES) {
     SyncAppendEntries *pSyncMsg = syncAppendEntriesFromRpcMsg2(pRpcMsg);
     assert(pSyncMsg != NULL);
 
-    SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
-    assert(pSyncNode != NULL);
-
     syncNodeOnAppendEntriesCb(pSyncNode, pSyncMsg);
-    syncNodeRelease(pSyncNode);
     syncAppendEntriesDestroy(pSyncMsg);
 
   } else if (pRpcMsg->msgType == TDMT_VND_SYNC_APPEND_ENTRIES_REPLY) {
     SyncAppendEntriesReply *pSyncMsg = syncAppendEntriesReplyFromRpcMsg2(pRpcMsg);
     assert(pSyncMsg != NULL);
 
-    SSyncNode *pSyncNode = syncNodeAcquire(pVnode->sync);
-    assert(pSyncNode != NULL);
-
     syncNodeOnAppendEntriesReplyCb(pSyncNode, pSyncMsg);
-    syncNodeRelease(pSyncNode);
     syncAppendEntriesReplyDestroy(pSyncMsg);
 
   } else {
     vError("==vnodeProcessSyncReq== error msg type:%d", pRpcMsg->msgType);
   }
+
+  syncNodeRelease(pSyncNode);
 
   return 0;
 }
