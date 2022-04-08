@@ -142,6 +142,7 @@ ESyncState syncGetMyRole(int64_t rid) {
 void syncSetQ(int64_t rid, void* queue) {
   SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
   if (pSyncNode == NULL) {
+    sTrace("syncSetQ get pSyncNode is NULL, rid:%ld", rid);
     return;
   }
   assert(rid == pSyncNode->rid);
@@ -153,6 +154,7 @@ void syncSetQ(int64_t rid, void* queue) {
 void syncSetRpc(int64_t rid, void* rpcHandle) {
   SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
   if (pSyncNode == NULL) {
+    sTrace("syncSetRpc get pSyncNode is NULL, rid:%ld", rid);
     return;
   }
   assert(rid == pSyncNode->rid);

@@ -82,6 +82,8 @@ int32_t vnodeSyncEqMsg(void *qHandle, SRpcMsg *pMsg) {
   SMsgCb *pMsgCb = qHandle;
   if (pMsgCb->queueFps[SYNC_QUEUE] != NULL) {
     tmsgPutToQueue(qHandle, SYNC_QUEUE, pMsg);
+  } else {
+    vError("vnodeSyncEqMsg queue is NULL, SYNC_QUEUE:%d", SYNC_QUEUE);
   }
 
   return ret;
@@ -89,7 +91,13 @@ int32_t vnodeSyncEqMsg(void *qHandle, SRpcMsg *pMsg) {
 
 int32_t vnodeSendMsg(void *rpcHandle, const SEpSet *pEpSet, SRpcMsg *pMsg) {
   int32_t ret = 0;
-  tmsgSendReq(rpcHandle, pEpSet, pMsg);
+
+  SMsgCb *pMsgCb = rpcHandle;
+  if (pMsgCb->queueFps[SYNC_QUEUE] != NULL) {
+    tmsgSendReq(rpcHandle, pEpSet, pMsg);
+  } else {
+    vError("vnodeSendMsg queue is NULL, SYNC_QUEUE:%d", SYNC_QUEUE);
+  }
 
   return ret;
 }

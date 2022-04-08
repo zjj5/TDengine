@@ -94,6 +94,7 @@ int32_t vmProcessCreateVnodeReq(SVnodesMgmt *pMgmt, SNodeMsg *pMsg) {
   msgCb.queueFps[QUERY_QUEUE] = vmPutMsgToQueryQueue;
   msgCb.queueFps[FETCH_QUEUE] = vmPutMsgToFetchQueue;
   msgCb.queueFps[APPLY_QUEUE] = vmPutMsgToApplyQueue;
+  msgCb.queueFps[SYNC_QUEUE] = vmPutMsgToSyncQueue;
   msgCb.qsizeFp = vmGetQueueSize;
   msgCb.sendReqFp = dndSendReqToDnode;
   msgCb.sendMnodeReqFp = dndSendReqToMnode;
