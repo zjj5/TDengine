@@ -20,6 +20,11 @@ static int  vnodeEndCommit(SVnode *pVnode);
 static int  vnodeCommit(void *arg);
 static void vnodeWaitCommit(SVnode *pVnode);
 
+int vnodeBegin(SVnode *pVnode) {
+  // TODO
+  return 0;
+}
+
 int vnodeAsyncCommit(SVnode *pVnode) {
   vnodeWaitCommit(pVnode);
 

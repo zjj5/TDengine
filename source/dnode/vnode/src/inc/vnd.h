@@ -143,6 +143,8 @@ void*           vmaMalloc(SVMemAllocator* pVMA, uint64_t size);
 void            vmaFree(SVMemAllocator* pVMA, void* ptr);
 bool            vmaIsFull(SVMemAllocator* pVMA);
 
+int vnodeBegin(SVnode* pVnode);
+
 #ifdef __cplusplus
 }
 #endif
