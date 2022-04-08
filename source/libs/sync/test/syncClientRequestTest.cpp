@@ -21,7 +21,8 @@ SyncClientRequest *createMsg() {
   rpcMsg.contLen = 20;
   rpcMsg.pCont = rpcMallocCont(rpcMsg.contLen);
   strcpy((char *)rpcMsg.pCont, "hello rpc");
-  SyncClientRequest *pMsg = syncClientRequestBuild2(&rpcMsg, 123, true);
+  SyncClientRequest *pMsg = syncClientRequestBuild2(&rpcMsg, 123, true, 1000);
+  rpcFreeCont(rpcMsg.pCont);
   return pMsg;
 }
 
@@ -65,6 +66,7 @@ void test4() {
   syncClientRequestFromRpcMsg(&rpcMsg, pMsg2);
   syncClientRequestPrint2((char *)"test4: syncClientRequest2RpcMsg -> syncClientRequestFromRpcMsg ", pMsg2);
 
+  rpcFreeCont(rpcMsg.pCont);
   syncClientRequestDestroy(pMsg);
   syncClientRequestDestroy(pMsg2);
 }
@@ -76,6 +78,7 @@ void test5() {
   SyncClientRequest *pMsg2 = syncClientRequestFromRpcMsg2(&rpcMsg);
   syncClientRequestPrint2((char *)"test5: syncClientRequest2RpcMsg -> syncClientRequestFromRpcMsg2 ", pMsg2);
 
+  rpcFreeCont(rpcMsg.pCont);
   syncClientRequestDestroy(pMsg);
   syncClientRequestDestroy(pMsg2);
 }

@@ -133,7 +133,7 @@ SRpcMsg *step0() {
 }
 
 SyncClientRequest *step1(const SRpcMsg *pMsg) {
-  SyncClientRequest *pRetMsg = syncClientRequestBuild2(pMsg, 123, true);
+  SyncClientRequest *pRetMsg = syncClientRequestBuild2(pMsg, 123, true, 1000);
   return pRetMsg;
 }
 

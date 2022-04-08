@@ -47,7 +47,7 @@ SyncClientRequest *createSyncClientRequest() {
   rpcMsg.contLen = 20;
   rpcMsg.pCont = rpcMallocCont(rpcMsg.contLen);
   strcpy((char *)rpcMsg.pCont, "hello rpc");
-  SyncClientRequest *pMsg = syncClientRequestBuild2(&rpcMsg, 123, true);
+  SyncClientRequest *pMsg = syncClientRequestBuild2(&rpcMsg, 123, true, 1000);
   return pMsg;
 }
 

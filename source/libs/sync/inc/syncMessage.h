@@ -176,6 +176,7 @@ void syncPingReplyLog2(char* s, const SyncPingReply* pMsg);
 // ---------------------------------------------
 typedef struct SyncClientRequest {
   uint32_t bytes;
+  int32_t  vgId;
   uint32_t msgType;
   uint32_t originalRpcType;
   uint64_t seqNum;
@@ -185,7 +186,8 @@ typedef struct SyncClientRequest {
 } SyncClientRequest;
 
 SyncClientRequest* syncClientRequestBuild(uint32_t dataLen);
-SyncClientRequest* syncClientRequestBuild2(const SRpcMsg* pOriginalRpcMsg, uint64_t seqNum, bool isWeak);  // step 1
+SyncClientRequest* syncClientRequestBuild2(const SRpcMsg* pOriginalRpcMsg, uint64_t seqNum, bool isWeak,
+                                           int32_t vgId);  // step 1
 void               syncClientRequestDestroy(SyncClientRequest* pMsg);
 void               syncClientRequestSerialize(const SyncClientRequest* pMsg, char* buf, uint32_t bufLen);
 void               syncClientRequestDeserialize(const char* buf, uint32_t len, SyncClientRequest* pMsg);

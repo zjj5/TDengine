@@ -800,8 +800,9 @@ SyncClientRequest* syncClientRequestBuild(uint32_t dataLen) {
 }
 
 // step 1. original SRpcMsg => SyncClientRequest, add seqNum, isWeak
-SyncClientRequest* syncClientRequestBuild2(const SRpcMsg* pOriginalRpcMsg, uint64_t seqNum, bool isWeak) {
+SyncClientRequest* syncClientRequestBuild2(const SRpcMsg* pOriginalRpcMsg, uint64_t seqNum, bool isWeak, int32_t vgId) {
   SyncClientRequest* pMsg = syncClientRequestBuild(pOriginalRpcMsg->contLen);
+  pMsg->vgId = vgId;
   pMsg->originalRpcType = pOriginalRpcMsg->msgType;
   pMsg->seqNum = seqNum;
   pMsg->isWeak = isWeak;
@@ -869,6 +870,7 @@ cJSON* syncClientRequest2Json(const SyncClientRequest* pMsg) {
 
   if (pMsg != NULL) {
     cJSON_AddNumberToObject(pRoot, "bytes", pMsg->bytes);
+    cJSON_AddNumberToObject(pRoot, "vgId", pMsg->vgId);
     cJSON_AddNumberToObject(pRoot, "msgType", pMsg->msgType);
     cJSON_AddNumberToObject(pRoot, "originalRpcType", pMsg->originalRpcType);
     snprintf(u64buf, sizeof(u64buf), "%lu", pMsg->seqNum);
