@@ -587,6 +587,7 @@ int32_t syncNodeSendMsgById(const SRaftId* destRaftId, SSyncNode* pSyncNode, SRp
   SEpSet epSet;
   syncUtilraftId2EpSet(destRaftId, &epSet);
   if (pSyncNode->FpSendMsg != NULL) {
+    pMsg->noResp = 1;
     // htonl
     syncUtilMsgHtoN(pMsg->pCont);
 

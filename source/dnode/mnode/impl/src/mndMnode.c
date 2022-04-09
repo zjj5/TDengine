@@ -21,7 +21,7 @@
 #include "mndTrans.h"
 #include "mndUser.h"
 
-#define TSDB_MNODE_VER_NUMBER   1
+#define TSDB_MNODE_VER_NUMBER 1
 #define TSDB_MNODE_RESERVE_SIZE 64
 
 static int32_t  mndCreateDefaultMnode(SMnode *pMnode);
@@ -78,6 +78,7 @@ static void mndReleaseMnode(SMnode *pMnode, SMnodeObj *pObj) {
   sdbRelease(pSdb, pObj);
 }
 
+/*
 char *mndGetRoleStr(int32_t showType) {
   switch (showType) {
     case TAOS_SYNC_STATE_FOLLOWER:
@@ -86,6 +87,20 @@ char *mndGetRoleStr(int32_t showType) {
       return "slave";
     case TAOS_SYNC_STATE_LEADER:
       return "master";
+    default:
+      return "undefined";
+  }
+}
+*/
+
+char *mndGetRoleStr(int32_t showType) {
+  switch (showType) {
+    case TAOS_SYNC_STATE_FOLLOWER:
+      return "FOLLOWER";
+    case TAOS_SYNC_STATE_CANDIDATE:
+      return "CANDIDATE";
+    case TAOS_SYNC_STATE_LEADER:
+      return "LEADER";
     default:
       return "undefined";
   }

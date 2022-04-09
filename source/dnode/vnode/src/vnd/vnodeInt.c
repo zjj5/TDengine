@@ -25,7 +25,10 @@ int32_t vnodeSync(SVnode *pVnode) { return 0; }
 
 int32_t vnodeGetLoad(SVnode *pVnode, SVnodeLoad *pLoad) {
   pLoad->vgId = pVnode->vgId;
-  pLoad->role = TAOS_SYNC_STATE_LEADER;
+
+  // pLoad->role = TAOS_SYNC_STATE_LEADER;
+  pLoad->role = syncGetMyRole(pVnode->sync);
+
   pLoad->numOfTables = metaGetTbNum(pVnode->pMeta);
   pLoad->numOfTimeSeries = 400;
   pLoad->totalStorage = 300;
@@ -46,9 +49,11 @@ int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
   ESyncState state = syncGetMyRole(pVnode->sync);
   SyncTerm   currentTerm = syncGetMyTerm(pVnode->sync);
 
+  SMsgHead *pHead = pMsg->pCont;
+
   char logBuf[128];
-  snprintf(logBuf, sizeof(logBuf), "==vnodeProcessSyncReq== msgType:%d, state:%d, %s, term:%lu", pMsg->msgType, state,
-           syncUtilState2String(state), currentTerm);
+  snprintf(logBuf, sizeof(logBuf), "==vnodeProcessSyncReq== msgType:%d, vgId:%d, state:%d, %s, term:%lu", pMsg->msgType,
+           pHead->vgId, state, syncUtilState2String(state), currentTerm);
   syncRpcMsgLog2(logBuf, pMsg);
 
   SRpcMsg *pRpcMsg = pMsg;

@@ -22,11 +22,11 @@
 #include "mndUser.h"
 #include "mndVgroup.h"
 
-#define TSDB_DNODE_VER_NUMBER   1
+#define TSDB_DNODE_VER_NUMBER 1
 #define TSDB_DNODE_RESERVE_SIZE 64
-#define TSDB_CONFIG_OPTION_LEN  16
-#define TSDB_CONIIG_VALUE_LEN   48
-#define TSDB_CONFIG_NUMBER      8
+#define TSDB_CONFIG_OPTION_LEN 16
+#define TSDB_CONIIG_VALUE_LEN 48
+#define TSDB_CONFIG_NUMBER 8
 
 static const char *offlineReason[] = {
     "",
@@ -340,13 +340,18 @@ static int32_t mndProcessStatusReq(SNodeMsg *pReq) {
         pVgroup->compStorage = pVload->compStorage;
         pVgroup->pointsWritten = pVload->pointsWritten;
       }
+
       bool roleChanged = false;
+
       for (int32_t vg = 0; vg < pVgroup->replica; ++vg) {
-        if (pVgroup->vnodeGid[vg].role != pVload->role) {
-          roleChanged = true;
+        if (pVgroup->vnodeGid[vg].dnodeId == statusReq.dnodeId) {
+          if (pVgroup->vnodeGid[vg].role != pVload->role) {
+            roleChanged = true;
+          }
+          pVgroup->vnodeGid[vg].role = pVload->role;
         }
-        pVgroup->vnodeGid[vg].role = pVload->role;
       }
+
       if (roleChanged) {
         // notify scheduler role has changed
       }
@@ -628,9 +633,7 @@ static int32_t mndProcessConfigDnodeReq(SNodeMsg *pReq) {
   return 0;
 }
 
-static int32_t mndProcessConfigDnodeRsp(SNodeMsg *pRsp) {
-  mInfo("app:%p config rsp from dnode", pRsp->rpcMsg.ahandle);
-}
+static int32_t mndProcessConfigDnodeRsp(SNodeMsg *pRsp) { mInfo("app:%p config rsp from dnode", pRsp->rpcMsg.ahandle); }
 
 static int32_t mndGetConfigMeta(SNodeMsg *pReq, SShowObj *pShow, STableMetaRsp *pMeta) {
   int32_t  cols = 0;
