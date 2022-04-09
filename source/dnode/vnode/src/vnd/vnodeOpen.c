@@ -26,6 +26,16 @@ static int vnodeCloseWal(SVnode *pVnode);
 static int vnodeCloseTq(SVnode *pVnode);
 static int vnodeCloseQuery(SVnode *pVnode);
 
+int vnodeCreate(const char *path, SVnodeCfg *pCfg) {
+  // TODO
+  return 0;
+}
+
+void vnodeDestroy(const char *path) {
+  // TODO
+  taosRemoveDir(path);
+}
+
 int vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg, SVnode **ppVnode) {
   SVnode *pVnode;
   int     ret;
@@ -49,8 +59,9 @@ int vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg, SVnode **ppVnode) {
     return -1;
   }
 
-  // open buffer pool sub-system
-  ret = vnodeOpenBufPool(pVnode);
+// open buffer pool sub-system
+  uint8_t heap = 0;
+  ret = vnodeOpenBufPool(pVnode, heap ? 0 : pVnode->config.wsize / 3);
   if (ret < 0) {
     return -1;
   }
@@ -105,11 +116,6 @@ void vnodeClose(SVnode *pVnode) {
     vnodeCloseMeta(pVnode);
     taosMemoryFree(pVnode);
   }
-}
-
-void vnodeDestroy(const char *path) {
-  // TODO
-  taosRemoveDir(path);
 }
 
 // static methods ----------

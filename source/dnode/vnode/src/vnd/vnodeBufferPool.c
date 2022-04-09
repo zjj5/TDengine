@@ -20,13 +20,11 @@
 static int vnodeBufPoolCreate(int size, SVBufPool **ppPool);
 static int vnodeBufPoolDestroy(SVBufPool *pPool);
 
-int vnodeOpenBufPool(SVnode *pVnode) {
+int vnodeOpenBufPool(SVnode *pVnode, int64_t size) {
   SVBufPool *pPool = NULL;
-  int        size = 0;
   int        ret;
 
-  // calc size
-  size = pVnode->config.wsize / 3;
+  ASSERT(pVnode->pPool == NULL);
 
   for (int i = 0; i < 3; i++) {
     // create pool
@@ -42,6 +40,8 @@ int vnodeOpenBufPool(SVnode *pVnode) {
     pVnode->pPool = pPool->next;
   }
 
+  vDebug("vgId:%d vnode buffer pool is opened, pool size: %" PRId64, TD_VNODE_ID(pVnode), size);
+
   return 0;
 }
 
@@ -53,6 +53,8 @@ int vnodeCloseBufPool(SVnode *pVnode) {
     vnodeBufPoolDestroy(pPool);
   }
 
+  vDebug("vgId:%d vnode buffer pool is closed", TD_VNODE_ID(pVnode));
+
   return 0;
 }
 
@@ -60,6 +62,8 @@ void vnodeBufPoolReset(SVBufPool *pPool) {
   SVBufPoolNode *pNode;
 
   for (pNode = pPool->pTail; pNode->prev; pNode = pPool->pTail) {
+    ASSERT(pNode->pnext == &pPool->pTail);
+    pNode->prev->pnext = &pPool->pTail;
     pPool->pTail = pNode->prev;
     pPool->size = pPool->size - sizeof(*pNode) - pNode->size;
     taosMemoryFree(pNode);
@@ -71,25 +75,17 @@ void vnodeBufPoolReset(SVBufPool *pPool) {
   pPool->ptr = pPool->node.data;
 }
 
-void vnodeBufPoolRef(SVBufPool *pPool) {
-  int64_t nRef = atomic_fetch_add_64(&pPool->nRef, 1);
-  ASSERT(nRef >= 0);
-}
-
-void vnodeBufPoolUnref(SVBufPool *pPool) {
-  int64_t nRef = atomic_add_fetch_64(&pPool->nRef, -1);
-  ASSERT(nRef >= 0);
-}
-
 void *vnodeBufPoolMalloc(SVBufPool *pPool, size_t size) {
   SVBufPoolNode *pNode;
   void          *p;
 
   if (pPool->node.size >= pPool->ptr - pPool->node.data + size) {
+    // allocate from the anchor node
     p = pPool->ptr;
     pPool->ptr = pPool->ptr + size;
     pPool->size += size;
   } else {
+    // allocate a new node
     pNode = taosMemoryMalloc(sizeof(*pNode) + size);
     if (pNode == NULL) {
       terrno = TSDB_CODE_OUT_OF_MEMORY;
@@ -98,8 +94,9 @@ void *vnodeBufPoolMalloc(SVBufPool *pPool, size_t size) {
 
     p = pNode->data;
     pNode->size = size;
-
     pNode->prev = pPool->pTail;
+    pNode->pnext = &pPool->pTail;
+    pPool->pTail->pnext = &pNode->prev;
     pPool->pTail = pNode;
 
     pPool->size = pPool->size + sizeof(*pNode) + size;
@@ -108,8 +105,18 @@ void *vnodeBufPoolMalloc(SVBufPool *pPool, size_t size) {
   return p;
 }
 
-void vnodeBufPoolFree(SVBufPool *pPool, void *ptr) {
-  // TODO
+void vnodeBufPoolFree(SVBufPool *pPool, void *p) {
+  uint8_t       *ptr = (uint8_t *)p;
+  SVBufPoolNode *pNode;
+
+  if (ptr < pPool->node.data || ptr >= pPool->node.data + pPool->node.size) {
+    pNode = &((SVBufPoolNode *)p)[-1];
+    *pNode->pnext = pNode->prev;
+    pNode->prev->pnext = pNode->pnext;
+
+    pPool->size = pPool->size - sizeof(*pNode) - pNode->size;
+    taosMemoryFree(pNode);
+  }
 }
 
 // STATIC METHODS -------------------
@@ -128,6 +135,7 @@ static int vnodeBufPoolCreate(int size, SVBufPool **ppPool) {
   pPool->ptr = pPool->node.data;
   pPool->pTail = &pPool->node;
   pPool->node.prev = NULL;
+  pPool->node.pnext = &pPool->pTail;
   pPool->node.size = size;
 
   *ppPool = pPool;

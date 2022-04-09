@@ -33,9 +33,10 @@ extern "C" {
 // vnodeBufferPool
 typedef struct SVBufPoolNode SVBufPoolNode;
 struct SVBufPoolNode {
-  SVBufPoolNode* prev;
-  int64_t        size;
-  uint8_t        data[];
+  SVBufPoolNode*  prev;
+  SVBufPoolNode** pnext;
+  int64_t         size;
+  uint8_t         data[];
 };
 
 struct SVBufPool {
@@ -47,11 +48,11 @@ struct SVBufPool {
   SVBufPoolNode  node;
 };
 
-int   vnodeOpenBufPool(SVnode* pVnode);
+int   vnodeOpenBufPool(SVnode* pVnode, int64_t size);
 int   vnodeCloseBufPool(SVnode* pVnode);
 void  vnodeBufPoolReset(SVBufPool* pPool);
 void* vnodeBufPoolMalloc(SVBufPool* pPool, size_t size);
-void  vnodeBufPoolFree(SVBufPool* pPool, void* ptr);
+void  vnodeBufPoolFree(SVBufPool* pPool, void* p);
 
 #if 1  // -----------------------------
 typedef struct SVnodeTask {
