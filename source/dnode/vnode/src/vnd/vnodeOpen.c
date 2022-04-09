@@ -59,7 +59,7 @@ int vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg, SVnode **ppVnode) {
     return -1;
   }
 
-// open buffer pool sub-system
+  // open buffer pool sub-system
   uint8_t heap = 0;
   ret = vnodeOpenBufPool(pVnode, heap ? 0 : pVnode->config.wsize / 3);
   if (ret < 0) {
@@ -120,7 +120,14 @@ void vnodeClose(SVnode *pVnode) {
 
 // static methods ----------
 static int vnodeOpenMeta(SVnode *pVnode) {
-  // TODO
+  int ret;
+
+  ret = metaOpen(pVnode, &pVnode->pMeta);
+  if (ret < 0) {
+    vError("vgId: %d failed to open vnode meta since %s", TD_VNODE_ID(pVnode), tstrerror(terrno));
+    return -1;
+  }
+
   return 0;
 }
 

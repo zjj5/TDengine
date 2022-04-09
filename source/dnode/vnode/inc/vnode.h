@@ -65,6 +65,8 @@ typedef struct STsdbCfg {
 struct SVnodeCfg {
   int32_t  vgId;
   uint64_t dbId;
+  int      szPage;
+  int      szCache;
   STfs    *pTfs;
   uint64_t wsize;
   uint64_t ssize;

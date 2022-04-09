@@ -16,16 +16,17 @@ target_sources(
 
     # meta
     # "src/meta/metaBDBImpl.c"
-    "src/meta/metaCache.c"
-    "src/meta/metaCfg.c"
-    "src/meta/metaIdx.c"
-    "src/meta/metaMain.c"
-    "src/meta/metaQuery.c"
-    "src/meta/metaTable.c"
-    "src/meta/metaTbCfg.c"
-    "src/meta/metaTbTag.c"
-    "src/meta/metaTbUid.c"
-    "src/meta/metaTDBImpl.c"
+    "src/meta/metaOpen.c"
+    # "src/meta/metaCache.c"
+    # "src/meta/metaCfg.c"
+    # "src/meta/metaIdx.c"
+    # "src/meta/metaMain.c"
+    # "src/meta/metaQuery.c"
+    # "src/meta/metaTable.c"
+    # "src/meta/metaTbCfg.c"
+    # "src/meta/metaTbTag.c"
+    # "src/meta/metaTbUid.c"
+    # "src/meta/metaTDBImpl.c"
 
     # tsdb
     # "src/tsdb/tsdbBDBImpl.c"

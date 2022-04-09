@@ -23,6 +23,8 @@
 #include "tcoding.h"
 #include "tcompression.h"
 #include "tdatablock.h"
+#include "tdbInt.h"  // TODO: change to tdb.h
+#include "tdef.h"
 #include "tfs.h"
 #include "tglobal.h"
 #include "tlist.h"
@@ -73,6 +75,11 @@ struct SVnode {
 };
 
 #define TD_VNODE_ID(PVNODE) (PVNODE)->vgId
+
+#define VND_META_DIR "meta"
+#define VND_TSDB_DIR "tsdb"
+#define VND_WAL_DIR  "wal"
+#define VND_TQ_DIR   "tq"
 
 // sma
 void smaHandleRes(void* pVnode, int64_t smaId, const SArray* data);
