@@ -341,9 +341,6 @@ void metaOptionsClear(SMetaCfg *pMetaCfg);
 
 // query condition to build multi-table data block iterator
 // STsdb
-STsdb *tsdbOpen(const char *path, int32_t vgId, const STsdbCfg *pTsdbCfg, SMemAllocatorFactory *pMAF, SMeta *pMeta,
-                STfs *pTfs);
-void   tsdbClose(STsdb *);
 void   tsdbRemove(const char *path);
 int    tsdbInsertData(STsdb *pTsdb, SSubmitReq *pMsg, SSubmitRsp *pRsp);
 int    tsdbPrepareCommit(STsdb *pTsdb);

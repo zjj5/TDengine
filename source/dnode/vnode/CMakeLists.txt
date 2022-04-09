@@ -5,14 +5,14 @@ target_sources(
     PRIVATE
     # vnode
     "src/vnd/vnodeBufferPool.c"
-    "src/vnd/vnodeCfg.c"
-    "src/vnd/vnodeExe.c"
-    "src/vnd/vnodeInt.c"
+    # "src/vnd/vnodeCfg.c"
+    # "src/vnd/vnodeExe.c"
+    # "src/vnd/vnodeInt.c"
     "src/vnd/vnodeOpen.c"
-    "src/vnd/vnodeMgr.c"
-    "src/vnd/vnodeQuery.c"
-    "src/vnd/vnodeStateMgr.c"
-    "src/vnd/vnodeWrite.c"
+    # "src/vnd/vnodeMgr.c"
+    # "src/vnd/vnodeQuery.c"
+    # "src/vnd/vnodeStateMgr.c"
+    # "src/vnd/vnodeWrite.c"
 
     # meta
     # "src/meta/metaBDBImpl.c"
@@ -29,19 +29,20 @@ target_sources(
     # "src/meta/metaTDBImpl.c"
 
     # tsdb
+    "src/tsdb/tsdbOpen.c"
     # "src/tsdb/tsdbBDBImpl.c"
-    "src/tsdb/tsdbCommit.c"
-    "src/tsdb/tsdbCompact.c"
-    "src/tsdb/tsdbFile.c"
-    "src/tsdb/tsdbFS.c"
-    "src/tsdb/tsdbMain.c"
-    "src/tsdb/tsdbMemTable.c"
-    "src/tsdb/tsdbOptions.c"
-    "src/tsdb/tsdbRead.c"
-    "src/tsdb/tsdbReadImpl.c"
-    "src/tsdb/tsdbScan.c"
+    # "src/tsdb/tsdbCommit.c"
+    # "src/tsdb/tsdbCompact.c"
+    # "src/tsdb/tsdbFile.c"
+    # "src/tsdb/tsdbFS.c"
+    # "src/tsdb/tsdbMain.c"
+    # "src/tsdb/tsdbMemTable.c"
+    # "src/tsdb/tsdbOptions.c"
+    # "src/tsdb/tsdbRead.c"
+    # "src/tsdb/tsdbReadImpl.c"
+    # "src/tsdb/tsdbScan.c"
     # "src/tsdb/tsdbSma.c"
-    "src/tsdb/tsdbWrite.c"
+    # "src/tsdb/tsdbWrite.c"
 
     # tq
     "src/tq/tq.c"

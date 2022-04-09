@@ -128,11 +128,22 @@ static int vnodeOpenMeta(SVnode *pVnode) {
     return -1;
   }
 
+  vDebug("vgId: %d vnode meta is opened", TD_VNODE_ID(pVnode));
+
   return 0;
 }
 
 static int vnodeOpenTsdb(SVnode *pVnode) {
-  // TODO
+  int ret;
+
+  ret = tsdbOpen(pVnode, &pVnode->pTsdb);
+  if (ret < 0) {
+    vError("vgId: %d failed to open vnode tsdb since %s", TD_VNODE_ID(pVnode), tstrerror(terrno));
+    return -1;
+  }
+
+  vDebug("vgId: %d vnode tsdb is opened", TD_VNODE_ID(pVnode));
+
   return 0;
 }
 

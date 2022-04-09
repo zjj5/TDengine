@@ -20,6 +20,19 @@
 extern "C" {
 #endif
 
+int tsdbOpen(SVnode *pVnode, STsdb **ppTsdb);
+int tsdbClose(STsdb *pTsdb);
+
+typedef struct {
+
+} SMemTable;
+
+struct STsdb {
+
+};
+
+#if 0
+
 typedef struct SSmaStat SSmaStat;
 typedef struct SSmaEnv  SSmaEnv;
 typedef struct SSmaEnvs SSmaEnvs;
@@ -527,12 +540,12 @@ static FORCE_INLINE int tsdbGetFidLevel(int fid, SRtn *pRtn) {
 // void*   tsdbGetSmaDataByKey(SDBFile* pDBF, void* key, uint32_t keySize, uint32_t* valueSize);
 
 // tsdbFile
-#define TSDB_FILE_HEAD_SIZE  512
-#define TSDB_FILE_DELIMITER  0xF00AFA0F
-#define TSDB_FILE_INIT_MAGIC 0xFFFFFFFF
-#define TSDB_IVLD_FID        INT_MIN
-#define TSDB_FILE_STATE_OK   0
-#define TSDB_FILE_STATE_BAD  1
+#define TSDB_FILE_HEAD_SIZE                 512
+#define TSDB_FILE_DELIMITER                 0xF00AFA0F
+#define TSDB_FILE_INIT_MAGIC                0xFFFFFFFF
+#define TSDB_IVLD_FID                       INT_MIN
+#define TSDB_FILE_STATE_OK                  0
+#define TSDB_FILE_STATE_BAD                 1
 
 #define TSDB_FILE_INFO(tf)         (&((tf)->info))
 #define TSDB_FILE_F(tf)            (&((tf)->f))
@@ -924,6 +937,8 @@ static FORCE_INLINE int tsdbUnLockFS(STsdbFS *pFs) {
 //   }
 //   return 0;
 // }
+
+#endif
 
 #ifdef __cplusplus
 }
