@@ -30,6 +30,29 @@ extern "C" {
 #define vTrace(...) do { if (vDebugFlag & DEBUG_TRACE) { taosPrintLog("VND ", DEBUG_TRACE, vDebugFlag, __VA_ARGS__); }}    while(0)
 // clang-format on
 
+// vnodeBufferPool
+typedef struct SVBufPoolNode SVBufPoolNode;
+struct SVBufPoolNode {
+  SVBufPoolNode* prev;
+  int64_t        size;
+  uint8_t        data[];
+};
+
+struct SVBufPool {
+  SVBufPool*     next;
+  int64_t        nRef;
+  int64_t        size;
+  uint8_t*       ptr;
+  SVBufPoolNode* pTail;
+  SVBufPoolNode  node;
+};
+
+int   vnodeOpenBufPool(SVnode* pVnode);
+int   vnodeCloseBufPool(SVnode* pVnode);
+void  vnodeBufPoolReset(SVBufPool* pPool);
+void* vnodeBufPoolMalloc(SVBufPool* pPool, size_t size);
+void  vnodeBufPoolFree(SVBufPool* pPool, void* ptr);
+
 #if 1  // -----------------------------
 typedef struct SVnodeTask {
   TD_DLIST_NODE(SVnodeTask);
@@ -80,42 +103,6 @@ void vnodeOptionsCopy(SVnodeCfg* pDest, const SVnodeCfg* pSrc);
 #define vnodeShouldCommit vnodeBufPoolIsFull
 int vnodeSyncCommit(SVnode* pVnode);
 int vnodeAsyncCommit(SVnode* pVnode);
-
-// SVBufPool
-
-int   vnodeOpenBufPool(SVnode* pVnode);
-void  vnodeCloseBufPool(SVnode* pVnode);
-int   vnodeBufPoolSwitch(SVnode* pVnode);
-int   vnodeBufPoolRecycle(SVnode* pVnode);
-void* vnodeMalloc(SVnode* pVnode, uint64_t size);
-bool  vnodeBufPoolIsFull(SVnode* pVnode);
-
-SMemAllocatorFactory* vBufPoolGetMAF(SVnode* pVnode);
-
-// SVMemAllocator
-typedef struct SVArenaNode {
-  TD_SLIST_NODE(SVArenaNode);
-  uint64_t size;  // current node size
-  void*    ptr;
-  char     data[];
-} SVArenaNode;
-
-typedef struct SVMemAllocator {
-  T_REF_DECLARE()
-  TD_DLIST_NODE(SVMemAllocator);
-  uint64_t     capacity;
-  uint64_t     ssize;
-  uint64_t     lsize;
-  SVArenaNode* pNode;
-  TD_SLIST(SVArenaNode) nlist;
-} SVMemAllocator;
-
-SVMemAllocator* vmaCreate(uint64_t capacity, uint64_t ssize, uint64_t lsize);
-void            vmaDestroy(SVMemAllocator* pVMA);
-void            vmaReset(SVMemAllocator* pVMA);
-void*           vmaMalloc(SVMemAllocator* pVMA, uint64_t size);
-void            vmaFree(SVMemAllocator* pVMA, void* ptr);
-bool            vmaIsFull(SVMemAllocator* pVMA);
 
 int vnodeBegin(SVnode* pVnode);
 

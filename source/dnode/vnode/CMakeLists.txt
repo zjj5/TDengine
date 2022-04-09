@@ -4,7 +4,6 @@ target_sources(
     vnode
     PRIVATE
     # vnode
-    "src/vnd/vnodeArenaMAImpl.c"
     "src/vnd/vnodeBufferPool.c"
     "src/vnd/vnodeCfg.c"
     "src/vnd/vnodeExe.c"

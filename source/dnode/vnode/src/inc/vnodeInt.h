@@ -57,7 +57,10 @@ struct SVnode {
   char*      path;
   SVnodeCfg  config;
   SVState    state;
-  SVBufPool* pBufPool;
+  SVBufPool* pPool;
+  SVBufPool* inUse;
+  SVBufPool* onCommit;
+  SVBufPool* onRecycle;
   SMeta*     pMeta;
   STsdb*     pTsdb;
   SWal*      pWal;

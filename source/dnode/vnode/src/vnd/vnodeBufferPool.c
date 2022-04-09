@@ -16,176 +16,126 @@
 #include "vnodeInt.h"
 
 /* ------------------------ STRUCTURES ------------------------ */
-#define VNODE_BUF_POOL_SHARDS 3
 
-struct SVBufPool {
-  TdThreadMutex mutex;
-  TdThreadCond  hasFree;
-  TD_DLIST(SVMemAllocator) free;
-  TD_DLIST(SVMemAllocator) incycle;
-  SVMemAllocator *inuse;
-  // MAF for submodules to use
-  SMemAllocatorFactory *pMAF;
-};
-
-static SMemAllocator *vBufPoolCreateMA(SMemAllocatorFactory *pMAF);
-static void           vBufPoolDestroyMA(SMemAllocatorFactory *pMAF, SMemAllocator *pMA);
+static int vnodeBufPoolCreate(int size, SVBufPool **ppPool);
+static int vnodeBufPoolDestroy(SVBufPool *pPool);
 
 int vnodeOpenBufPool(SVnode *pVnode) {
-  uint64_t capacity;
+  SVBufPool *pPool = NULL;
+  int        size = 0;
+  int        ret;
 
-  if ((pVnode->pBufPool = (SVBufPool *)taosMemoryCalloc(1, sizeof(SVBufPool))) == NULL) {
-    /* TODO */
-    return -1;
-  }
+  // calc size
+  size = pVnode->config.wsize / 3;
 
-  TD_DLIST_INIT(&(pVnode->pBufPool->free));
-  TD_DLIST_INIT(&(pVnode->pBufPool->incycle));
-
-  pVnode->pBufPool->inuse = NULL;
-
-  // TODO
-  capacity = pVnode->config.wsize / VNODE_BUF_POOL_SHARDS;
-
-  for (int i = 0; i < VNODE_BUF_POOL_SHARDS; i++) {
-    SVMemAllocator *pVMA = vmaCreate(capacity, pVnode->config.ssize, pVnode->config.lsize);
-    if (pVMA == NULL) {
-      // TODO: handle error
+  for (int i = 0; i < 3; i++) {
+    // create pool
+    ret = vnodeBufPoolCreate(size, &pPool);
+    if (ret < 0) {
+      vError("vgId:%d failed to open vnode buffer pool since %s", TD_VNODE_ID(pVnode), tstrerror(terrno));
+      vnodeCloseBufPool(pVnode);
       return -1;
     }
 
-    TD_DLIST_APPEND(&(pVnode->pBufPool->free), pVMA);
+    // add pool to queue
+    pPool->next = pVnode->pPool;
+    pVnode->pPool = pPool->next;
   }
 
-  pVnode->pBufPool->pMAF = (SMemAllocatorFactory *)taosMemoryMalloc(sizeof(SMemAllocatorFactory));
-  if (pVnode->pBufPool->pMAF == NULL) {
-    // TODO: handle error
+  return 0;
+}
+
+int vnodeCloseBufPool(SVnode *pVnode) {
+  SVBufPool *pPool;
+
+  for (pPool = pVnode->pPool; pPool; pPool = pVnode->pPool) {
+    pVnode->pPool = pPool->next;
+    vnodeBufPoolDestroy(pPool);
+  }
+
+  return 0;
+}
+
+void vnodeBufPoolReset(SVBufPool *pPool) {
+  SVBufPoolNode *pNode;
+
+  for (pNode = pPool->pTail; pNode->prev; pNode = pPool->pTail) {
+    pPool->pTail = pNode->prev;
+    pPool->size = pPool->size - sizeof(*pNode) - pNode->size;
+    taosMemoryFree(pNode);
+  }
+
+  ASSERT(pPool->size == pPool->ptr - pPool->node.data);
+
+  pPool->size = 0;
+  pPool->ptr = pPool->node.data;
+}
+
+void vnodeBufPoolRef(SVBufPool *pPool) {
+  int64_t nRef = atomic_fetch_add_64(&pPool->nRef, 1);
+  ASSERT(nRef >= 0);
+}
+
+void vnodeBufPoolUnref(SVBufPool *pPool) {
+  int64_t nRef = atomic_add_fetch_64(&pPool->nRef, -1);
+  ASSERT(nRef >= 0);
+}
+
+void *vnodeBufPoolMalloc(SVBufPool *pPool, size_t size) {
+  SVBufPoolNode *pNode;
+  void          *p;
+
+  if (pPool->node.size >= pPool->ptr - pPool->node.data + size) {
+    p = pPool->ptr;
+    pPool->ptr = pPool->ptr + size;
+    pPool->size += size;
+  } else {
+    pNode = taosMemoryMalloc(sizeof(*pNode) + size);
+    if (pNode == NULL) {
+      terrno = TSDB_CODE_OUT_OF_MEMORY;
+      return -1;
+    }
+
+    p = pNode->data;
+    pNode->size = size;
+
+    pNode->prev = pPool->pTail;
+    pPool->pTail = pNode;
+
+    pPool->size = pPool->size + sizeof(*pNode) + size;
+  }
+
+  return p;
+}
+
+void vnodeBufPoolFree(SVBufPool *pPool, void *ptr) {
+  // TODO
+}
+
+// STATIC METHODS -------------------
+static int vnodeBufPoolCreate(int size, SVBufPool **ppPool) {
+  SVBufPool *pPool;
+
+  pPool = taosMemoryMalloc(sizeof(SVBufPool) + size);
+  if (pPool == NULL) {
+    terrno = TSDB_CODE_OUT_OF_MEMORY;
     return -1;
   }
-  pVnode->pBufPool->pMAF->impl = pVnode;
-  pVnode->pBufPool->pMAF->create = vBufPoolCreateMA;
-  pVnode->pBufPool->pMAF->destroy = vBufPoolDestroyMA;
 
+  pPool->next = NULL;
+  pPool->nRef = 0;
+  pPool->size = 0;
+  pPool->ptr = pPool->node.data;
+  pPool->pTail = &pPool->node;
+  pPool->node.prev = NULL;
+  pPool->node.size = size;
+
+  *ppPool = pPool;
   return 0;
 }
 
-void vnodeCloseBufPool(SVnode *pVnode) {
-  if (pVnode->pBufPool) {
-    taosMemoryFreeClear(pVnode->pBufPool->pMAF);
-    vmaDestroy(pVnode->pBufPool->inuse);
-
-    while (true) {
-      SVMemAllocator *pVMA = TD_DLIST_HEAD(&(pVnode->pBufPool->incycle));
-      if (pVMA == NULL) break;
-      TD_DLIST_POP(&(pVnode->pBufPool->incycle), pVMA);
-      vmaDestroy(pVMA);
-    }
-
-    while (true) {
-      SVMemAllocator *pVMA = TD_DLIST_HEAD(&(pVnode->pBufPool->free));
-      if (pVMA == NULL) break;
-      TD_DLIST_POP(&(pVnode->pBufPool->free), pVMA);
-      vmaDestroy(pVMA);
-    }
-
-    taosMemoryFree(pVnode->pBufPool);
-    pVnode->pBufPool = NULL;
-  }
-}
-
-int vnodeBufPoolSwitch(SVnode *pVnode) {
-  SVMemAllocator *pvma = pVnode->pBufPool->inuse;
-
-  pVnode->pBufPool->inuse = NULL;
-
-  if (pvma) {
-    TD_DLIST_APPEND(&(pVnode->pBufPool->incycle), pvma);
-  }
+static int vnodeBufPoolDestroy(SVBufPool *pPool) {
+  vnodeBufPoolReset(pPool);
+  taosMemoryFree(pPool);
   return 0;
-}
-
-int vnodeBufPoolRecycle(SVnode *pVnode) {
-  SVBufPool *     pBufPool = pVnode->pBufPool;
-  SVMemAllocator *pvma = TD_DLIST_HEAD(&(pBufPool->incycle));
-  if (pvma == NULL) return 0;
-  // ASSERT(pvma != NULL);
-
-  TD_DLIST_POP(&(pBufPool->incycle), pvma);
-  vmaReset(pvma);
-  TD_DLIST_APPEND(&(pBufPool->free), pvma);
-
-  return 0;
-}
-
-void *vnodeMalloc(SVnode *pVnode, uint64_t size) {
-  SVBufPool *pBufPool = pVnode->pBufPool;
-
-  if (pBufPool->inuse == NULL) {
-    while (true) {
-      // TODO: add sem_wait and sem_post
-      pBufPool->inuse = TD_DLIST_HEAD(&(pBufPool->free));
-      if (pBufPool->inuse) {
-        TD_DLIST_POP(&(pBufPool->free), pBufPool->inuse);
-        break;
-      } else {
-        // tsem_wait(&(pBufPool->hasFree));
-      }
-    }
-  }
-
-  return vmaMalloc(pBufPool->inuse, size);
-}
-
-bool vnodeBufPoolIsFull(SVnode *pVnode) {
-  if (pVnode->pBufPool->inuse == NULL) return false;
-  return vmaIsFull(pVnode->pBufPool->inuse);
-}
-
-SMemAllocatorFactory *vBufPoolGetMAF(SVnode *pVnode) { return pVnode->pBufPool->pMAF; }
-
-/* ------------------------ STATIC METHODS ------------------------ */
-typedef struct {
-  SVnode *        pVnode;
-  SVMemAllocator *pVMA;
-} SVMAWrapper;
-
-static FORCE_INLINE void *vmaMaloocCb(SMemAllocator *pMA, uint64_t size) {
-  SVMAWrapper *pWrapper = (SVMAWrapper *)(pMA->impl);
-
-  return vmaMalloc(pWrapper->pVMA, size);
-}
-
-// TODO: Add atomic operations here
-static SMemAllocator *vBufPoolCreateMA(SMemAllocatorFactory *pMAF) {
-  SMemAllocator *pMA;
-  SVnode *       pVnode = (SVnode *)(pMAF->impl);
-  SVMAWrapper *  pWrapper;
-
-  pMA = (SMemAllocator *)taosMemoryCalloc(1, sizeof(*pMA) + sizeof(SVMAWrapper));
-  if (pMA == NULL) {
-    return NULL;
-  }
-
-  pVnode->pBufPool->inuse->_ref.val++;
-  pWrapper = POINTER_SHIFT(pMA, sizeof(*pMA));
-  pWrapper->pVnode = pVnode;
-  pWrapper->pVMA = pVnode->pBufPool->inuse;
-
-  pMA->impl = pWrapper;
-  TD_MA_MALLOC_FUNC(pMA) = vmaMaloocCb;
-
-  return pMA;
-}
-
-static void vBufPoolDestroyMA(SMemAllocatorFactory *pMAF, SMemAllocator *pMA) {
-  SVMAWrapper *   pWrapper = (SVMAWrapper *)(pMA->impl);
-  SVnode *        pVnode = pWrapper->pVnode;
-  SVMemAllocator *pVMA = pWrapper->pVMA;
-
-  taosMemoryFree(pMA);
-  if (--pVMA->_ref.val == 0) {
-    TD_DLIST_POP(&(pVnode->pBufPool->incycle), pVMA);
-    vmaReset(pVMA);
-    TD_DLIST_APPEND(&(pVnode->pBufPool->free), pVMA);
-  }
 }
