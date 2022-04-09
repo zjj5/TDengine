@@ -67,7 +67,7 @@ target_link_libraries(
     PUBLIC executor
     PUBLIC scheduler
     PUBLIC tdb
-    PUBLIC bdb
+    #PUBLIC bdb
     PUBLIC transport
     PUBLIC stream
 )
