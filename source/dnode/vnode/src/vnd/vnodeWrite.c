@@ -54,7 +54,7 @@ int vnodeApplyWMsg(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
   void *ptr = NULL;
 
   if (pVnode->config.streamMode == 0) {
-    ptr = vnodeMalloc(pVnode, pMsg->contLen);
+    ptr = vnodeBufPoolMalloc(pVnode->inUse, pMsg->contLen);
     if (ptr == NULL) {
       // TODO: handle error
     }
@@ -81,7 +81,7 @@ int vnodeApplyWMsg(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
       // TODO: to encapsule a free API
       taosMemoryFree(vCreateTbReq.stbCfg.pSchema);
       taosMemoryFree(vCreateTbReq.stbCfg.pTagSchema);
-      if(vCreateTbReq.stbCfg.pRSmaParam) {
+      if (vCreateTbReq.stbCfg.pRSmaParam) {
         taosMemoryFree(vCreateTbReq.stbCfg.pRSmaParam->pFuncIds);
         taosMemoryFree(vCreateTbReq.stbCfg.pRSmaParam);
       }
@@ -232,16 +232,16 @@ int vnodeApplyWMsg(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
       tdDestroyTSma(&vCreateSmaReq.tSma);
       // TODO: return directly or go on follow steps?
 #endif
-    //   if (tsdbCreateTSma(pVnode->pTsdb, POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead))) < 0) {
-    //     // TODO
-    //   }
-    // } break;
-    // case TDMT_VND_CANCEL_SMA: {  // timeRangeSMA
-    // } break;
-    // case TDMT_VND_DROP_SMA: {  // timeRangeSMA
-    //   if (tsdbDropTSma(pVnode->pTsdb, POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead))) < 0) {
-    //     // TODO
-    //   }
+      //   if (tsdbCreateTSma(pVnode->pTsdb, POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead))) < 0) {
+      //     // TODO
+      //   }
+      // } break;
+      // case TDMT_VND_CANCEL_SMA: {  // timeRangeSMA
+      // } break;
+      // case TDMT_VND_DROP_SMA: {  // timeRangeSMA
+      //   if (tsdbDropTSma(pVnode->pTsdb, POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead))) < 0) {
+      //     // TODO
+      //   }
 #if 0    
       tsdbTSmaSub(pVnode->pTsdb, 1);
       SVDropTSmaReq vDropSmaReq = {0};
@@ -278,7 +278,7 @@ int vnodeApplyWMsg(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
   pVnode->state.applied = ver;
 
   // Check if it needs to commit
-  if (vnodeShouldCommit(pVnode)) {
+  if (0) {
     // tsem_wait(&(pVnode->canCommit));
     if (vnodeAsyncCommit(pVnode) < 0) {
       // TODO: handle error

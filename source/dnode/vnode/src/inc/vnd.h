@@ -100,7 +100,7 @@ int  vnodeValidateOptions(const SVnodeCfg*);
 void vnodeOptionsCopy(SVnodeCfg* pDest, const SVnodeCfg* pSrc);
 
 // For commit
-#define vnodeShouldCommit vnodeBufPoolIsFull
+#define vnodeShouldCommit 0
 int vnodeSyncCommit(SVnode* pVnode);
 int vnodeAsyncCommit(SVnode* pVnode);
 

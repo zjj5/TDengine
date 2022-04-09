@@ -28,7 +28,7 @@ int vnodeBegin(SVnode *pVnode) {
 int vnodeAsyncCommit(SVnode *pVnode) {
   vnodeWaitCommit(pVnode);
 
-  vnodeBufPoolSwitch(pVnode);
+  // vnodeBufPoolSwitch(pVnode);
   SVnodeTask *pTask = (SVnodeTask *)taosMemoryMalloc(sizeof(*pTask));
 
   pTask->execute = vnodeCommit;  // TODO
@@ -56,7 +56,7 @@ static int vnodeCommit(void *arg) {
   tqCommit(pVnode->pTq);
   tsdbCommit(pVnode->pTsdb);
 
-  vnodeBufPoolRecycle(pVnode);
+  // vnodeBufPoolRecycle(pVnode);
   tsem_post(&(pVnode->canCommit));
   return 0;
 }

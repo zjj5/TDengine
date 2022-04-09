@@ -93,7 +93,7 @@ void *vnodeBufPoolMalloc(SVBufPool *pPool, size_t size) {
     pNode = taosMemoryMalloc(sizeof(*pNode) + size);
     if (pNode == NULL) {
       terrno = TSDB_CODE_OUT_OF_MEMORY;
-      return -1;
+      return NULL;
     }
 
     p = pNode->data;
