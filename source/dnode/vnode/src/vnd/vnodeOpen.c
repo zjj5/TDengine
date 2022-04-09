@@ -179,21 +179,41 @@ static int vnodeOpenTq(SVnode *pVnode) {
 }
 
 static int vnodeCloseMeta(SVnode *pVnode) {
-  // TODO
-  return 0;
+  int ret = 0;
+
+  if (pVnode->pMeta) {
+    ret = metaClose(pVnode->pMeta);
+    pVnode->pMeta = NULL;
+  }
+
+  return ret;
 }
 
 static int vnodeCloseTsdb(SVnode *pVnode) {
-  // TODO
-  return 0;
+  int ret = 0;
+
+  if (pVnode->pTsdb) {
+    ret = tsdbClose(pVnode->pTsdb);
+    pVnode->pTsdb = NULL;
+  }
+
+  return ret;
 }
 
 static int vnodeCloseWal(SVnode *pVnode) {
-  // TODO
+  if (pVnode->pWal) {
+    walClose(pVnode->pWal);
+    pVnode->pWal = NULL;
+  }
+
   return 0;
 }
 
 static int vnodeCloseTq(SVnode *pVnode) {
-  // TODO
+  if (pVnode->pTq) {
+    tqClose(pVnode->pTq);
+    pVnode->pTq = NULL;
+  }
+
   return 0;
 }

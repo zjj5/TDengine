@@ -94,7 +94,6 @@ void vnodeClose(SVnode *pVnode);
 void vnodeDestroy(const char *path);
 void vnodeProcessWMsgs(SVnode *pVnode, SArray *pMsgs);
 
-#if 1
 /* ------------------------ TYPES EXPOSED ------------------------ */
 typedef struct SMgmtWrapper SMgmtWrapper;
 
@@ -341,10 +340,10 @@ void metaOptionsClear(SMetaCfg *pMetaCfg);
 
 // query condition to build multi-table data block iterator
 // STsdb
-void   tsdbRemove(const char *path);
-int    tsdbInsertData(STsdb *pTsdb, SSubmitReq *pMsg, SSubmitRsp *pRsp);
-int    tsdbPrepareCommit(STsdb *pTsdb);
-int    tsdbCommit(STsdb *pTsdb);
+void tsdbRemove(const char *path);
+int  tsdbInsertData(STsdb *pTsdb, SSubmitReq *pMsg, SSubmitRsp *pRsp);
+int  tsdbPrepareCommit(STsdb *pTsdb);
+int  tsdbCommit(STsdb *pTsdb);
 
 int32_t tsdbInitSma(STsdb *pTsdb);
 int32_t tsdbCreateTSma(STsdb *pTsdb, char *pMsg);
@@ -538,7 +537,6 @@ int32_t tsdbGetTableGroupFromIdList(STsdb *tsdb, SArray *pTableIdList, STableGro
 void tsdbCleanupReadHandle(tsdbReaderT queryHandle);
 
 int32_t tdScanAndConvertSubmitMsg(SSubmitReq *pMsg);
-#endif
 
 #ifdef __cplusplus
 }

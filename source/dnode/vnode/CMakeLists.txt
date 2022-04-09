@@ -4,23 +4,21 @@ target_sources(
     vnode
     PRIVATE
     # vnode
+    "src/vnd/vnodeMgr.c"
+    "src/vnd/vnodeOpen.c"
     "src/vnd/vnodeBufferPool.c"
+    "src/vnd/vnodeQuery.c"
     # "src/vnd/vnodeCfg.c"
     # "src/vnd/vnodeExe.c"
     # "src/vnd/vnodeInt.c"
-    "src/vnd/vnodeOpen.c"
-    # "src/vnd/vnodeMgr.c"
-    "src/vnd/vnodeQuery.c"
     # "src/vnd/vnodeStateMgr.c"
     # "src/vnd/vnodeWrite.c"
 
     # meta
     # "src/meta/metaBDBImpl.c"
     "src/meta/metaOpen.c"
-    # "src/meta/metaCache.c"
     # "src/meta/metaCfg.c"
     # "src/meta/metaIdx.c"
-    # "src/meta/metaMain.c"
     # "src/meta/metaQuery.c"
     # "src/meta/metaTable.c"
     # "src/meta/metaTbCfg.c"
