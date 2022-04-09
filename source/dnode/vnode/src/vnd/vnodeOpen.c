@@ -19,12 +19,10 @@ static int vnodeOpenMeta(SVnode *pVnode);
 static int vnodeOpenTsdb(SVnode *pVnode);
 static int vnodeOpenWal(SVnode *pVnode);
 static int vnodeOpenTq(SVnode *pVnode);
-static int vnodeOpenQuery(SVnode *pVnode);
 static int vnodeCloseMeta(SVnode *pVnode);
 static int vnodeCloseTsdb(SVnode *pVnode);
 static int vnodeCloseWal(SVnode *pVnode);
 static int vnodeCloseTq(SVnode *pVnode);
-static int vnodeCloseQuery(SVnode *pVnode);
 
 int vnodeCreate(const char *path, SVnodeCfg *pCfg) {
   // TODO
@@ -91,7 +89,7 @@ int vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg, SVnode **ppVnode) {
   }
 
   // open meta query-system
-  ret = vnodeOpenQuery(pVnode);
+  ret = vnodeQueryOpen(pVnode);
   if (ret < 0) {
     return -1;
   }
@@ -109,7 +107,7 @@ int vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg, SVnode **ppVnode) {
 void vnodeClose(SVnode *pVnode) {
   if (pVnode) {
     vnodeSyncCommit(pVnode);
-    vnodeCloseQuery(pVnode);
+    vnodeQueryClose(pVnode);
     vnodeCloseTq(pVnode);
     vnodeCloseWal(pVnode);
     vnodeCloseTsdb(pVnode);
@@ -148,17 +146,35 @@ static int vnodeOpenTsdb(SVnode *pVnode) {
 }
 
 static int vnodeOpenWal(SVnode *pVnode) {
-  // TODO
+  char path[TSDB_FILENAME_LEN];
+
+  snprintf(path, TSDB_FILENAME_LEN, "%s/%s", pVnode->path, VND_WAL_DIR);
+
+  pVnode->pWal = walOpen(path, &pVnode->config.walCfg);
+  if (pVnode->pWal == NULL) {
+    vError("vgId: %d failed to open vnode wal since %s", TD_VNODE_ID(pVnode), tstrerror(terrno));
+    return -1;
+  }
+
+  vDebug("vgId: %d vnode wal is opened", TD_VNODE_ID(pVnode));
+
   return 0;
 }
 
 static int vnodeOpenTq(SVnode *pVnode) {
-  // TODO
-  return 0;
-}
+  char path[TSDB_FILENAME_LEN];
 
-static int vnodeOpenQuery(SVnode *pVnode) {
-  // TODO
+  snprintf(path, TSDB_FILENAME_LEN, "%s/%s", pVnode->path, VND_TQ_DIR);
+
+  // TODO: refact here
+  pVnode->pTq = tqOpen(path, pVnode, pVnode->pWal, pVnode->pMeta, &pVnode->config.tqCfg, NULL);
+  if (pVnode->pTq == NULL) {
+    vError("vgId: %d failed to open vnode tq since %s", TD_VNODE_ID(pVnode), tstrerror(terrno));
+    return -1;
+  }
+
+  vDebug("vgId: %d vnode tq is opened", TD_VNODE_ID(pVnode));
+
   return 0;
 }
 
@@ -178,11 +194,6 @@ static int vnodeCloseWal(SVnode *pVnode) {
 }
 
 static int vnodeCloseTq(SVnode *pVnode) {
-  // TODO
-  return 0;
-}
-
-static int vnodeCloseQuery(SVnode *pVnode) {
   // TODO
   return 0;
 }
