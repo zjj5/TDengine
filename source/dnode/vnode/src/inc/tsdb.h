@@ -24,11 +24,13 @@ int tsdbOpen(SVnode *pVnode, STsdb **ppTsdb);
 int tsdbClose(STsdb *pTsdb);
 
 typedef struct {
-
+  // TODO
 } SMemTable;
 
 struct STsdb {
-
+  SMemTable *mem;
+  SMemTable *imem;
+  // TODO
 };
 
 #if 0

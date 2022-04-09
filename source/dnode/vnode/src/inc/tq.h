@@ -30,6 +30,7 @@ extern "C" {
 #define tqTrace(...) do { if (tqDebugFlag & DEBUG_TRACE) { taosPrintLog("TQ ", DEBUG_TRACE, tqDebugFlag, __VA_ARGS__); }} while(0)
 // clang-format on
 
+#if 0
 int  tqInit();
 void tqCleanUp();
 
@@ -55,11 +56,11 @@ int32_t tqProcessStreamTrigger(STQ* pTq, void* data, int32_t dataLen, int32_t wo
 #define TQ_BUCKET_MASK 0xFF
 #define TQ_BUCKET_SIZE 256
 
-#define TQ_PAGE_SIZE 4096
+#define TQ_PAGE_SIZE          4096
 // key + offset + size
-#define TQ_IDX_SIZE 24
+#define TQ_IDX_SIZE           24
 // 4096 / 24
-#define TQ_MAX_IDX_ONE_PAGE 170
+#define TQ_MAX_IDX_ONE_PAGE   170
 // 24 * 170
 #define TQ_IDX_PAGE_BODY_SIZE 4080
 // 4096 - 4080
@@ -70,7 +71,7 @@ int32_t tqProcessStreamTrigger(STQ* pTq, void* data, int32_t dataLen, int32_t wo
 #define TQ_ACTION_INUSE_CONT 2
 #define TQ_ACTION_INTXN      3
 
-#define TQ_SVER 0
+#define TQ_SVER           0
 
 // TODO: inplace mode is not implemented
 #define TQ_UPDATE_INPLACE 0
@@ -280,6 +281,7 @@ void        tqPushMgrClose(STqPushMgr* pushMgr);
 
 STqClientPusher* tqAddClientPusher(STqPushMgr* pushMgr, SRpcMsg* pMsg, int64_t consumerId, int64_t ttl);
 STqStreamPusher* tqAddStreamPusher(STqPushMgr* pushMgr, int64_t streamId, SEpSet* pEpSet);
+#endif
 
 #ifdef __cplusplus
 }

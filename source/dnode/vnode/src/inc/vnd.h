@@ -54,23 +54,13 @@ void  vnodeBufPoolReset(SVBufPool* pPool);
 void* vnodeBufPoolMalloc(SVBufPool* pPool, size_t size);
 void  vnodeBufPoolFree(SVBufPool* pPool, void* p);
 
-#if 1  // -----------------------------
+#if 0  // -----------------------------
 typedef struct SVnodeTask {
   TD_DLIST_NODE(SVnodeTask);
   void* arg;
   int (*execute)(void*);
 } SVnodeTask;
 
-typedef struct SVnodeMgr {
-  td_mode_flag_t vnodeInitFlag;
-  // For commit
-  bool          stop;
-  uint16_t      nthreads;
-  TdThread*     threads;
-  TdThreadMutex mutex;
-  TdThreadCond  hasTask;
-  TD_DLIST(SVnodeTask) queue;
-} SVnodeMgr;
 
 typedef struct {
   int8_t  streamType;  // sma or other
@@ -86,8 +76,6 @@ struct SSink {
   SVnode*   pVnode;
   SHashObj* pHash;  // streamId -> SStreamSinkInfo
 };
-
-extern SVnodeMgr vnodeMgr;
 
 // SVState
 int  vnodeScheduleTask(SVnodeTask* task);

@@ -5,9 +5,9 @@ target_sources(
     PRIVATE
     # vnode
     "src/vnd/vnodeMgr.c"
-    "src/vnd/vnodeOpen.c"
-    "src/vnd/vnodeBufferPool.c"
-    "src/vnd/vnodeQuery.c"
+    # "src/vnd/vnodeOpen.c"
+    # "src/vnd/vnodeBufferPool.c"
+    # "src/vnd/vnodeQuery.c"
     # "src/vnd/vnodeCfg.c"
     # "src/vnd/vnodeExe.c"
     # "src/vnd/vnodeInt.c"
@@ -15,8 +15,8 @@ target_sources(
     # "src/vnd/vnodeWrite.c"
 
     # meta
+    # "src/meta/metaOpen.c"
     # "src/meta/metaBDBImpl.c"
-    "src/meta/metaOpen.c"
     # "src/meta/metaCfg.c"
     # "src/meta/metaIdx.c"
     # "src/meta/metaQuery.c"
@@ -27,7 +27,7 @@ target_sources(
     # "src/meta/metaTDBImpl.c"
 
     # tsdb
-    "src/tsdb/tsdbOpen.c"
+    # "src/tsdb/tsdbOpen.c"
     # "src/tsdb/tsdbBDBImpl.c"
     # "src/tsdb/tsdbCommit.c"
     # "src/tsdb/tsdbCompact.c"
@@ -43,12 +43,12 @@ target_sources(
     # "src/tsdb/tsdbWrite.c"
 
     # tq
-    "src/tq/tq.c"
-    "src/tq/tqCommit.c"
-    "src/tq/tqMetaStore.c"
-    "src/tq/tqOffset.c"
-    "src/tq/tqPush.c"
-    "src/tq/tqRead.c"
+    # "src/tq/tq.c"
+    # "src/tq/tqCommit.c"
+    # "src/tq/tqMetaStore.c"
+    # "src/tq/tqOffset.c"
+    # "src/tq/tqPush.c"
+    # "src/tq/tqRead.c"
 )
 target_include_directories(
     vnode

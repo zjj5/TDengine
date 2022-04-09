@@ -15,11 +15,23 @@
 
 #include "vnodeInt.h"
 
-SVnodeMgr vnodeMgr = {.vnodeInitFlag = TD_MOD_UNINITIALIZED};
+// typedef struct SVnodeMgr {
+//   td_mode_flag_t vnodeInitFlag;
+//   // For commit
+//   bool          stop;
+//   uint16_t      nthreads;
+//   TdThread*     threads;
+//   TdThreadMutex mutex;
+//   TdThreadCond  hasTask;
+//   TD_DLIST(SVnodeTask) queue;
+// } SVnodeMgr;
+
+// SVnodeMgr vnodeMgr = {.vnodeInitFlag = TD_MOD_UNINITIALIZED};
 
 static void* loop(void* arg);
 
 int vnodeInit() {
+#if 0
   if (TD_CHECK_AND_SET_MODE_INIT(&(vnodeMgr.vnodeInitFlag)) == TD_MOD_INITIALIZED) {
     return 0;
   }
@@ -46,10 +58,12 @@ int vnodeInit() {
     return -1;
   }
 
+#endif
   return 0;
 }
 
 void vnodeCleanup() {
+#if 0
   if (TD_CHECK_AND_SET_MOD_CLEAR(&(vnodeMgr.vnodeInitFlag)) == TD_MOD_UNINITIALIZED) {
     return;
   }
@@ -67,8 +81,10 @@ void vnodeCleanup() {
   taosMemoryFreeClear(vnodeMgr.threads);
   taosThreadCondDestroy(&(vnodeMgr.hasTask));
   taosThreadMutexDestroy(&(vnodeMgr.mutex));
+#endif
 }
 
+#if 0
 int vnodeScheduleTask(SVnodeTask* pTask) {
   taosThreadMutexLock(&(vnodeMgr.mutex));
 
@@ -80,9 +96,11 @@ int vnodeScheduleTask(SVnodeTask* pTask) {
 
   return 0;
 }
+#endif
 
 /* ------------------------ STATIC METHODS ------------------------ */
 static void* loop(void* arg) {
+#if 0
   setThreadName("vnode-commit");
 
   SVnodeTask* pTask;
@@ -109,5 +127,6 @@ static void* loop(void* arg) {
     taosMemoryFree(pTask);
   }
 
+#endif
   return NULL;
 }
