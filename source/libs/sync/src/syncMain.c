@@ -602,6 +602,10 @@ int32_t syncNodeSendMsgByInfo(const SNodeInfo* nodeInfo, SSyncNode* pSyncNode, S
   SEpSet epSet;
   syncUtilnodeInfo2EpSet(nodeInfo, &epSet);
   if (pSyncNode->FpSendMsg != NULL) {
+    pMsg->noResp = 1;
+    // htonl
+    syncUtilMsgHtoN(pMsg->pCont);
+
     pSyncNode->FpSendMsg(pSyncNode->rpcClient, &epSet, pMsg);
   } else {
     sTrace("syncNodeSendMsgByInfo pSyncNode->FpSendMsg is NULL");
