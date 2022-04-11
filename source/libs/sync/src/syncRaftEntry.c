@@ -26,15 +26,15 @@ SSyncRaftEntry* syncEntryBuild(uint32_t dataLen) {
   return pEntry;
 }
 
-// step 4. SyncClientRequest => SSyncRaftEntry, add term, index
-SSyncRaftEntry* syncEntryBuild2(SyncClientRequest* pMsg, SyncTerm term, SyncIndex index) {
+// step 4. SyncClientRequestCopy => SSyncRaftEntry, add term, index
+SSyncRaftEntry* syncEntryBuild2(SyncClientRequestCopy* pMsg, SyncTerm term, SyncIndex index) {
   SSyncRaftEntry* pEntry = syncEntryBuild3(pMsg, term, index, SYNC_RAFT_ENTRY_DATA);
   assert(pEntry != NULL);
 
   return pEntry;
 }
 
-SSyncRaftEntry* syncEntryBuild3(SyncClientRequest* pMsg, SyncTerm term, SyncIndex index, EntryType entryType) {
+SSyncRaftEntry* syncEntryBuild3(SyncClientRequestCopy* pMsg, SyncTerm term, SyncIndex index, EntryType entryType) {
   SSyncRaftEntry* pEntry = syncEntryBuild(pMsg->dataLen);
   assert(pEntry != NULL);
 

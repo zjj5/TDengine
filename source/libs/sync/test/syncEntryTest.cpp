@@ -32,7 +32,7 @@ void test1() {
 }
 
 void test2() {
-  SyncClientRequest* pSyncMsg = syncClientRequestBuild(10);
+  SyncClientRequestCopy* pSyncMsg = syncClientRequestCopyBuild(10);
   pSyncMsg->originalRpcType = 33;
   pSyncMsg->seqNum = 11;
   pSyncMsg->isWeak = 1;
@@ -41,12 +41,12 @@ void test2() {
   SSyncRaftEntry* pEntry = syncEntryBuild2(pSyncMsg, 100, 200);
   syncEntryPrint(pEntry);
 
-  syncClientRequestDestroy(pSyncMsg);
+  syncClientRequestCopyDestroy(pSyncMsg);
   syncEntryDestory(pEntry);
 }
 
 void test3() {
-  SyncClientRequest* pSyncMsg = syncClientRequestBuild(10);
+  SyncClientRequestCopy* pSyncMsg = syncClientRequestCopyBuild(10);
   pSyncMsg->originalRpcType = 33;
   pSyncMsg->seqNum = 11;
   pSyncMsg->isWeak = 1;
@@ -55,7 +55,7 @@ void test3() {
   SSyncRaftEntry* pEntry = syncEntryBuild3(pSyncMsg, 100, 200, SYNC_RAFT_ENTRY_NOOP);
   syncEntryPrint(pEntry);
 
-  syncClientRequestDestroy(pSyncMsg);
+  syncClientRequestCopyDestroy(pSyncMsg);
   syncEntryDestory(pEntry);
 }
 

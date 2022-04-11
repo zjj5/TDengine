@@ -101,24 +101,24 @@ SRpcMsg *step0() {
   return pMsg;
 }
 
-SyncClientRequest *step1(const SRpcMsg *pMsg) {
-  SyncClientRequest *pRetMsg = syncClientRequestBuild2(pMsg, 123, true, 1000);
+SyncClientRequestCopy *step1(const SRpcMsg *pMsg) {
+  SyncClientRequestCopy *pRetMsg = syncClientRequestCopyBuild2(pMsg, 123, true, 1000);
   return pRetMsg;
 }
 
-SRpcMsg *step2(const SyncClientRequest *pMsg) {
+SRpcMsg *step2(const SyncClientRequestCopy *pMsg) {
   SRpcMsg *pRetMsg = (SRpcMsg *)taosMemoryMalloc(sizeof(SRpcMsg));
-  syncClientRequest2RpcMsg(pMsg, pRetMsg);
+  syncClientRequestCopy2RpcMsg(pMsg, pRetMsg);
   return pRetMsg;
 }
 
-SyncClientRequest *step3(const SRpcMsg *pMsg) {
-  SyncClientRequest *pRetMsg = syncClientRequestFromRpcMsg2(pMsg);
+SyncClientRequestCopy *step3(const SRpcMsg *pMsg) {
+  SyncClientRequestCopy *pRetMsg = syncClientRequestCopyFromRpcMsg2(pMsg);
   return pRetMsg;
 }
 
-SSyncRaftEntry *step4(const SyncClientRequest *pMsg) {
-  SSyncRaftEntry *pRetMsg = syncEntryBuild2((SyncClientRequest *)pMsg, 100, 0);
+SSyncRaftEntry *step4(const SyncClientRequestCopy *pMsg) {
+  SSyncRaftEntry *pRetMsg = syncEntryBuild2((SyncClientRequestCopy *)pMsg, 100, 0);
   return pRetMsg;
 }
 
@@ -162,16 +162,16 @@ int main(int argc, char **argv) {
   syncRpcMsgPrint2((char *)"==step0==", pMsg0);
 
   // step1
-  SyncClientRequest *pMsg1 = step1(pMsg0);
-  syncClientRequestPrint2((char *)"==step1==", pMsg1);
+  SyncClientRequestCopy *pMsg1 = step1(pMsg0);
+  syncClientRequestCopyPrint2((char *)"==step1==", pMsg1);
 
   // step2
   SRpcMsg *pMsg2 = step2(pMsg1);
   syncRpcMsgPrint2((char *)"==step2==", pMsg2);
 
   // step3
-  SyncClientRequest *pMsg3 = step3(pMsg2);
-  syncClientRequestPrint2((char *)"==step3==", pMsg3);
+  SyncClientRequestCopy *pMsg3 = step3(pMsg2);
+  syncClientRequestCopyPrint2((char *)"==step3==", pMsg3);
 
   // step4
   SSyncRaftEntry *pMsg4 = step4(pMsg3);

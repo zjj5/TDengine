@@ -40,14 +40,14 @@ SyncPingReply *createSyncPingReply() {
   return pMsg;
 }
 
-SyncClientRequest *createSyncClientRequest() {
+SyncClientRequestCopy *createSyncClientRequestCopy() {
   SRpcMsg rpcMsg;
   memset(&rpcMsg, 0, sizeof(rpcMsg));
   rpcMsg.msgType = 12345;
   rpcMsg.contLen = 20;
   rpcMsg.pCont = rpcMallocCont(rpcMsg.contLen);
   strcpy((char *)rpcMsg.pCont, "hello rpc");
-  SyncClientRequest *pMsg = syncClientRequestBuild2(&rpcMsg, 123, true, 1000);
+  SyncClientRequestCopy *pMsg = syncClientRequestCopyBuild2(&rpcMsg, 123, true, 1000);
   return pMsg;
 }
 
@@ -155,11 +155,11 @@ void test7() {
 }
 
 void test8() {
-  SyncClientRequest *pMsg = createSyncClientRequest();
+  SyncClientRequestCopy *pMsg = createSyncClientRequestCopy();
   SRpcMsg            rpcMsg;
-  syncClientRequest2RpcMsg(pMsg, &rpcMsg);
+  syncClientRequestCopy2RpcMsg(pMsg, &rpcMsg);
   syncRpcMsgPrint2((char *)"test8", &rpcMsg);
-  syncClientRequestDestroy(pMsg);
+  syncClientRequestCopyDestroy(pMsg);
 }
 
 int main() {

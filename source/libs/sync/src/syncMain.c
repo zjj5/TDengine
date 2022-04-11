@@ -46,7 +46,7 @@ static int32_t syncNodeAppendNoop(SSyncNode* ths);
 // process message ----
 int32_t syncNodeOnPingCb(SSyncNode* ths, SyncPing* pMsg);
 int32_t syncNodeOnPingReplyCb(SSyncNode* ths, SyncPingReply* pMsg);
-int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg);
+int32_t syncNodeOnClientRequestCopyCb(SSyncNode* ths, SyncClientRequestCopy* pMsg);
 
 // life cycle
 static void syncFreeNode(void* param);
@@ -224,15 +224,15 @@ int32_t syncPropose2(int64_t rid, const SRpcMsg* pMsg, bool isWeak, uint64_t seq
   assert(rid == pSyncNode->rid);
 
   if (pSyncNode->state == TAOS_SYNC_STATE_LEADER) {
-    SyncClientRequest* pSyncMsg = syncClientRequestBuild2(pMsg, seqNum, isWeak, pSyncNode->vgId);
+    SyncClientRequestCopy* pSyncMsg = syncClientRequestCopyBuild2(pMsg, seqNum, isWeak, pSyncNode->vgId);
     SRpcMsg            rpcMsg;
-    syncClientRequest2RpcMsg(pSyncMsg, &rpcMsg);
+    syncClientRequestCopy2RpcMsg(pSyncMsg, &rpcMsg);
     if (pSyncNode->FpEqMsg != NULL) {
       pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
     } else {
       sTrace("syncPropose2 pSyncNode->FpEqMsg is NULL");
     }
-    syncClientRequestDestroy(pSyncMsg);
+    syncClientRequestCopyDestroy(pSyncMsg);
     ret = 0;
 
   } else {
@@ -388,7 +388,7 @@ SSyncNode* syncNodeOpen(const SSyncInfo* pSyncInfo) {
   // init callback
   pSyncNode->FpOnPing = syncNodeOnPingCb;
   pSyncNode->FpOnPingReply = syncNodeOnPingReplyCb;
-  pSyncNode->FpOnClientRequest = syncNodeOnClientRequestCb;
+  pSyncNode->FpOnClientRequestCopy = syncNodeOnClientRequestCopyCb;
   pSyncNode->FpOnRequestVote = syncNodeOnRequestVoteCb;
   pSyncNode->FpOnRequestVoteReply = syncNodeOnRequestVoteReplyCb;
   pSyncNode->FpOnAppendEntries = syncNodeOnAppendEntriesCb;
@@ -1023,12 +1023,12 @@ static int32_t syncNodeEqNoop(SSyncNode* ths) {
 
   uint32_t           entryLen;
   char*              serialized = syncEntrySerialize(pEntry, &entryLen);
-  SyncClientRequest* pSyncMsg = syncClientRequestBuild(entryLen);
+  SyncClientRequestCopy* pSyncMsg = syncClientRequestCopyBuild(entryLen);
   assert(pSyncMsg->dataLen == entryLen);
   memcpy(pSyncMsg->data, serialized, entryLen);
 
   SRpcMsg rpcMsg;
-  syncClientRequest2RpcMsg(pSyncMsg, &rpcMsg);
+  syncClientRequestCopy2RpcMsg(pSyncMsg, &rpcMsg);
   if (ths->FpEqMsg != NULL) {
     ths->FpEqMsg(ths->queue, &rpcMsg);
   } else {
@@ -1036,7 +1036,7 @@ static int32_t syncNodeEqNoop(SSyncNode* ths) {
   }
 
   taosMemoryFree(serialized);
-  syncClientRequestDestroy(pSyncMsg);
+  syncClientRequestCopyDestroy(pSyncMsg);
 
   return ret;
 }
@@ -1092,7 +1092,7 @@ int32_t syncNodeOnPingReplyCb(SSyncNode* ths, SyncPingReply* pMsg) {
 }
 
 // TLA+ Spec
-// ClientRequest(i, v) ==
+// ClientRequestCopy(i, v) ==
 //     /\ state[i] = Leader
 //     /\ LET entry == [term  |-> currentTerm[i],
 //                      value |-> v]
@@ -1101,13 +1101,13 @@ int32_t syncNodeOnPingReplyCb(SSyncNode* ths, SyncPingReply* pMsg) {
 //     /\ UNCHANGED <<messages, serverVars, candidateVars,
 //                    leaderVars, commitIndex>>
 //
-int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg) {
+int32_t syncNodeOnClientRequestCopyCb(SSyncNode* ths, SyncClientRequestCopy* pMsg) {
   int32_t ret = 0;
-  syncClientRequestLog2("==syncNodeOnClientRequestCb==", pMsg);
+  syncClientRequestCopyLog2("==syncNodeOnClientRequestCopyCb==", pMsg);
 
   SyncIndex       index = ths->pLogStore->getLastIndex(ths->pLogStore) + 1;
   SyncTerm        term = ths->pRaftStore->currentTerm;
-  SSyncRaftEntry* pEntry = syncEntryBuild2((SyncClientRequest*)pMsg, term, index);
+  SSyncRaftEntry* pEntry = syncEntryBuild2((SyncClientRequestCopy*)pMsg, term, index);
   assert(pEntry != NULL);
 
   if (ths->state == TAOS_SYNC_STATE_LEADER) {

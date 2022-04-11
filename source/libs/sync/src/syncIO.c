@@ -269,11 +269,11 @@ static void *syncIOConsumerFunc(void *param) {
         }
 
       } else if (pRpcMsg->msgType == TDMT_VND_SYNC_CLIENT_REQUEST) {
-        if (io->FpOnSyncClientRequest != NULL) {
-          SyncClientRequest *pSyncMsg = syncClientRequestFromRpcMsg2(pRpcMsg);
+        if (io->FpOnSyncClientRequestCopy != NULL) {
+          SyncClientRequestCopy *pSyncMsg = syncClientRequestCopyFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
-          io->FpOnSyncClientRequest(io->pSyncNode, pSyncMsg);
-          syncClientRequestDestroy(pSyncMsg);
+          io->FpOnSyncClientRequestCopy(io->pSyncNode, pSyncMsg);
+          syncClientRequestCopyDestroy(pSyncMsg);
         }
 
       } else if (pRpcMsg->msgType == TDMT_VND_SYNC_REQUEST_VOTE) {

@@ -47,8 +47,8 @@ typedef struct SSyncRaftEntry {
 } SSyncRaftEntry;
 
 SSyncRaftEntry* syncEntryBuild(uint32_t dataLen);
-SSyncRaftEntry* syncEntryBuild2(SyncClientRequest* pMsg, SyncTerm term, SyncIndex index);  // step 4
-SSyncRaftEntry* syncEntryBuild3(SyncClientRequest* pMsg, SyncTerm term, SyncIndex index, EntryType entryType);
+SSyncRaftEntry* syncEntryBuild2(SyncClientRequestCopy* pMsg, SyncTerm term, SyncIndex index);  // step 4
+SSyncRaftEntry* syncEntryBuild3(SyncClientRequestCopy* pMsg, SyncTerm term, SyncIndex index, EntryType entryType);
 SSyncRaftEntry* syncEntryBuildNoop(SyncTerm term, SyncIndex index);
 void            syncEntryDestory(SSyncRaftEntry* pEntry);
 char*           syncEntrySerialize(const SSyncRaftEntry* pEntry, uint32_t* len);  // step 5

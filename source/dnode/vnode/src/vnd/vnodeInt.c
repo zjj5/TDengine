@@ -80,11 +80,11 @@ int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
     syncPingReplyDestroy(pSyncMsg);
 
   } else if (pRpcMsg->msgType == TDMT_VND_SYNC_CLIENT_REQUEST) {
-    SyncClientRequest *pSyncMsg = syncClientRequestFromRpcMsg2(pRpcMsg);
+    SyncClientRequestCopy *pSyncMsg = syncClientRequestCopyFromRpcMsg2(pRpcMsg);
     assert(pSyncMsg != NULL);
 
-    syncNodeOnClientRequestCb(pSyncNode, pSyncMsg);
-    syncClientRequestDestroy(pSyncMsg);
+    syncNodeOnClientRequestCopyCb(pSyncNode, pSyncMsg);
+    syncClientRequestCopyDestroy(pSyncMsg);
 
   } else if (pRpcMsg->msgType == TDMT_VND_SYNC_REQUEST_VOTE) {
     SyncRequestVote *pSyncMsg = syncRequestVoteFromRpcMsg2(pRpcMsg);

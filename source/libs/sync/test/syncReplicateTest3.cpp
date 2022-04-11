@@ -116,7 +116,7 @@ int64_t syncNodeInit() {
   gSyncIO->FpOnSyncAppendEntries = pSyncNode->FpOnAppendEntries;
   gSyncIO->FpOnSyncAppendEntriesReply = pSyncNode->FpOnAppendEntriesReply;
   gSyncIO->FpOnSyncTimeout = pSyncNode->FpOnTimeout;
-  gSyncIO->FpOnSyncClientRequest = pSyncNode->FpOnClientRequest;
+  gSyncIO->FpOnSyncClientRequestCopy = pSyncNode->FpOnClientRequestCopy;
   gSyncIO->pSyncNode = pSyncNode;
 
   syncNodeRelease(pSyncNode);
@@ -143,8 +143,8 @@ SRpcMsg *step0(int i) {
   return pMsg;
 }
 
-SyncClientRequest *step1(const SRpcMsg *pMsg) {
-  SyncClientRequest *pRetMsg = syncClientRequestBuild2(pMsg, 123, true, 1000);
+SyncClientRequestCopy *step1(const SRpcMsg *pMsg) {
+  SyncClientRequestCopy *pRetMsg = syncClientRequestCopyBuild2(pMsg, 123, true, 1000);
   return pRetMsg;
 }
 

@@ -55,7 +55,7 @@ extern "C" {
 //            \/ \E i \in Server : Timeout(i)
 //            \/ \E i,j \in Server : RequestVote(i, j)
 //            \/ \E i \in Server : BecomeLeader(i)
-//            \/ \E i \in Server, v \in Value : ClientRequest(i, v)
+//            \/ \E i \in Server, v \in Value : ClientRequestCopy(i, v)
 //            \/ \E i \in Server : AdvanceCommitIndex(i)
 //            \/ \E i,j \in Server : AppendEntries(i, j)
 //            \/ \E m \in DOMAIN messages : Receive(m)

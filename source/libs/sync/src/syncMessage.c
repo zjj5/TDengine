@@ -38,9 +38,9 @@ cJSON* syncRpcMsg2Json(SRpcMsg* pRpcMsg) {
     syncPingReplyDestroy(pSyncMsg);
 
   } else if (pRpcMsg->msgType == TDMT_VND_SYNC_CLIENT_REQUEST) {
-    SyncClientRequest* pSyncMsg = syncClientRequestDeserialize2(pRpcMsg->pCont, pRpcMsg->contLen);
-    pRoot = syncClientRequest2Json(pSyncMsg);
-    syncClientRequestDestroy(pSyncMsg);
+    SyncClientRequestCopy* pSyncMsg = syncClientRequestCopyDeserialize2(pRpcMsg->pCont, pRpcMsg->contLen);
+    pRoot = syncClientRequestCopy2Json(pSyncMsg);
+    syncClientRequestCopyDestroy(pSyncMsg);
 
   } else if (pRpcMsg->msgType == TDMT_VND_SYNC_CLIENT_REQUEST_REPLY) {
     pRoot = syncRpcUnknownMsg2Json();
@@ -786,10 +786,10 @@ void syncPingReplyLog2(char* s, const SyncPingReply* pMsg) {
   taosMemoryFree(serialized);
 }
 
-// ---- message process SyncClientRequest----
-SyncClientRequest* syncClientRequestBuild(uint32_t dataLen) {
-  uint32_t           bytes = sizeof(SyncClientRequest) + dataLen;
-  SyncClientRequest* pMsg = taosMemoryMalloc(bytes);
+// ---- message process SyncClientRequestCopy----
+SyncClientRequestCopy* syncClientRequestCopyBuild(uint32_t dataLen) {
+  uint32_t           bytes = sizeof(SyncClientRequestCopy) + dataLen;
+  SyncClientRequestCopy* pMsg = taosMemoryMalloc(bytes);
   memset(pMsg, 0, bytes);
   pMsg->bytes = bytes;
   pMsg->msgType = TDMT_VND_SYNC_CLIENT_REQUEST;
@@ -799,9 +799,9 @@ SyncClientRequest* syncClientRequestBuild(uint32_t dataLen) {
   return pMsg;
 }
 
-// step 1. original SRpcMsg => SyncClientRequest, add seqNum, isWeak
-SyncClientRequest* syncClientRequestBuild2(const SRpcMsg* pOriginalRpcMsg, uint64_t seqNum, bool isWeak, int32_t vgId) {
-  SyncClientRequest* pMsg = syncClientRequestBuild(pOriginalRpcMsg->contLen);
+// step 1. original SRpcMsg => SyncClientRequestCopy, add seqNum, isWeak
+SyncClientRequestCopy* syncClientRequestCopyBuild2(const SRpcMsg* pOriginalRpcMsg, uint64_t seqNum, bool isWeak, int32_t vgId) {
+  SyncClientRequestCopy* pMsg = syncClientRequestCopyBuild(pOriginalRpcMsg->contLen);
   pMsg->vgId = vgId;
   pMsg->originalRpcType = pOriginalRpcMsg->msgType;
   pMsg->seqNum = seqNum;
@@ -810,61 +810,61 @@ SyncClientRequest* syncClientRequestBuild2(const SRpcMsg* pOriginalRpcMsg, uint6
   return pMsg;
 }
 
-void syncClientRequestDestroy(SyncClientRequest* pMsg) {
+void syncClientRequestCopyDestroy(SyncClientRequestCopy* pMsg) {
   if (pMsg != NULL) {
     taosMemoryFree(pMsg);
   }
 }
 
-void syncClientRequestSerialize(const SyncClientRequest* pMsg, char* buf, uint32_t bufLen) {
+void syncClientRequestCopySerialize(const SyncClientRequestCopy* pMsg, char* buf, uint32_t bufLen) {
   assert(pMsg->bytes <= bufLen);
   memcpy(buf, pMsg, pMsg->bytes);
 }
 
-void syncClientRequestDeserialize(const char* buf, uint32_t len, SyncClientRequest* pMsg) {
+void syncClientRequestCopyDeserialize(const char* buf, uint32_t len, SyncClientRequestCopy* pMsg) {
   memcpy(pMsg, buf, len);
   assert(len == pMsg->bytes);
 }
 
-char* syncClientRequestSerialize2(const SyncClientRequest* pMsg, uint32_t* len) {
+char* syncClientRequestCopySerialize2(const SyncClientRequestCopy* pMsg, uint32_t* len) {
   char* buf = taosMemoryMalloc(pMsg->bytes);
   assert(buf != NULL);
-  syncClientRequestSerialize(pMsg, buf, pMsg->bytes);
+  syncClientRequestCopySerialize(pMsg, buf, pMsg->bytes);
   if (len != NULL) {
     *len = pMsg->bytes;
   }
   return buf;
 }
 
-SyncClientRequest* syncClientRequestDeserialize2(const char* buf, uint32_t len) {
+SyncClientRequestCopy* syncClientRequestCopyDeserialize2(const char* buf, uint32_t len) {
   uint32_t           bytes = *((uint32_t*)buf);
-  SyncClientRequest* pMsg = taosMemoryMalloc(bytes);
+  SyncClientRequestCopy* pMsg = taosMemoryMalloc(bytes);
   assert(pMsg != NULL);
-  syncClientRequestDeserialize(buf, len, pMsg);
+  syncClientRequestCopyDeserialize(buf, len, pMsg);
   assert(len == pMsg->bytes);
   return pMsg;
 }
 
-// step 2. SyncClientRequest => RpcMsg, to queue
-void syncClientRequest2RpcMsg(const SyncClientRequest* pMsg, SRpcMsg* pRpcMsg) {
+// step 2. SyncClientRequestCopy => RpcMsg, to queue
+void syncClientRequestCopy2RpcMsg(const SyncClientRequestCopy* pMsg, SRpcMsg* pRpcMsg) {
   memset(pRpcMsg, 0, sizeof(*pRpcMsg));
   pRpcMsg->msgType = pMsg->msgType;
   pRpcMsg->contLen = pMsg->bytes;
   pRpcMsg->pCont = rpcMallocCont(pRpcMsg->contLen);
-  syncClientRequestSerialize(pMsg, pRpcMsg->pCont, pRpcMsg->contLen);
+  syncClientRequestCopySerialize(pMsg, pRpcMsg->pCont, pRpcMsg->contLen);
 }
 
-void syncClientRequestFromRpcMsg(const SRpcMsg* pRpcMsg, SyncClientRequest* pMsg) {
-  syncClientRequestDeserialize(pRpcMsg->pCont, pRpcMsg->contLen, pMsg);
+void syncClientRequestCopyFromRpcMsg(const SRpcMsg* pRpcMsg, SyncClientRequestCopy* pMsg) {
+  syncClientRequestCopyDeserialize(pRpcMsg->pCont, pRpcMsg->contLen, pMsg);
 }
 
-// step 3. RpcMsg => SyncClientRequest, from queue
-SyncClientRequest* syncClientRequestFromRpcMsg2(const SRpcMsg* pRpcMsg) {
-  SyncClientRequest* pMsg = syncClientRequestDeserialize2(pRpcMsg->pCont, pRpcMsg->contLen);
+// step 3. RpcMsg => SyncClientRequestCopy, from queue
+SyncClientRequestCopy* syncClientRequestCopyFromRpcMsg2(const SRpcMsg* pRpcMsg) {
+  SyncClientRequestCopy* pMsg = syncClientRequestCopyDeserialize2(pRpcMsg->pCont, pRpcMsg->contLen);
   return pMsg;
 }
 
-cJSON* syncClientRequest2Json(const SyncClientRequest* pMsg) {
+cJSON* syncClientRequestCopy2Json(const SyncClientRequestCopy* pMsg) {
   char   u64buf[128];
   cJSON* pRoot = cJSON_CreateObject();
 
@@ -888,41 +888,41 @@ cJSON* syncClientRequest2Json(const SyncClientRequest* pMsg) {
   }
 
   cJSON* pJson = cJSON_CreateObject();
-  cJSON_AddItemToObject(pJson, "SyncClientRequest", pRoot);
+  cJSON_AddItemToObject(pJson, "SyncClientRequestCopy", pRoot);
   return pJson;
 }
 
-char* syncClientRequest2Str(const SyncClientRequest* pMsg) {
-  cJSON* pJson = syncClientRequest2Json(pMsg);
+char* syncClientRequestCopy2Str(const SyncClientRequestCopy* pMsg) {
+  cJSON* pJson = syncClientRequestCopy2Json(pMsg);
   char*  serialized = cJSON_Print(pJson);
   cJSON_Delete(pJson);
   return serialized;
 }
 
 // for debug ----------------------
-void syncClientRequestPrint(const SyncClientRequest* pMsg) {
-  char* serialized = syncClientRequest2Str(pMsg);
-  printf("syncClientRequestPrint | len:%lu | %s \n", strlen(serialized), serialized);
+void syncClientRequestCopyPrint(const SyncClientRequestCopy* pMsg) {
+  char* serialized = syncClientRequestCopy2Str(pMsg);
+  printf("syncClientRequestCopyPrint | len:%lu | %s \n", strlen(serialized), serialized);
   fflush(NULL);
   taosMemoryFree(serialized);
 }
 
-void syncClientRequestPrint2(char* s, const SyncClientRequest* pMsg) {
-  char* serialized = syncClientRequest2Str(pMsg);
-  printf("syncClientRequestPrint2 | len:%lu | %s | %s \n", strlen(serialized), s, serialized);
+void syncClientRequestCopyPrint2(char* s, const SyncClientRequestCopy* pMsg) {
+  char* serialized = syncClientRequestCopy2Str(pMsg);
+  printf("syncClientRequestCopyPrint2 | len:%lu | %s | %s \n", strlen(serialized), s, serialized);
   fflush(NULL);
   taosMemoryFree(serialized);
 }
 
-void syncClientRequestLog(const SyncClientRequest* pMsg) {
-  char* serialized = syncClientRequest2Str(pMsg);
-  sTrace("syncClientRequestLog | len:%lu | %s", strlen(serialized), serialized);
+void syncClientRequestCopyLog(const SyncClientRequestCopy* pMsg) {
+  char* serialized = syncClientRequestCopy2Str(pMsg);
+  sTrace("syncClientRequestCopyLog | len:%lu | %s", strlen(serialized), serialized);
   taosMemoryFree(serialized);
 }
 
-void syncClientRequestLog2(char* s, const SyncClientRequest* pMsg) {
-  char* serialized = syncClientRequest2Str(pMsg);
-  sTrace("syncClientRequestLog2 | len:%lu | %s | %s", strlen(serialized), s, serialized);
+void syncClientRequestCopyLog2(char* s, const SyncClientRequestCopy* pMsg) {
+  char* serialized = syncClientRequestCopy2Str(pMsg);
+  sTrace("syncClientRequestCopyLog2 | len:%lu | %s | %s", strlen(serialized), s, serialized);
   taosMemoryFree(serialized);
 }
 

@@ -99,7 +99,7 @@ SSyncNode *syncNodeInit() {
   assert(pSyncNode != NULL);
 
   gSyncIO->FpOnSyncPing = pSyncNode->FpOnPing;
-  gSyncIO->FpOnSyncClientRequest = pSyncNode->FpOnClientRequest;
+  gSyncIO->FpOnSyncClientRequestCopy = pSyncNode->FpOnClientRequestCopy;
   gSyncIO->FpOnSyncPingReply = pSyncNode->FpOnPingReply;
   gSyncIO->FpOnSyncRequestVote = pSyncNode->FpOnRequestVote;
   gSyncIO->FpOnSyncRequestVoteReply = pSyncNode->FpOnRequestVoteReply;
@@ -132,8 +132,8 @@ SRpcMsg *step0() {
   return pMsg;
 }
 
-SyncClientRequest *step1(const SRpcMsg *pMsg) {
-  SyncClientRequest *pRetMsg = syncClientRequestBuild2(pMsg, 123, true, 1000);
+SyncClientRequestCopy *step1(const SRpcMsg *pMsg) {
+  SyncClientRequestCopy *pRetMsg = syncClientRequestCopyBuild2(pMsg, 123, true, 1000);
   return pRetMsg;
 }
 
@@ -169,13 +169,13 @@ int main(int argc, char **argv) {
   syncRpcMsgPrint2((char *)"==step0==", pMsg0);
 
   // step1
-  SyncClientRequest *pMsg1 = step1(pMsg0);
-  syncClientRequestPrint2((char *)"==step1==", pMsg1);
+  SyncClientRequestCopy *pMsg1 = step1(pMsg0);
+  syncClientRequestCopyPrint2((char *)"==step1==", pMsg1);
 
   for (int i = 0; i < 10; ++i) {
-    SyncClientRequest *pSyncClientRequest = pMsg1;
+    SyncClientRequestCopy *pSyncClientRequestCopy = pMsg1;
     SRpcMsg            rpcMsg;
-    syncClientRequest2RpcMsg(pSyncClientRequest, &rpcMsg);
+    syncClientRequestCopy2RpcMsg(pSyncClientRequestCopy, &rpcMsg);
     gSyncNode->FpEqMsg(gSyncNode->queue, &rpcMsg);
 
     taosMsleep(1000);
