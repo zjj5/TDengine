@@ -38,12 +38,12 @@ int vnodeCreate(const char *path, SVnodeCfg *pCfg, STfs *pTfs) {
   return 0;
 }
 
-void vnodeDestroy(const char *path) {
+void vnodeDestroy(const char *path, STfs *pTfs) {
   // TODO
   // taosRemoveDir(path);
 }
 
-int vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg, SVnode **ppVnode) {
+int vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs) {
 #if 0
   SVnode *pVnode;
   int     ret;

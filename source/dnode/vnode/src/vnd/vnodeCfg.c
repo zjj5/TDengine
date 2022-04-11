@@ -37,6 +37,8 @@ const SVnodeCfg vnodeCfgDefault = {
     .keep2 = 60 * 24 * 3650   // 10 years
 };
 
+void vnodeGetDefaultCfg(SVnodeCfg *pCfg) { memcpy(pCfg, &vnodeCfgDefault, sizeof(*pCfg)); }
+
 int vnodeCheckCfg(SVnodeCfg *pCfg) {
   // vgId
   if (pCfg->vgId <= 0) {

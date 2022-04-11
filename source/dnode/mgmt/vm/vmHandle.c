@@ -82,28 +82,30 @@ int32_t vmProcessGetVnodeLoadsReq(SMgmtWrapper *pWrapper, SNodeMsg *pReq) {
 }
 
 static void vmGenerateVnodeCfg(SCreateVnodeReq *pCreate, SVnodeCfg *pCfg) {
-  // pCfg->vgId = pCreate->vgId;
-  // pCfg->wsize = pCreate->cacheBlockSize;
-  // pCfg->ssize = pCreate->cacheBlockSize;
-  // pCfg->lsize = pCreate->cacheBlockSize;
-  // pCfg->isHeapAllocator = true;
+  int32_t flag = 0;
+
+  vnodeGetDefaultCfg(pCfg);
+
+  pCfg->vgId = pCreate->vgId;
+  if (pCreate->streamMode) {
+    flag |= VND_FLG_STREM_MODE;
+  }
+  pCfg->flag = flag;
+  pCfg->szBuf = pCreate->cacheBlockSize;
+  pCfg->walCfg.fsyncPeriod = pCreate->fsyncPeriod;
+  pCfg->walCfg.level = pCreate->walLevel;
+  pCfg->walCfg.retentionPeriod = 10;
+  pCfg->walCfg.retentionSize = 128;
+  pCfg->walCfg.rollPeriod = 128;
+  pCfg->walCfg.segSize = 128;
+  pCfg->walCfg.vgId = pCreate->vgId;
+  pCfg->keep0 = pCreate->daysToKeep0;
+  pCfg->keep1 = pCreate->daysToKeep1;
+  pCfg->keep2 = pCreate->daysToKeep2;
+
   // pCfg->ttl = 4;
   // pCfg->keep = pCreate->daysToKeep0;
-  // pCfg->streamMode = pCreate->streamMode;
   // pCfg->isWeak = true;
-  // pCfg->tsdbCfg.keep2 = pCreate->daysToKeep0;
-  // pCfg->tsdbCfg.keep0 = pCreate->daysToKeep2;
-  // pCfg->tsdbCfg.keep1 = pCreate->daysToKeep0;
-  // pCfg->tsdbCfg.lruCacheSize = pCreate->cacheBlockSize;
-  // pCfg->tsdbCfg.retentions = pCreate->pRetensions;
-  // pCfg->metaCfg.lruSize = pCreate->cacheBlockSize;
-  // pCfg->walCfg.fsyncPeriod = pCreate->fsyncPeriod;
-  // pCfg->walCfg.level = pCreate->walLevel;
-  // pCfg->walCfg.retentionPeriod = 10;
-  // pCfg->walCfg.retentionSize = 128;
-  // pCfg->walCfg.rollPeriod = 128;
-  // pCfg->walCfg.segSize = 128;
-  // pCfg->walCfg.vgId = pCreate->vgId;
   // pCfg->hashBegin = pCreate->hashBegin;
   // pCfg->hashEnd = pCreate->hashEnd;
   // pCfg->hashMethod = pCreate->hashMethod;
@@ -152,12 +154,15 @@ int32_t vmProcessCreateVnodeReq(SVnodesMgmt *pMgmt, SNodeMsg *pMsg) {
   msgCb.queueFps[APPLY_QUEUE] = vmPutMsgToApplyQueue;
   msgCb.qsizeFp = vmGetQueueSize;
 
-  // vnodeCfg.msgCb = msgCb;
-  // vnodeCfg.pTfs = pMgmt->pTfs;
-  // vnodeCfg.dbId = wrapperCfg.dbUid;
-  if (vnodeOpen(wrapperCfg.path, &vnodeCfg, &pImpl) < 0) {
+  if (vnodeCreate(wrapperCfg.path, &vnodeCfg, pMgmt->pTfs) < 0) {
     tFreeSCreateVnodeReq(&createReq);
     dError("vgId:%d, failed to create vnode since %s", createReq.vgId, terrstr());
+    return -1;
+  }
+
+  if (vnodeOpen(wrapperCfg.path, &pImpl, pMgmt->pTfs) < 0) {
+    tFreeSCreateVnodeReq(&createReq);
+    dError("vgId:%d, failed to open vnode since %s", createReq.vgId, terrstr());
     return -1;
   }
 
@@ -166,7 +171,7 @@ int32_t vmProcessCreateVnodeReq(SVnodesMgmt *pMgmt, SNodeMsg *pMsg) {
     tFreeSCreateVnodeReq(&createReq);
     dError("vgId:%d, failed to open vnode since %s", createReq.vgId, terrstr());
     vnodeClose(pImpl);
-    vnodeDestroy(wrapperCfg.path);
+    vnodeDestroy(wrapperCfg.path, pMgmt->pTfs);
     terrno = code;
     return code;
   }
@@ -175,7 +180,7 @@ int32_t vmProcessCreateVnodeReq(SVnodesMgmt *pMgmt, SNodeMsg *pMsg) {
   if (code != 0) {
     tFreeSCreateVnodeReq(&createReq);
     vnodeClose(pImpl);
-    vnodeDestroy(wrapperCfg.path);
+    vnodeDestroy(wrapperCfg.path, pMgmt->pTfs);
     terrno = code;
     return code;
   }

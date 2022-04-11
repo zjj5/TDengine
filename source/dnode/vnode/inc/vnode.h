@@ -47,9 +47,11 @@ typedef struct SDataStatis    SDataStatis;
 // vnode
 int  vnodeInit(int nthreads);
 void vnodeCleanup();
-int  vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg, SVnode **ppVnode);
+void vnodeGetDefaultCfg(SVnodeCfg *pCfg);
+int  vnodeCreate(const char *path, SVnodeCfg *pCfg, STfs *pTfs);
+void vnodeDestroy(const char *path, STfs *pTfs);
+int  vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs);
 void vnodeClose(SVnode *pVnode);
-void vnodeDestroy(const char *path);
 int  vnodeProcessQueryMsg(SVnode *pVnode, SRpcMsg *pMsg);
 int  vnodeProcessFetchMsg(SVnode *pVnode, SRpcMsg *pMsg, SQueueInfo *pInfo);
 void vnodeProcessWMsgs(SVnode *pVnode, SArray *pMsgs);
@@ -93,6 +95,7 @@ void    tqReadHandleSetColIdList(STqReadHandle *pReadHandle, SArray *pColIdList)
 int     tqReadHandleSetTbUidList(STqReadHandle *pHandle, const SArray *tbUidList);
 
 #define VND_FLG_STREM_MODE 0x1
+#define VND_FLG_WEAK_SYNC  0x2
 struct SVnodeCfg {
   int32_t vgId;
   int32_t flag;

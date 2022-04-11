@@ -104,7 +104,7 @@ void vmCloseVnode(SVnodesMgmt *pMgmt, SVnodeObj *pVnode) {
 
   if (pVnode->dropped) {
     dDebug("vgId:%d, vnode is destroyed for dropped:%d", pVnode->vgId, pVnode->dropped);
-    vnodeDestroy(pVnode->path);
+    vnodeDestroy(pVnode->path, pMgmt->pTfs);
   }
 
   taosMemoryFree(pVnode->path);
@@ -136,7 +136,7 @@ static void *vmOpenVnodeFunc(void *param) {
     msgCb.queueFps[APPLY_QUEUE] = vmPutMsgToApplyQueue;
     msgCb.qsizeFp = vmGetQueueSize;
     SVnodeCfg cfg = {/*.msgCb = msgCb, .pTfs = pMgmt->pTfs, .vgId = pCfg->vgId, .dbId = pCfg->dbUid*/};
-    if (vnodeOpen(pCfg->path, &cfg, &pImpl) < 0) {
+    if (vnodeOpen(pCfg->path, &pImpl, pMgmt->pTfs) < 0) {
       dError("vgId:%d, failed to open vnode by thread:%d", pCfg->vgId, pThread->threadIndex);
       pThread->failed++;
     } else {
