@@ -31,7 +31,7 @@ int vnodeCreate(const char *path, SVnodeCfg *pCfg) {
 
 void vnodeDestroy(const char *path) {
   // TODO
-  taosRemoveDir(path);
+  // taosRemoveDir(path);
 }
 
 int vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg, SVnode **ppVnode) {

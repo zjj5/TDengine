@@ -31,30 +31,30 @@
 //   return pReadHandle;
 // }
 
-// int32_t tqReadHandleSetMsg(STqReadHandle* pReadHandle, SSubmitReq* pMsg, int64_t ver) {
-//   pReadHandle->pMsg = pMsg;
-//   pMsg->length = htonl(pMsg->length);
-//   pMsg->numOfBlocks = htonl(pMsg->numOfBlocks);
+int32_t tqReadHandleSetMsg(STqReadHandle* pReadHandle, SSubmitReq* pMsg, int64_t ver) {
+  //   pReadHandle->pMsg = pMsg;
+  //   pMsg->length = htonl(pMsg->length);
+  //   pMsg->numOfBlocks = htonl(pMsg->numOfBlocks);
 
-//   // iterate and convert
-//   if (tInitSubmitMsgIter(pMsg, &pReadHandle->msgIter) < 0) return -1;
-//   while (true) {
-//     if (tGetSubmitMsgNext(&pReadHandle->msgIter, &pReadHandle->pBlock) < 0) return -1;
-//     if (pReadHandle->pBlock == NULL) break;
+  //   // iterate and convert
+  //   if (tInitSubmitMsgIter(pMsg, &pReadHandle->msgIter) < 0) return -1;
+  //   while (true) {
+  //     if (tGetSubmitMsgNext(&pReadHandle->msgIter, &pReadHandle->pBlock) < 0) return -1;
+  //     if (pReadHandle->pBlock == NULL) break;
 
-//     pReadHandle->pBlock->uid = htobe64(pReadHandle->pBlock->uid);
-//     pReadHandle->pBlock->suid = htobe64(pReadHandle->pBlock->suid);
-//     pReadHandle->pBlock->sversion = htonl(pReadHandle->pBlock->sversion);
-//     pReadHandle->pBlock->dataLen = htonl(pReadHandle->pBlock->dataLen);
-//     pReadHandle->pBlock->schemaLen = htonl(pReadHandle->pBlock->schemaLen);
-//     pReadHandle->pBlock->numOfRows = htons(pReadHandle->pBlock->numOfRows);
-//   }
+  //     pReadHandle->pBlock->uid = htobe64(pReadHandle->pBlock->uid);
+  //     pReadHandle->pBlock->suid = htobe64(pReadHandle->pBlock->suid);
+  //     pReadHandle->pBlock->sversion = htonl(pReadHandle->pBlock->sversion);
+  //     pReadHandle->pBlock->dataLen = htonl(pReadHandle->pBlock->dataLen);
+  //     pReadHandle->pBlock->schemaLen = htonl(pReadHandle->pBlock->schemaLen);
+  //     pReadHandle->pBlock->numOfRows = htons(pReadHandle->pBlock->numOfRows);
+  //   }
 
-//   if (tInitSubmitMsgIter(pMsg, &pReadHandle->msgIter) < 0) return -1;
-//   pReadHandle->ver = ver;
-//   memset(&pReadHandle->blkIter, 0, sizeof(SSubmitBlkIter));
-//   return 0;
-// }
+  //   if (tInitSubmitMsgIter(pMsg, &pReadHandle->msgIter) < 0) return -1;
+  //   pReadHandle->ver = ver;
+  //   memset(&pReadHandle->blkIter, 0, sizeof(SSubmitBlkIter));
+  return 0;
+}
 
 bool tqNextDataBlock(STqReadHandle* pHandle) {
   //   while (1) {
@@ -178,22 +178,22 @@ SArray* tqRetrieveDataBlock(STqReadHandle* pHandle) {
   return pArray;
 }
 
-// int tqReadHandleAddTbUidList(STqReadHandle* pHandle, const SArray* tbUidList) {
-//   if (pHandle->tbIdHash == NULL) {
-//     pHandle->tbIdHash = taosHashInit(64, taosGetDefaultHashFunction(TSDB_DATA_TYPE_BIGINT), true, HASH_NO_LOCK);
-//     if (pHandle->tbIdHash == NULL) {
-//       terrno = TSDB_CODE_OUT_OF_MEMORY;
-//       return -1;
-//     }
-//   }
+int tqReadHandleAddTbUidList(STqReadHandle* pHandle, const SArray* tbUidList) {
+  //   if (pHandle->tbIdHash == NULL) {
+  //     pHandle->tbIdHash = taosHashInit(64, taosGetDefaultHashFunction(TSDB_DATA_TYPE_BIGINT), true, HASH_NO_LOCK);
+  //     if (pHandle->tbIdHash == NULL) {
+  //       terrno = TSDB_CODE_OUT_OF_MEMORY;
+  //       return -1;
+  //     }
+  //   }
 
-//   for (int i = 0; i < taosArrayGetSize(tbUidList); i++) {
-//     int64_t* pKey = (int64_t*)taosArrayGet(tbUidList, i);
-//     taosHashPut(pHandle->tbIdHash, pKey, sizeof(int64_t), NULL, 0);
-//   }
+  //   for (int i = 0; i < taosArrayGetSize(tbUidList); i++) {
+  //     int64_t* pKey = (int64_t*)taosArrayGet(tbUidList, i);
+  //     taosHashPut(pHandle->tbIdHash, pKey, sizeof(int64_t), NULL, 0);
+  //   }
 
-//   return 0;
-// }
+  return 0;
+}
 
 int tqReadHandleSetTbUidList(STqReadHandle* pHandle, const SArray* tbUidList) {
   // if (pHandle->tbIdHash) {

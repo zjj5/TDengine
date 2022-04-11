@@ -241,15 +241,6 @@ typedef struct STable {
 typedef struct STsdb STsdb;
 
 /**
- * @brief Apply a write request message.
- *
- * @param pVnode The vnode object.
- * @param pMsg The request message
- * @param pRsp The response message
- * @return int 0 for success, -1 for failure
- */
-
-/**
  * @brief Process a consume message.
  *
  * @param pVnode The vnode object.

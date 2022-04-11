@@ -6,11 +6,13 @@ target_sources(
     # vnode
     "src/vnd/vnodeMgr.c"
     "src/vnd/vnodeOpen.c"
+    "src/vnd/vnodeHandle.c"
+    "src/vnd/vnodeQuery.c"
+    "src/vnd/vnodeAlter.c"
     # "src/vnd/vnodeBufferPool.c"
-    # "src/vnd/vnodeQuery.c"
+
     # "src/vnd/vnodeCfg.c"
     # "src/vnd/vnodeExe.c"
-    # "src/vnd/vnodeInt.c"
     # "src/vnd/vnodeStateMgr.c"
     # "src/vnd/vnodeWrite.c"
 
@@ -29,6 +31,7 @@ target_sources(
 
     # tsdb
     # "src/tsdb/tsdbOpen.c"
+    "src/tsdb/tsdbRead.c"
     # "src/tsdb/tsdbBDBImpl.c"
     # "src/tsdb/tsdbCommit.c"
     # "src/tsdb/tsdbCompact.c"
@@ -37,19 +40,18 @@ target_sources(
     # "src/tsdb/tsdbMain.c"
     # "src/tsdb/tsdbMemTable.c"
     # "src/tsdb/tsdbOptions.c"
-    "src/tsdb/tsdbRead.c"
     # "src/tsdb/tsdbReadImpl.c"
     # "src/tsdb/tsdbScan.c"
     # "src/tsdb/tsdbSma.c"
     # "src/tsdb/tsdbWrite.c"
 
     # tq
+    "src/tq/tqRead.c"
     # "src/tq/tq.c"
     # "src/tq/tqCommit.c"
     # "src/tq/tqMetaStore.c"
     # "src/tq/tqOffset.c"
     # "src/tq/tqPush.c"
-    "src/tq/tqRead.c"
 )
 target_include_directories(
     vnode

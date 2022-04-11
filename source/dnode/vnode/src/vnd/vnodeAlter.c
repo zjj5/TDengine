@@ -15,12 +15,17 @@
 
 #include "vnodeInt.h"
 
-void smaHandleRes(void *pVnode, int64_t smaId, const SArray *data) {
+int vnodeAlter(SVnode *pVnode, const SVnodeCfg *pCfg) {
   // TODO
-
-  // blockDebugShowData(data);
-  // tsdbInsertTSmaData(((SVnode *)pVnode)->pTsdb, smaId, (const char *)data);
+  return 0;
 }
 
+int vnodeCompact(SVnode *pVnode) {
+  // TODO: move the function to vnodeCompact.c
+  return 0;
+}
 
-/* ------------------------ STATIC METHODS ------------------------ */
+int vnodeSync(SVnode *pVnode) {
+  // TODO: move the function to vnodeSync.c
+  return 0;
+}
