@@ -25,6 +25,7 @@ static int vnodeCloseWal(SVnode *pVnode);
 static int vnodeCloseTq(SVnode *pVnode);
 
 int vnodeCreate(const char *path, SVnodeCfg *pCfg, STfs *pTfs) {
+  char dir[TSDB_FILENAME_LEN];
   // TODO: check if directory exists
 
   // check config
@@ -35,7 +36,8 @@ int vnodeCreate(const char *path, SVnodeCfg *pCfg, STfs *pTfs) {
 
   // create vnode env
   tfsMkdir(pTfs, path);
-  if (vnodeSaveCfg(tfsGetPrimaryPath(pTfs), pCfg) < 0) {
+  snprintf(dir, TSDB_FILENAME_LEN, "%s%s%s", tfsGetPrimaryPath(pTfs), TD_DIRSEP, path);
+  if (vnodeSaveCfg(dir, pCfg) < 0) {
     vError("vgId: %d failed to save vnode config since %s", pCfg->vgId, tstrerror(terrno));
     return -1;
   }
@@ -43,10 +45,7 @@ int vnodeCreate(const char *path, SVnodeCfg *pCfg, STfs *pTfs) {
   return 0;
 }
 
-void vnodeDestroy(const char *path, STfs *pTfs) {
-  // TODO
-  // taosRemoveDir(path);
-}
+void vnodeDestroy(const char *path, STfs *pTfs) { tfsRmdir(pTfs, path); }
 
 int vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs) {
 #if 0

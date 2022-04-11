@@ -15,6 +15,12 @@
 
 #include "vnodeInt.h"
 
+#define VND_CFG_FILENAME     "config.json"
+#define VND_CFG_FILENAME_TMP "config.json_tmp"
+
+static char *vnodeCfgToStr(SVnodeCfg *pCfg);
+static int   vnodeStrToCfg(char *pStr, SVnodeCfg *pCfg);
+
 const SVnodeCfg vnodeCfgDefault = {
     .vgId = -1,
     .flag = 0,
@@ -58,11 +64,128 @@ int vnodeCheckCfg(SVnodeCfg *pCfg) {
 }
 
 int vnodeSaveCfg(const char *path, SVnodeCfg *pCfg) {
-  // TODO
+  TdFilePtr pFile;
+  char      cname[TSDB_FILENAME_LEN];
+  char      tname[TSDB_FILENAME_LEN];
+  char     *str;
+
+  snprintf(cname, TSDB_FILENAME_LEN, "%s%s%s", path, TD_DIRSEP, VND_CFG_FILENAME);
+  snprintf(tname, TSDB_FILENAME_LEN, "%s%s%s", path, TD_DIRSEP, VND_CFG_FILENAME_TMP);
+
+  str = vnodeCfgToStr(pCfg);
+
+  pFile = taosOpenFile(tname, TD_FILE_CTEATE | TD_FILE_WRITE);
+
+  taosWriteFile(pFile, str, strlen(str));
+
+  taosCloseFile(&pFile);
+  taosRenameFile(tname, cname);
+
+  taosMemoryFree(str);
+
   return 0;
 }
 
 int vnodeLoadCfg(const char *path, SVnodeCfg *pCfg) {
-  // TODO
+  TdFilePtr pFile;
+  char      cname[TSDB_FILENAME_LEN];
+  char      str[2048];
+
+  snprintf(cname, TSDB_FILENAME_LEN, "%s%s%s", path, TD_DIRSEP, VND_CFG_FILENAME);
+
+  pFile = taosOpenFile(cname, TD_FILE_READ);
+  if (pFile == NULL) {
+    // TODO
+    ASSERT(0);
+    return -1;
+  }
+
+  taosReadFile(pFile, str, 2048);
+  vnodeStrToCfg(str, pCfg);
+
+  taosCloseFile(&pFile);
+
+  return 0;
+}
+
+static char *vnodeCfgToStr(SVnodeCfg *pCfg) {
+  SJson *pJson;
+  char  *pStr;
+
+  pJson = tjsonCreateObject();
+
+  tjsonAddIntegerToObject(pJson, "vgId", pCfg->vgId);
+  tjsonAddIntegerToObject(pJson, "flag", pCfg->flag);
+  // vnd
+  tjsonAddIntegerToObject(pJson, "isHeap", pCfg->isHeap);
+  tjsonAddIntegerToObject(pJson, "szBuf", pCfg->szBuf);
+  // wal
+  tjsonAddIntegerToObject(pJson, "wal.fsyncPeriod", pCfg->walCfg.fsyncPeriod);
+  tjsonAddIntegerToObject(pJson, "wal.retentionPeriod", pCfg->walCfg.retentionPeriod);
+  tjsonAddIntegerToObject(pJson, "wal.rollPeriod", pCfg->walCfg.rollPeriod);
+  tjsonAddIntegerToObject(pJson, "wal.retentionSize", pCfg->walCfg.retentionSize);
+  tjsonAddIntegerToObject(pJson, "wal.segSize", pCfg->walCfg.segSize);
+  tjsonAddIntegerToObject(pJson, "wal.level", pCfg->walCfg.level);
+  // meta
+  tjsonAddIntegerToObject(pJson, "szPage", pCfg->szPage);
+  tjsonAddIntegerToObject(pJson, "szCache", pCfg->szCache);
+
+  // tq
+
+  // tsdb
+  tjsonAddIntegerToObject(pJson, "precision", pCfg->precision);
+  tjsonAddIntegerToObject(pJson, "compress", pCfg->compress);
+  tjsonAddIntegerToObject(pJson, "minutesPerFile", pCfg->minutes);
+  tjsonAddIntegerToObject(pJson, "minRows", pCfg->minRows);
+  tjsonAddIntegerToObject(pJson, "maxRows", pCfg->maxRows);
+  tjsonAddIntegerToObject(pJson, "keep0", pCfg->keep0);
+  tjsonAddIntegerToObject(pJson, "keep1", pCfg->keep1);
+  tjsonAddIntegerToObject(pJson, "keep2", pCfg->keep2);
+
+  pStr = tjsonToString(pJson);
+
+  tjsonDelete(pJson);
+
+  return pStr;
+}
+
+static int vnodeStrToCfg(char *pStr, SVnodeCfg *pCfg) {
+  SJson *pJson;
+
+  pJson = tjsonParse(pStr);
+
+  tjsonGetNumberValue(pJson, "vgId", pCfg->vgId);
+  tjsonGetNumberValue(pJson, "vgId", pCfg->vgId);
+  tjsonGetNumberValue(pJson, "flag", pCfg->flag);
+  // vnd
+  tjsonGetNumberValue(pJson, "isHeap", pCfg->isHeap);
+  tjsonGetNumberValue(pJson, "szBuf", pCfg->szBuf);
+  // wal
+  tjsonGetNumberValue(pJson, "wal.fsyncPeriod", pCfg->walCfg.fsyncPeriod);
+  tjsonGetNumberValue(pJson, "wal.retentionPeriod", pCfg->walCfg.retentionPeriod);
+  tjsonGetNumberValue(pJson, "wal.rollPeriod", pCfg->walCfg.rollPeriod);
+  tjsonGetNumberValue(pJson, "wal.retentionSize", pCfg->walCfg.retentionSize);
+  tjsonGetNumberValue(pJson, "wal.segSize", pCfg->walCfg.segSize);
+  tjsonGetNumberValue(pJson, "wal.level", pCfg->walCfg.level);
+  // meta
+  tjsonGetNumberValue(pJson, "szPage", pCfg->szPage);
+  tjsonGetNumberValue(pJson, "szCache", pCfg->szCache);
+
+  // tq
+
+  // tsdb
+  tjsonGetNumberValue(pJson, "precision", pCfg->precision);
+  tjsonGetNumberValue(pJson, "compress", pCfg->compress);
+  tjsonGetNumberValue(pJson, "minutesPerFile", pCfg->minutes);
+  tjsonGetNumberValue(pJson, "minRows", pCfg->minRows);
+  tjsonGetNumberValue(pJson, "maxRows", pCfg->maxRows);
+  tjsonGetNumberValue(pJson, "keep0", pCfg->keep0);
+  tjsonGetNumberValue(pJson, "keep1", pCfg->keep1);
+  tjsonGetNumberValue(pJson, "keep2", pCfg->keep2);
+
+  tjsonDelete(pJson);
+
+  pCfg->walCfg.vgId = pCfg->vgId;
+
   return 0;
 }
