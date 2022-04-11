@@ -115,7 +115,7 @@ static void vmGenerateWrapperCfg(SVnodesMgmt *pMgmt, SCreateVnodeReq *pCreate, S
   memcpy(pCfg->db, pCreate->db, TSDB_DB_FNAME_LEN);
   pCfg->dbUid = pCreate->dbUid;
   pCfg->dropped = 0;
-  snprintf(pCfg->path, sizeof(pCfg->path), "%s%svnode%d", pMgmt->path, TD_DIRSEP, pCreate->vgId);
+  snprintf(pCfg->path, sizeof(pCfg->path), "vnode%svnode%d", TD_DIRSEP, pCreate->vgId);
   pCfg->vgId = pCreate->vgId;
   pCfg->vgVersion = pCreate->vgVersion;
 }

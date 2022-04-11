@@ -33,7 +33,12 @@ int vnodeCreate(const char *path, SVnodeCfg *pCfg, STfs *pTfs) {
     return -1;
   }
 
-  // TODO: create vnode env
+  // create vnode env
+  tfsMkdir(pTfs, path);
+  if (vnodeSaveCfg(tfsGetPrimaryPath(pTfs), pCfg) < 0) {
+    vError("vgId: %d failed to save vnode config since %s", pCfg->vgId, tstrerror(terrno));
+    return -1;
+  }
 
   return 0;
 }
