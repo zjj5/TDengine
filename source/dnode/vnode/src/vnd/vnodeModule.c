@@ -30,8 +30,7 @@ struct SVnodeGlobal {
   TdThread*     threads;
   TdThreadMutex mutex;
   TdThreadCond  hasTask;
-  SVnodeTask*   head;
-  SVnodeTask*   tail;
+  SVnodeTask    queue;
 };
 
 struct SVnodeGlobal vnodeGlobal;
@@ -48,6 +47,9 @@ int vnodeInit(int nthreads) {
   }
 
   vnodeGlobal.stop = 0;
+
+  vnodeGlobal.queue.next = &vnodeGlobal.queue;
+  vnodeGlobal.queue.prev = &vnodeGlobal.queue;
 
   vnodeGlobal.nthreads = nthreads;
   vnodeGlobal.threads = taosMemoryCalloc(nthreads, sizeof(TdThread));
@@ -109,7 +111,10 @@ int vnodeScheduleTask(int (*execute)(void*), void* arg) {
   pTask->arg = arg;
 
   taosThreadMutexLock(&(vnodeGlobal.mutex));
-  // TODO: add to queue
+  pTask->next = &vnodeGlobal.queue;
+  pTask->prev = vnodeGlobal.queue.prev;
+  vnodeGlobal.queue.prev->next = pTask;
+  vnodeGlobal.queue.prev = pTask;
   taosThreadCondSignal(&(vnodeGlobal.hasTask));
   taosThreadMutexUnlock(&(vnodeGlobal.mutex));
 
@@ -118,29 +123,34 @@ int vnodeScheduleTask(int (*execute)(void*), void* arg) {
 
 /* ------------------------ STATIC METHODS ------------------------ */
 static void* loop(void* arg) {
+  SVnodeTask* pTask;
+  int         ret;
+
   setThreadName("vnode-commit");
 
-  SVnodeTask* pTask;
   for (;;) {
     taosThreadMutexLock(&(vnodeGlobal.mutex));
     for (;;) {
-      // pTask = TD_DLIST_HEAD(&(vnodeGlobal.queue));
-      // if (pTask == NULL) {
-      //   if (vnodeGlobal.stop) {
-      //     taosThreadMutexUnlock(&(vnodeGlobal.mutex));
-      //     return NULL;
-      //   } else {
-      //     taosThreadCondWait(&(vnodeGlobal.hasTask), &(vnodeGlobal.mutex));
-      //   }
-      // } else {
-      //   TD_DLIST_POP(&(vnodeGlobal.queue), pTask);
-      //   break;
-      // }
+      pTask = vnodeGlobal.queue.next;
+      if (pTask == &vnodeGlobal.queue) {
+        // no task
+        if (vnodeGlobal.stop) {
+          taosThreadMutexUnlock(&(vnodeGlobal.mutex));
+          return NULL;
+        } else {
+          taosThreadCondWait(&(vnodeGlobal.hasTask), &(vnodeGlobal.mutex));
+        }
+      } else {
+        // has task
+        pTask->prev->next = pTask->next;
+        pTask->next->prev = pTask->prev;
+        break;
+      }
     }
 
     taosThreadMutexUnlock(&(vnodeGlobal.mutex));
 
-    (*(pTask->execute))(pTask->arg);
+    pTask->execute(pTask->arg);
     taosMemoryFree(pTask);
   }
 
