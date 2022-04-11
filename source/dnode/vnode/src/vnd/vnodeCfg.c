@@ -26,7 +26,7 @@ const SVnodeCfg vnodeCfgDefault = {
     .flag = 0,
     // vnd
     .isHeap = 0,
-    .szBuf = 96 * 1024 * 1024,  // 96M
+    .szBuf = 32,  // 32 * 3 = 96M
     // wal
     .walCfg = {.level = TAOS_WAL_WRITE},
     // meta

@@ -16,7 +16,21 @@
 #include "vnodeInt.h"
 
 int tsdbOpen(SVnode *pVnode, STsdb **ppTsdb) {
-  // TODO
+  STsdb *pTsdb;
+
+  *ppTsdb = NULL;
+
+  pTsdb = taosMemoryCalloc(1, sizeof(*pTsdb));
+  if (pTsdb == NULL) {
+    terrno = TSDB_CODE_OUT_OF_MEMORY;
+    return -1;
+  }
+
+  pTsdb->pVnode = pVnode;
+
+  // TODO: loop to load all file infos
+
+  *ppTsdb = pTsdb;
   return 0;
 }
 

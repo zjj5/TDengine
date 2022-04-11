@@ -28,7 +28,7 @@ target_sources(
     # "src/meta/metaTDBImpl.c"
 
     # tsdb
-    # "src/tsdb/tsdbOpen.c"
+    "src/tsdb/tsdbOpen.c"
     "src/tsdb/tsdbRead.c"
     # "src/tsdb/tsdbBDBImpl.c"
     # "src/tsdb/tsdbCommit.c"

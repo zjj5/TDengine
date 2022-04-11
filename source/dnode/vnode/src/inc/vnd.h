@@ -64,6 +64,10 @@ void  vnodeBufPoolReset(SVBufPool* pPool);
 void* vnodeBufPoolMalloc(SVBufPool* pPool, size_t size);
 void  vnodeBufPoolFree(SVBufPool* pPool, void* p);
 
+// vnodeQuery ====================
+int  vnodeQueryOpen(SVnode* pVnode);
+void vnodeQueryClose(SVnode* pVnode);
+
 #if 0  // -----------------------------
 typedef struct SVnodeTask {
   TD_DLIST_NODE(SVnodeTask);
@@ -89,8 +93,6 @@ struct SSink {
 
 // SVState
 int  vnodeScheduleTask(SVnodeTask* task);
-int  vnodeQueryOpen(SVnode* pVnode);
-void vnodeQueryClose(SVnode* pVnode);
 
 // vnodeCfg.h
 extern const SVnodeCfg defaultVnodeOptions;

@@ -85,7 +85,7 @@ int vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs) {
   pVnode->pTfs = pTfs;
 
   // open buffer pool sub-system
-  ret = vnodeOpenBufPool(pVnode, pVnode->config.isHeap ? 0 : pVnode->config.szBuf / 3);
+  ret = vnodeOpenBufPool(pVnode, pVnode->config.isHeap ? 0 : pVnode->config.szBuf * 1024 * 1024 / 3);
   if (ret < 0) {
     return -1;
   }
@@ -96,7 +96,6 @@ int vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs) {
     return -1;
   }
 
-#if 0
   // open meta tsdb-system
   ret = vnodeOpenTsdb(pVnode);
   if (ret < 0) {
@@ -115,6 +114,7 @@ int vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs) {
     return -1;
   }
 
+#if 0
   // open meta query-system
   ret = vnodeQueryOpen(pVnode);
   if (ret < 0) {
@@ -160,7 +160,6 @@ static int vnodeOpenMeta(SVnode *pVnode) {
 }
 
 static int vnodeOpenTsdb(SVnode *pVnode) {
-#if 0
   int ret;
 
   ret = tsdbOpen(pVnode, &pVnode->pTsdb);
@@ -171,12 +170,10 @@ static int vnodeOpenTsdb(SVnode *pVnode) {
 
   vDebug("vgId: %d vnode tsdb is opened", TD_VNODE_ID(pVnode));
 
-#endif
   return 0;
 }
 
 static int vnodeOpenWal(SVnode *pVnode) {
-#if 0
   char path[TSDB_FILENAME_LEN];
 
   snprintf(path, TSDB_FILENAME_LEN, "%s/%s", pVnode->path, VND_WAL_DIR);
@@ -189,7 +186,6 @@ static int vnodeOpenWal(SVnode *pVnode) {
 
   vDebug("vgId: %d vnode wal is opened", TD_VNODE_ID(pVnode));
 
-#endif
   return 0;
 }
 
@@ -207,8 +203,8 @@ static int vnodeOpenTq(SVnode *pVnode) {
   }
 
   vDebug("vgId: %d vnode tq is opened", TD_VNODE_ID(pVnode));
-
 #endif
+
   return 0;
 }
 
