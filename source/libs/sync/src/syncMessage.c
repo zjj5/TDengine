@@ -786,9 +786,16 @@ void syncPingReplyLog2(char* s, const SyncPingReply* pMsg) {
   taosMemoryFree(serialized);
 }
 
+// ---- message process SyncClientRequest----
+void syncClientRequestInit(SRpcMsg* pRpcMsg, uint64_t seqNum, bool isWeak, SyncClientRequest* pMsg) {
+  pMsg->seqNum = seqNum;
+  pMsg->isWeak = isWeak;
+  pMsg->pRpcMsg = pRpcMsg;
+}
+
 // ---- message process SyncClientRequestCopy----
 SyncClientRequestCopy* syncClientRequestCopyBuild(uint32_t dataLen) {
-  uint32_t           bytes = sizeof(SyncClientRequestCopy) + dataLen;
+  uint32_t               bytes = sizeof(SyncClientRequestCopy) + dataLen;
   SyncClientRequestCopy* pMsg = taosMemoryMalloc(bytes);
   memset(pMsg, 0, bytes);
   pMsg->bytes = bytes;
@@ -800,7 +807,8 @@ SyncClientRequestCopy* syncClientRequestCopyBuild(uint32_t dataLen) {
 }
 
 // step 1. original SRpcMsg => SyncClientRequestCopy, add seqNum, isWeak
-SyncClientRequestCopy* syncClientRequestCopyBuild2(const SRpcMsg* pOriginalRpcMsg, uint64_t seqNum, bool isWeak, int32_t vgId) {
+SyncClientRequestCopy* syncClientRequestCopyBuild2(const SRpcMsg* pOriginalRpcMsg, uint64_t seqNum, bool isWeak,
+                                                   int32_t vgId) {
   SyncClientRequestCopy* pMsg = syncClientRequestCopyBuild(pOriginalRpcMsg->contLen);
   pMsg->vgId = vgId;
   pMsg->originalRpcType = pOriginalRpcMsg->msgType;
@@ -837,7 +845,7 @@ char* syncClientRequestCopySerialize2(const SyncClientRequestCopy* pMsg, uint32_
 }
 
 SyncClientRequestCopy* syncClientRequestCopyDeserialize2(const char* buf, uint32_t len) {
-  uint32_t           bytes = *((uint32_t*)buf);
+  uint32_t               bytes = *((uint32_t*)buf);
   SyncClientRequestCopy* pMsg = taosMemoryMalloc(bytes);
   assert(pMsg != NULL);
   syncClientRequestCopyDeserialize(buf, len, pMsg);

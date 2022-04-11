@@ -308,6 +308,13 @@ void syncTimeoutLog2(char* s, const SyncTimeout* pMsg);
 //---------------------
 
 //----------
+typedef struct SyncClientRequest {
+  uint64_t seqNum;
+  bool     isWeak;
+  SRpcMsg* pRpcMsg;
+} SyncClientRequest;
+
+void syncClientRequestInit(SRpcMsg* pRpcMsg, uint64_t seqNum, bool isWeak, SyncClientRequest* pMsg);
 
 // ---------------------------------------------
 typedef struct SyncClientRequestCopy {
@@ -323,17 +330,17 @@ typedef struct SyncClientRequestCopy {
 
 SyncClientRequestCopy* syncClientRequestCopyBuild(uint32_t dataLen);
 SyncClientRequestCopy* syncClientRequestCopyBuild2(const SRpcMsg* pOriginalRpcMsg, uint64_t seqNum, bool isWeak,
-                                           int32_t vgId);  // step 1
-void               syncClientRequestCopyDestroy(SyncClientRequestCopy* pMsg);
-void               syncClientRequestCopySerialize(const SyncClientRequestCopy* pMsg, char* buf, uint32_t bufLen);
-void               syncClientRequestCopyDeserialize(const char* buf, uint32_t len, SyncClientRequestCopy* pMsg);
-char*              syncClientRequestCopySerialize2(const SyncClientRequestCopy* pMsg, uint32_t* len);
+                                                   int32_t vgId);  // step 1
+void                   syncClientRequestCopyDestroy(SyncClientRequestCopy* pMsg);
+void                   syncClientRequestCopySerialize(const SyncClientRequestCopy* pMsg, char* buf, uint32_t bufLen);
+void                   syncClientRequestCopyDeserialize(const char* buf, uint32_t len, SyncClientRequestCopy* pMsg);
+char*                  syncClientRequestCopySerialize2(const SyncClientRequestCopy* pMsg, uint32_t* len);
 SyncClientRequestCopy* syncClientRequestCopyDeserialize2(const char* buf, uint32_t len);
-void               syncClientRequestCopy2RpcMsg(const SyncClientRequestCopy* pMsg, SRpcMsg* pRpcMsg);  // step 2
-void               syncClientRequestCopyFromRpcMsg(const SRpcMsg* pRpcMsg, SyncClientRequestCopy* pMsg);
+void                   syncClientRequestCopy2RpcMsg(const SyncClientRequestCopy* pMsg, SRpcMsg* pRpcMsg);  // step 2
+void                   syncClientRequestCopyFromRpcMsg(const SRpcMsg* pRpcMsg, SyncClientRequestCopy* pMsg);
 SyncClientRequestCopy* syncClientRequestCopyFromRpcMsg2(const SRpcMsg* pRpcMsg);  // step 3
-cJSON*             syncClientRequestCopy2Json(const SyncClientRequestCopy* pMsg);
-char*              syncClientRequestCopy2Str(const SyncClientRequestCopy* pMsg);
+cJSON*                 syncClientRequestCopy2Json(const SyncClientRequestCopy* pMsg);
+char*                  syncClientRequestCopy2Str(const SyncClientRequestCopy* pMsg);
 
 // for debug ----------------------
 void syncClientRequestCopyPrint(const SyncClientRequestCopy* pMsg);
