@@ -48,32 +48,44 @@ int vnodeCreate(const char *path, SVnodeCfg *pCfg, STfs *pTfs) {
 void vnodeDestroy(const char *path, STfs *pTfs) { tfsRmdir(pTfs, path); }
 
 int vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs) {
-#if 0
-  SVnode *pVnode;
-  int     ret;
+  SVnode   *pVnode;
+  char      dir[TSDB_FILENAME_LEN];
+  int       ret;
+  int       slen;
+  SVnodeCfg cfg;
 
   *ppVnode = NULL;
 
-  if (1) {
-    // create a new vnode
-    // 1. validate the config parameter
-    // 2. create the vnode on disk (create directory and files)
-  } else {
-    // open an existing vnode
-    // 1. load the config
-    // 2. check the config
+  // load config
+  snprintf(dir, TSDB_FILENAME_LEN, "%s%s%s", tfsGetPrimaryPath(pTfs), TD_DIRSEP, path);
+  ret = vnodeLoadCfg(dir, &cfg);
+  if (ret < 0) {
+    vError("failed to open vnode %s since %s", path, tstrerror(terrno));
+    return -1;
+  }
+
+  // check config
+  if (vnodeCheckCfg(&cfg) < 0) {
+    vError("failed to open vnode %s since %s", path, tstrerror(terrno));
+    return -1;
   }
 
   // open the vnode from the environment
-  pVnode = taosMemoryCalloc(1, sizeof(*pVnode));
+  slen = strlen(path);
+  pVnode = taosMemoryCalloc(1, sizeof(*pVnode) + slen + 1);
   if (pVnode == NULL) {
     terrno = TSDB_CODE_OUT_OF_MEMORY;
     return -1;
   }
 
+  memcpy(&pVnode->config, &cfg, sizeof(cfg));
+  pVnode->path = (char *)&pVnode[1];
+  memcpy(pVnode->path, path, slen);
+  pVnode->path[slen] = '\0';
+  pVnode->pTfs = pTfs;
+
   // open buffer pool sub-system
-  uint8_t heap = 0;
-  ret = vnodeOpenBufPool(pVnode, heap ? 0 : pVnode->config.wsize / 3);
+  ret = vnodeOpenBufPool(pVnode, pVnode->config.isHeap ? 0 : pVnode->config.szBuf / 3);
   if (ret < 0) {
     return -1;
   }
@@ -84,6 +96,7 @@ int vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs) {
     return -1;
   }
 
+#if 0
   // open meta tsdb-system
   ret = vnodeOpenTsdb(pVnode);
   if (ret < 0) {
@@ -113,29 +126,26 @@ int vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs) {
   if (ret < 0) {
     return -1;
   }
+#endif
 
   *ppVnode = pVnode;
-#endif
   return 0;
 }
 
 void vnodeClose(SVnode *pVnode) {
-#if 0
   if (pVnode) {
-    vnodeSyncCommit(pVnode);
-    vnodeQueryClose(pVnode);
-    vnodeCloseTq(pVnode);
-    vnodeCloseWal(pVnode);
-    vnodeCloseTsdb(pVnode);
-    vnodeCloseMeta(pVnode);
-    taosMemoryFree(pVnode);
+    // vnodeSyncCommit(pVnode);
+    // vnodeQueryClose(pVnode);
+    // vnodeCloseTq(pVnode);
+    // vnodeCloseWal(pVnode);
+    // vnodeCloseTsdb(pVnode);
+    // vnodeCloseMeta(pVnode);
+    // taosMemoryFree(pVnode);
   }
-#endif
 }
 
 // static methods ----------
 static int vnodeOpenMeta(SVnode *pVnode) {
-#if 0
   int ret;
 
   ret = metaOpen(pVnode, &pVnode->pMeta);
@@ -145,7 +155,6 @@ static int vnodeOpenMeta(SVnode *pVnode) {
   }
 
   vDebug("vgId: %d vnode meta is opened", TD_VNODE_ID(pVnode));
-#endif
 
   return 0;
 }

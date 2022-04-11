@@ -55,9 +55,8 @@ typedef struct {
 } SVState;
 
 struct SVnode {
-  int32_t    vgId;
-  char*      path;
   SVnodeCfg  config;
+  char*      path;
   SVState    state;
   SVBufPool* pPool;
   SVBufPool* inUse;
@@ -74,7 +73,7 @@ struct SVnode {
   STfs*      pTfs;
 };
 
-#define TD_VNODE_ID(PVNODE) (PVNODE)->vgId
+#define TD_VNODE_ID(PVNODE) (PVNODE)->config.vgId
 
 #define VND_META_DIR "meta"
 #define VND_TSDB_DIR "tsdb"

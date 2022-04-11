@@ -15,7 +15,7 @@ target_sources(
     # "src/vnd/vnodeWrite.c"
 
     # meta
-    # "src/meta/metaOpen.c"
+    "src/meta/metaOpen.c"
     "src/meta/metaRead.c"
     # "src/meta/metaBDBImpl.c"
     # "src/meta/metaCfg.c"
