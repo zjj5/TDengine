@@ -45,7 +45,7 @@ typedef struct STsdbQueryCond STsdbQueryCond;
 typedef struct SDataStatis    SDataStatis;
 
 // vnode
-int  vnodeInit();
+int  vnodeInit(int nthreads);
 void vnodeCleanup();
 int  vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg, SVnode **ppVnode);
 void vnodeClose(SVnode *pVnode);

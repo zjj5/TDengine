@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-// vndDebug
+// vndDebug ====================
 // clang-format off
 #define vFatal(...) do { if (vDebugFlag & DEBUG_FATAL) { taosPrintLog("VND FATAL ", DEBUG_FATAL, 255, __VA_ARGS__); }}     while(0)
 #define vError(...) do { if (vDebugFlag & DEBUG_ERROR) { taosPrintLog("VND ERROR ", DEBUG_ERROR, 255, __VA_ARGS__); }}     while(0)
@@ -30,7 +30,10 @@ extern "C" {
 #define vTrace(...) do { if (vDebugFlag & DEBUG_TRACE) { taosPrintLog("VND ", DEBUG_TRACE, vDebugFlag, __VA_ARGS__); }}    while(0)
 // clang-format on
 
-// vnodeBufferPool
+// vnodeModule ====================
+int vnodeScheduleTask(int (*)(void*), void*);
+
+// vnodeBufferPool ====================
 typedef struct SVBufPoolNode SVBufPoolNode;
 struct SVBufPoolNode {
   SVBufPoolNode*  prev;

@@ -15,118 +15,134 @@
 
 #include "vnodeInt.h"
 
-// typedef struct SVnodeMgr {
-//   td_mode_flag_t vnodeInitFlag;
-//   // For commit
-//   bool          stop;
-//   uint16_t      nthreads;
-//   TdThread*     threads;
-//   TdThreadMutex mutex;
-//   TdThreadCond  hasTask;
-//   TD_DLIST(SVnodeTask) queue;
-// } SVnodeMgr;
+typedef struct SVnodeTask SVnodeTask;
+struct SVnodeTask {
+  SVnodeTask* next;
+  SVnodeTask* prev;
+  int (*execute)(void*);
+  void* arg;
+};
 
-// SVnodeMgr vnodeMgr = {.vnodeInitFlag = TD_MOD_UNINITIALIZED};
+struct SVnodeGlobal {
+  int8_t        init;
+  int8_t        stop;
+  int           nthreads;
+  TdThread*     threads;
+  TdThreadMutex mutex;
+  TdThreadCond  hasTask;
+  SVnodeTask*   head;
+  SVnodeTask*   tail;
+};
+
+struct SVnodeGlobal vnodeGlobal;
 
 static void* loop(void* arg);
 
-int vnodeInit() {
-#if 0
-  if (TD_CHECK_AND_SET_MODE_INIT(&(vnodeMgr.vnodeInitFlag)) == TD_MOD_INITIALIZED) {
+int vnodeInit(int nthreads) {
+  int8_t init;
+  int    ret;
+
+  init = atomic_val_compare_exchange_8(&(vnodeGlobal.init), 0, 1);
+  if (init) {
     return 0;
   }
 
-  vnodeMgr.stop = false;
+  vnodeGlobal.stop = 0;
 
-  // Start commit handers
-  vnodeMgr.nthreads = tsNumOfCommitThreads;
-  vnodeMgr.threads = taosMemoryCalloc(vnodeMgr.nthreads, sizeof(TdThread));
-  if (vnodeMgr.threads == NULL) {
+  vnodeGlobal.nthreads = nthreads;
+  vnodeGlobal.threads = taosMemoryCalloc(nthreads, sizeof(TdThread));
+  if (vnodeGlobal.threads == NULL) {
+    terrno = TSDB_CODE_OUT_OF_MEMORY;
+    vError("failed to init vnode module since: %s", tstrerror(terrno));
     return -1;
   }
 
-  taosThreadMutexInit(&(vnodeMgr.mutex), NULL);
-  taosThreadCondInit(&(vnodeMgr.hasTask), NULL);
-  TD_DLIST_INIT(&(vnodeMgr.queue));
+  taosThreadMutexInit(&vnodeGlobal.mutex, NULL);
+  taosThreadCondInit(&vnodeGlobal.hasTask, NULL);
 
-  for (uint16_t i = 0; i < vnodeMgr.nthreads; i++) {
-    taosThreadCreate(&(vnodeMgr.threads[i]), NULL, loop, NULL);
-    // pthread_setname_np(vnodeMgr.threads[i], "VND Commit Thread");
+  for (int i = 0; i < nthreads; i++) {
+    taosThreadCreate(&(vnodeGlobal.threads[i]), NULL, loop, NULL);
   }
 
   if (walInit() < 0) {
     return -1;
   }
 
-#endif
   return 0;
 }
 
 void vnodeCleanup() {
-#if 0
-  if (TD_CHECK_AND_SET_MOD_CLEAR(&(vnodeMgr.vnodeInitFlag)) == TD_MOD_UNINITIALIZED) {
-    return;
+  int8_t init;
+
+  init = atomic_val_compare_exchange_8(&(vnodeGlobal.init), 1, 0);
+  if (init == 0) return;
+
+  // set stop
+  taosThreadMutexLock(&(vnodeGlobal.mutex));
+  vnodeGlobal.stop = 1;
+  taosThreadCondBroadcast(&(vnodeGlobal.hasTask));
+  taosThreadMutexUnlock(&(vnodeGlobal.mutex));
+
+  // wait for threads
+  for (int i = 0; i < vnodeGlobal.nthreads; i++) {
+    taosThreadJoin(vnodeGlobal.threads[i], NULL);
   }
 
-  // Stop commit handler
-  taosThreadMutexLock(&(vnodeMgr.mutex));
-  vnodeMgr.stop = true;
-  taosThreadCondBroadcast(&(vnodeMgr.hasTask));
-  taosThreadMutexUnlock(&(vnodeMgr.mutex));
-
-  for (uint16_t i = 0; i < vnodeMgr.nthreads; i++) {
-    taosThreadJoin(vnodeMgr.threads[i], NULL);
-  }
-
-  taosMemoryFreeClear(vnodeMgr.threads);
-  taosThreadCondDestroy(&(vnodeMgr.hasTask));
-  taosThreadMutexDestroy(&(vnodeMgr.mutex));
-#endif
+  // clear source
+  taosMemoryFreeClear(vnodeGlobal.threads);
+  taosThreadCondDestroy(&(vnodeGlobal.hasTask));
+  taosThreadMutexDestroy(&(vnodeGlobal.mutex));
 }
 
-#if 0
-int vnodeScheduleTask(SVnodeTask* pTask) {
-  taosThreadMutexLock(&(vnodeMgr.mutex));
+int vnodeScheduleTask(int (*execute)(void*), void* arg) {
+  SVnodeTask* pTask;
 
-  TD_DLIST_APPEND(&(vnodeMgr.queue), pTask);
+  ASSERT(!vnodeGlobal.stop);
 
-  taosThreadCondSignal(&(vnodeMgr.hasTask));
+  pTask = taosMemoryMalloc(sizeof(*pTask));
+  if (pTask == NULL) {
+    terrno = TSDB_CODE_OUT_OF_MEMORY;
+    return -1;
+  }
 
-  taosThreadMutexUnlock(&(vnodeMgr.mutex));
+  pTask->execute = execute;
+  pTask->arg = arg;
+
+  taosThreadMutexLock(&(vnodeGlobal.mutex));
+  // TODO: add to queue
+  taosThreadCondSignal(&(vnodeGlobal.hasTask));
+  taosThreadMutexUnlock(&(vnodeGlobal.mutex));
 
   return 0;
 }
-#endif
 
 /* ------------------------ STATIC METHODS ------------------------ */
 static void* loop(void* arg) {
-#if 0
   setThreadName("vnode-commit");
 
   SVnodeTask* pTask;
   for (;;) {
-    taosThreadMutexLock(&(vnodeMgr.mutex));
+    taosThreadMutexLock(&(vnodeGlobal.mutex));
     for (;;) {
-      pTask = TD_DLIST_HEAD(&(vnodeMgr.queue));
-      if (pTask == NULL) {
-        if (vnodeMgr.stop) {
-          taosThreadMutexUnlock(&(vnodeMgr.mutex));
-          return NULL;
-        } else {
-          taosThreadCondWait(&(vnodeMgr.hasTask), &(vnodeMgr.mutex));
-        }
-      } else {
-        TD_DLIST_POP(&(vnodeMgr.queue), pTask);
-        break;
-      }
+      // pTask = TD_DLIST_HEAD(&(vnodeGlobal.queue));
+      // if (pTask == NULL) {
+      //   if (vnodeGlobal.stop) {
+      //     taosThreadMutexUnlock(&(vnodeGlobal.mutex));
+      //     return NULL;
+      //   } else {
+      //     taosThreadCondWait(&(vnodeGlobal.hasTask), &(vnodeGlobal.mutex));
+      //   }
+      // } else {
+      //   TD_DLIST_POP(&(vnodeGlobal.queue), pTask);
+      //   break;
+      // }
     }
 
-    taosThreadMutexUnlock(&(vnodeMgr.mutex));
+    taosThreadMutexUnlock(&(vnodeGlobal.mutex));
 
     (*(pTask->execute))(pTask->arg);
     taosMemoryFree(pTask);
   }
 
-#endif
   return NULL;
 }
