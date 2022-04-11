@@ -15,43 +15,52 @@
 
 #include "vnodeInt.h"
 
-const SVnodeCfg defaultVnodeOptions = {
-    .wsize = 96 * 1024 * 1024, .ssize = 1 * 1024 * 1024, .lsize = 1024, .walCfg = {.level = TAOS_WAL_WRITE}}; /* TODO */
+const SVnodeCfg vnodeCfgDefault = {
+    .vgId = -1,
+    .flag = 0,
+    // vnd
+    .isHeap = 0,
+    .szBuf = 96 * 1024 * 1024,  // 96M
+    // wal
+    .walCfg = {.level = TAOS_WAL_WRITE},
+    // meta
+    .szPage = 4096,
+    .szCache = 256,
+    // tsdb
+    .precision = TSDB_TIME_PRECISION_MILLI,
+    .compress = TWO_STAGE_COMP,
+    .minutes = 60 * 24 * 10,  // 10 days
+    .minRows = 100,
+    .maxRows = 4096,
+    .keep0 = 60 * 24 * 3650,  // 10 years
+    .keep1 = 60 * 24 * 3650,  // 10 years
+    .keep2 = 60 * 24 * 3650   // 10 years
+};
 
-void vnodeOptionsInit(SVnodeCfg *pVnodeOptions) { /* TODO */
-  vnodeOptionsCopy(pVnodeOptions, &defaultVnodeOptions);
+int vnodeCheckCfg(SVnodeCfg *pCfg) {
+  // vgId
+  if (pCfg->vgId <= 0) {
+    terrno = TSDB_CODE_VND_INVALID_VGROUP_ID;
+    return -1;
+  }
+
+  // flags
+  if (pCfg->flag != 0 && pCfg->flag != VND_FLG_STREM_MODE) {
+    terrno = TSDB_CODE_VND_INVLID_FLAG;
+    return -1;
+  }
+
+  // TODO
+
+  return 0;
 }
 
-void vnodeOptionsClear(SVnodeCfg *pVnodeOptions) { /* TODO */
-}
-
-int vnodeValidateOptions(const SVnodeCfg *pVnodeOptions) {
+int vnodeSaveCfg(const char *path, SVnodeCfg *pCfg) {
   // TODO
   return 0;
 }
 
-void vnodeOptionsCopy(SVnodeCfg *pDest, const SVnodeCfg *pSrc) {
-  memcpy((void *)pDest, (void *)pSrc, sizeof(SVnodeCfg));
+int vnodeLoadCfg(const char *path, SVnodeCfg *pCfg) {
+  // TODO
+  return 0;
 }
-
-int vnodeValidateTableHash(SVnodeCfg *pVnodeOptions, char *tableFName) {
-  uint32_t hashValue = 0;
-  
-  switch (pVnodeOptions->hashMethod) {
-    default:
-      hashValue = MurmurHash3_32(tableFName, strlen(tableFName));
-      break;
-  }
-
-  // TODO OPEN THIS !!!!!!!
-#if 0
-  if (hashValue < pVnodeOptions->hashBegin || hashValue > pVnodeOptions->hashEnd) {
-    terrno = TSDB_CODE_VND_HASH_MISMATCH;
-    return TSDB_CODE_VND_HASH_MISMATCH;
-  }
-#endif
-
-  return TSDB_CODE_SUCCESS;
-}
-
-

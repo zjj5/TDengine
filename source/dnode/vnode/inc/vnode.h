@@ -92,8 +92,10 @@ SArray *tqRetrieveDataBlock(STqReadHandle *pHandle);
 void    tqReadHandleSetColIdList(STqReadHandle *pReadHandle, SArray *pColIdList);
 int     tqReadHandleSetTbUidList(STqReadHandle *pHandle, const SArray *tbUidList);
 
+#define VND_FLG_STREM_MODE 0x1
 struct SVnodeCfg {
   int32_t vgId;
+  int32_t flag;
   // vnd
   int8_t  isHeap;
   int64_t szBuf;
@@ -105,8 +107,8 @@ struct SVnodeCfg {
   // tq
   // tsdb
   int8_t  precision;
-  int8_t  comp;
-  int32_t days;
+  int8_t  compress;
+  int32_t minutes;
   int32_t minRows;
   int32_t maxRows;
   int32_t keep0;
@@ -151,7 +153,7 @@ struct STqReadHandle {
   int32_t           sver;
   SSchemaWrapper   *pSchemaWrapper;
   STSchema         *pSchema;
-} ;
+};
 
 #define BLOCK_LOAD_OFFSET_SEQ_ORDER 1
 #define BLOCK_LOAD_TABLE_SEQ_ORDER  2

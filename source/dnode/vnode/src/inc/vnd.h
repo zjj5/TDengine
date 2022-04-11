@@ -33,6 +33,13 @@ extern "C" {
 // vnodeModule ====================
 int vnodeScheduleTask(int (*)(void*), void*);
 
+// vnodeCfg ====================
+extern const SVnodeCfg vnodeCfgDefault;
+
+int vnodeCheckCfg(SVnodeCfg* pCfg);
+int vnodeSaveCfg(const char* path, SVnodeCfg* pCfg);
+int vnodeLoadCfg(const char* path, SVnodeCfg* pCfg);
+
 // vnodeBufferPool ====================
 typedef struct SVBufPoolNode SVBufPoolNode;
 struct SVBufPoolNode {

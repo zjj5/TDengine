@@ -24,8 +24,17 @@ static int vnodeCloseTsdb(SVnode *pVnode);
 static int vnodeCloseWal(SVnode *pVnode);
 static int vnodeCloseTq(SVnode *pVnode);
 
-int vnodeCreate(const char *path, SVnodeCfg *pCfg) {
-  // TODO
+int vnodeCreate(const char *path, SVnodeCfg *pCfg, STfs *pTfs) {
+  // TODO: check if directory exists
+
+  // check config
+  if (vnodeCheckCfg(pCfg) < 0) {
+    vError("vgId: %d failed to create vnode since: %s", pCfg->vgId, tstrerror(terrno));
+    return -1;
+  }
+
+  // TODO: create vnode env
+
   return 0;
 }
 
