@@ -23,7 +23,7 @@
 
 // #include "tarray.h"
 // #include "tfs.h"
-// #include "wal.h"
+#include "wal.h"
 
 #include "tcommon.h"
 #include "tfs.h"
@@ -42,6 +42,7 @@ typedef void                 *tsdbReaderT;
 typedef struct SMTbCursor     SMTbCursor;
 typedef struct SMCtbCursor    SMCtbCursor;
 typedef struct STsdbQueryCond STsdbQueryCond;
+typedef struct SDataStatis    SDataStatis;
 
 // vnode
 int  vnodeInit();
@@ -80,6 +81,7 @@ int32_t      tsdbQuerySTableByTagCond(void *pMeta, uint64_t uid, TSKEY skey, con
                                       int16_t tagNameRelType, const char *tbnameCond, STableGroupInfo *pGroupInfo,
                                       SColIndex *pColIndex, int32_t numOfCols, uint64_t reqId, uint64_t taskId);
 int32_t      tsdbGetOneTableGroup(void *pMeta, uint64_t uid, TSKEY startKey, STableGroupInfo *pGroupInfo);
+int32_t      tsdbRetrieveDataBlockStatisInfo(tsdbReaderT *pTsdbReadHandle, SDataStatis **pBlockStatis);
 
 // tq
 int32_t tqReadHandleSetMsg(STqReadHandle *pHandle, SSubmitReq *pMsg, int64_t ver);
@@ -91,7 +93,25 @@ void    tqReadHandleSetColIdList(STqReadHandle *pReadHandle, SArray *pColIdList)
 int     tqReadHandleSetTbUidList(STqReadHandle *pHandle, const SArray *tbUidList);
 
 struct SVnodeCfg {
-  // TODO
+  int32_t vgId;
+  // vnd
+  int8_t  isHeap;
+  int64_t szBuf;
+  // wal
+  SWalCfg walCfg;
+  // meta
+  int32_t szPage;
+  int32_t szCache;
+  // tq
+  // tsdb
+  int8_t  precision;
+  int8_t  comp;
+  int32_t days;
+  int32_t minRows;
+  int32_t maxRows;
+  int32_t keep0;
+  int32_t keep1;
+  int32_t keep2;
 };
 
 typedef struct {
@@ -107,6 +127,31 @@ struct STsdbQueryCond {
   bool         loadExternalRows;  // load external rows or not
   int32_t      type;              // data block load type:
 };
+
+struct SDataStatis {
+  int16_t colId;
+  int16_t maxIndex;
+  int16_t minIndex;
+  int16_t numOfNull;
+  int64_t sum;
+  int64_t max;
+  int64_t min;
+};
+
+struct STqReadHandle {
+  int64_t           ver;
+  int64_t           tbUid;
+  SHashObj         *tbIdHash;
+  const SSubmitReq *pMsg;
+  SSubmitBlk       *pBlock;
+  SSubmitMsgIter    msgIter;
+  SSubmitBlkIter    blkIter;
+  SMeta            *pVnodeMeta;
+  SArray           *pColIdList;  // SArray<int32_t>
+  int32_t           sver;
+  SSchemaWrapper   *pSchemaWrapper;
+  STSchema         *pSchema;
+} ;
 
 #define BLOCK_LOAD_OFFSET_SEQ_ORDER 1
 #define BLOCK_LOAD_TABLE_SEQ_ORDER  2
@@ -180,15 +225,6 @@ typedef struct SMSmaCursor SMSmaCursor;
 typedef SVCreateTbReq   STbCfg;
 typedef SVCreateTSmaReq SSmaCfg;
 
-typedef struct SDataStatis {
-  int16_t colId;
-  int16_t maxIndex;
-  int16_t minIndex;
-  int16_t numOfNull;
-  int64_t sum;
-  int64_t max;
-  int64_t min;
-} SDataStatis;
 
 
 
@@ -203,21 +239,6 @@ typedef struct STable {
 
 // TYPES EXPOSED
 typedef struct STsdb STsdb;
-
-struct STqReadHandle {
-  int64_t           ver;
-  int64_t           tbUid;
-  SHashObj         *tbIdHash;
-  const SSubmitReq *pMsg;
-  SSubmitBlk       *pBlock;
-  SSubmitMsgIter    msgIter;
-  SSubmitBlkIter    blkIter;
-  SMeta            *pVnodeMeta;
-  SArray           *pColIdList;  // SArray<int32_t>
-  int32_t           sver;
-  SSchemaWrapper   *pSchemaWrapper;
-  STSchema         *pSchema;
-} ;
 
 /**
  * @brief Apply a write request message.
@@ -455,7 +476,6 @@ bool isTsdbCacheLastRow(tsdbReaderT *pReader);
  * @pBlockStatis the pre-calculated value for current data blocks. if the block is a cache block, always return 0
  * @return
  */
-int32_t tsdbRetrieveDataBlockStatisInfo(tsdbReaderT *pTsdbReadHandle, SDataStatis **pBlockStatis);
 
 /**
  *

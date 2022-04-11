@@ -82,31 +82,31 @@ int32_t vmProcessGetVnodeLoadsReq(SMgmtWrapper *pWrapper, SNodeMsg *pReq) {
 }
 
 static void vmGenerateVnodeCfg(SCreateVnodeReq *pCreate, SVnodeCfg *pCfg) {
-  pCfg->vgId = pCreate->vgId;
-  pCfg->wsize = pCreate->cacheBlockSize;
-  pCfg->ssize = pCreate->cacheBlockSize;
-  pCfg->lsize = pCreate->cacheBlockSize;
-  pCfg->isHeapAllocator = true;
-  pCfg->ttl = 4;
-  pCfg->keep = pCreate->daysToKeep0;
-  pCfg->streamMode = pCreate->streamMode;
-  pCfg->isWeak = true;
-  pCfg->tsdbCfg.keep2 = pCreate->daysToKeep0;
-  pCfg->tsdbCfg.keep0 = pCreate->daysToKeep2;
-  pCfg->tsdbCfg.keep1 = pCreate->daysToKeep0;
-  pCfg->tsdbCfg.lruCacheSize = pCreate->cacheBlockSize;
-  pCfg->tsdbCfg.retentions = pCreate->pRetensions;
-  pCfg->metaCfg.lruSize = pCreate->cacheBlockSize;
-  pCfg->walCfg.fsyncPeriod = pCreate->fsyncPeriod;
-  pCfg->walCfg.level = pCreate->walLevel;
-  pCfg->walCfg.retentionPeriod = 10;
-  pCfg->walCfg.retentionSize = 128;
-  pCfg->walCfg.rollPeriod = 128;
-  pCfg->walCfg.segSize = 128;
-  pCfg->walCfg.vgId = pCreate->vgId;
-  pCfg->hashBegin = pCreate->hashBegin;
-  pCfg->hashEnd = pCreate->hashEnd;
-  pCfg->hashMethod = pCreate->hashMethod;
+  // pCfg->vgId = pCreate->vgId;
+  // pCfg->wsize = pCreate->cacheBlockSize;
+  // pCfg->ssize = pCreate->cacheBlockSize;
+  // pCfg->lsize = pCreate->cacheBlockSize;
+  // pCfg->isHeapAllocator = true;
+  // pCfg->ttl = 4;
+  // pCfg->keep = pCreate->daysToKeep0;
+  // pCfg->streamMode = pCreate->streamMode;
+  // pCfg->isWeak = true;
+  // pCfg->tsdbCfg.keep2 = pCreate->daysToKeep0;
+  // pCfg->tsdbCfg.keep0 = pCreate->daysToKeep2;
+  // pCfg->tsdbCfg.keep1 = pCreate->daysToKeep0;
+  // pCfg->tsdbCfg.lruCacheSize = pCreate->cacheBlockSize;
+  // pCfg->tsdbCfg.retentions = pCreate->pRetensions;
+  // pCfg->metaCfg.lruSize = pCreate->cacheBlockSize;
+  // pCfg->walCfg.fsyncPeriod = pCreate->fsyncPeriod;
+  // pCfg->walCfg.level = pCreate->walLevel;
+  // pCfg->walCfg.retentionPeriod = 10;
+  // pCfg->walCfg.retentionSize = 128;
+  // pCfg->walCfg.rollPeriod = 128;
+  // pCfg->walCfg.segSize = 128;
+  // pCfg->walCfg.vgId = pCreate->vgId;
+  // pCfg->hashBegin = pCreate->hashBegin;
+  // pCfg->hashEnd = pCreate->hashEnd;
+  // pCfg->hashMethod = pCreate->hashMethod;
 }
 
 static void vmGenerateWrapperCfg(SVnodesMgmt *pMgmt, SCreateVnodeReq *pCreate, SWrapperCfg *pCfg) {
@@ -152,9 +152,9 @@ int32_t vmProcessCreateVnodeReq(SVnodesMgmt *pMgmt, SNodeMsg *pMsg) {
   msgCb.queueFps[APPLY_QUEUE] = vmPutMsgToApplyQueue;
   msgCb.qsizeFp = vmGetQueueSize;
 
-  vnodeCfg.msgCb = msgCb;
-  vnodeCfg.pTfs = pMgmt->pTfs;
-  vnodeCfg.dbId = wrapperCfg.dbUid;
+  // vnodeCfg.msgCb = msgCb;
+  // vnodeCfg.pTfs = pMgmt->pTfs;
+  // vnodeCfg.dbId = wrapperCfg.dbUid;
   if (vnodeOpen(wrapperCfg.path, &vnodeCfg, &pImpl) < 0) {
     tFreeSCreateVnodeReq(&createReq);
     dError("vgId:%d, failed to create vnode since %s", createReq.vgId, terrstr());

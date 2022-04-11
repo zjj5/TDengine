@@ -35,6 +35,7 @@ void vnodeDestroy(const char *path) {
 }
 
 int vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg, SVnode **ppVnode) {
+#if 0
   SVnode *pVnode;
   int     ret;
 
@@ -101,10 +102,12 @@ int vnodeOpen(const char *path, const SVnodeCfg *pVnodeCfg, SVnode **ppVnode) {
   }
 
   *ppVnode = pVnode;
+#endif
   return 0;
 }
 
 void vnodeClose(SVnode *pVnode) {
+#if 0
   if (pVnode) {
     vnodeSyncCommit(pVnode);
     vnodeQueryClose(pVnode);
@@ -114,10 +117,12 @@ void vnodeClose(SVnode *pVnode) {
     vnodeCloseMeta(pVnode);
     taosMemoryFree(pVnode);
   }
+#endif
 }
 
 // static methods ----------
 static int vnodeOpenMeta(SVnode *pVnode) {
+#if 0
   int ret;
 
   ret = metaOpen(pVnode, &pVnode->pMeta);
@@ -127,11 +132,13 @@ static int vnodeOpenMeta(SVnode *pVnode) {
   }
 
   vDebug("vgId: %d vnode meta is opened", TD_VNODE_ID(pVnode));
+#endif
 
   return 0;
 }
 
 static int vnodeOpenTsdb(SVnode *pVnode) {
+#if 0
   int ret;
 
   ret = tsdbOpen(pVnode, &pVnode->pTsdb);
@@ -142,10 +149,12 @@ static int vnodeOpenTsdb(SVnode *pVnode) {
 
   vDebug("vgId: %d vnode tsdb is opened", TD_VNODE_ID(pVnode));
 
+#endif
   return 0;
 }
 
 static int vnodeOpenWal(SVnode *pVnode) {
+#if 0
   char path[TSDB_FILENAME_LEN];
 
   snprintf(path, TSDB_FILENAME_LEN, "%s/%s", pVnode->path, VND_WAL_DIR);
@@ -158,10 +167,12 @@ static int vnodeOpenWal(SVnode *pVnode) {
 
   vDebug("vgId: %d vnode wal is opened", TD_VNODE_ID(pVnode));
 
+#endif
   return 0;
 }
 
 static int vnodeOpenTq(SVnode *pVnode) {
+#if 0
   char path[TSDB_FILENAME_LEN];
 
   snprintf(path, TSDB_FILENAME_LEN, "%s/%s", pVnode->path, VND_TQ_DIR);
@@ -175,45 +186,54 @@ static int vnodeOpenTq(SVnode *pVnode) {
 
   vDebug("vgId: %d vnode tq is opened", TD_VNODE_ID(pVnode));
 
+#endif
   return 0;
 }
 
 static int vnodeCloseMeta(SVnode *pVnode) {
   int ret = 0;
 
+#if 0
   if (pVnode->pMeta) {
     ret = metaClose(pVnode->pMeta);
     pVnode->pMeta = NULL;
   }
+#endif
 
   return ret;
 }
 
 static int vnodeCloseTsdb(SVnode *pVnode) {
   int ret = 0;
+#if 0
 
   if (pVnode->pTsdb) {
     ret = tsdbClose(pVnode->pTsdb);
     pVnode->pTsdb = NULL;
   }
+#endif
 
   return ret;
 }
 
 static int vnodeCloseWal(SVnode *pVnode) {
+#if 0
   if (pVnode->pWal) {
     walClose(pVnode->pWal);
     pVnode->pWal = NULL;
   }
+#endif
 
   return 0;
 }
 
 static int vnodeCloseTq(SVnode *pVnode) {
+#if 0
   if (pVnode->pTq) {
     tqClose(pVnode->pTq);
     pVnode->pTq = NULL;
   }
+#endif
 
   return 0;
 }

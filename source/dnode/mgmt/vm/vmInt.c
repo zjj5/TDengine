@@ -135,7 +135,7 @@ static void *vmOpenVnodeFunc(void *param) {
     msgCb.queueFps[FETCH_QUEUE] = vmPutMsgToFetchQueue;
     msgCb.queueFps[APPLY_QUEUE] = vmPutMsgToApplyQueue;
     msgCb.qsizeFp = vmGetQueueSize;
-    SVnodeCfg cfg = {.msgCb = msgCb, .pTfs = pMgmt->pTfs, .vgId = pCfg->vgId, .dbId = pCfg->dbUid};
+    SVnodeCfg cfg = {/*.msgCb = msgCb, .pTfs = pMgmt->pTfs, .vgId = pCfg->vgId, .dbId = pCfg->dbUid*/};
     if (vnodeOpen(pCfg->path, &cfg, &pImpl) < 0) {
       dError("vgId:%d, failed to open vnode by thread:%d", pCfg->vgId, pThread->threadIndex);
       pThread->failed++;

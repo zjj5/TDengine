@@ -5,7 +5,7 @@ target_sources(
     PRIVATE
     # vnode
     "src/vnd/vnodeMgr.c"
-    # "src/vnd/vnodeOpen.c"
+    "src/vnd/vnodeOpen.c"
     # "src/vnd/vnodeBufferPool.c"
     # "src/vnd/vnodeQuery.c"
     # "src/vnd/vnodeCfg.c"
@@ -16,6 +16,7 @@ target_sources(
 
     # meta
     # "src/meta/metaOpen.c"
+    "src/meta/metaRead.c"
     # "src/meta/metaBDBImpl.c"
     # "src/meta/metaCfg.c"
     # "src/meta/metaIdx.c"
@@ -36,7 +37,7 @@ target_sources(
     # "src/tsdb/tsdbMain.c"
     # "src/tsdb/tsdbMemTable.c"
     # "src/tsdb/tsdbOptions.c"
-    # "src/tsdb/tsdbRead.c"
+    "src/tsdb/tsdbRead.c"
     # "src/tsdb/tsdbReadImpl.c"
     # "src/tsdb/tsdbScan.c"
     # "src/tsdb/tsdbSma.c"
@@ -48,7 +49,7 @@ target_sources(
     # "src/tq/tqMetaStore.c"
     # "src/tq/tqOffset.c"
     # "src/tq/tqPush.c"
-    # "src/tq/tqRead.c"
+    "src/tq/tqRead.c"
 )
 target_include_directories(
     vnode
