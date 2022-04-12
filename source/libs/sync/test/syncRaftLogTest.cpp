@@ -85,8 +85,10 @@ void syncRaftLogTest() {
     SSyncRaftEntry entry;
     syncRaftEntryInit(&entry, &syncMsg, 100+i, i);
 
-    syncRaftEntryPrint2((char*)"write entry:", &entry);
+    syncRaftEntryPrint2((char*)"====write entry====", &entry);
     pLog->appendEntry(pLog, &entry);
+
+    rpcFreeCont(entry.rpcMsg.pCont);
 
     if (i == 0) {
       assert(pLog->getLastIndex(pLog) == SYNC_INDEX_BEGIN);

@@ -310,6 +310,7 @@ SSyncRaftEntry* syncRaftLogGetEntry(SSyncRaftLog* pLog, SyncIndex index) {
   if (index >= SYNC_INDEX_BEGIN && index <= syncRaftLogLastIndex(pLog)) {
     SSyncRaftEntry* pEntry = taosMemoryMalloc(sizeof(SSyncRaftEntry));
     assert(pEntry != NULL);
+    memset(pEntry, 0, sizeof(SSyncRaftEntry));
 
     SWalReadHandle* pWalHandle = walOpenReadHandle(pWal);
     assert(walReadWithHandle(pWalHandle, index) == 0);
@@ -323,6 +324,7 @@ SSyncRaftEntry* syncRaftLogGetEntry(SSyncRaftLog* pLog, SyncIndex index) {
     SMsgHead* pHead = pEntry->rpcMsg.pCont;
     pEntry->vgId = pHead->vgId;
     pEntry->msgType = pWalHandle->pHead->head.msgType;
+    pEntry->rpcMsg.msgType = pWalHandle->pHead->head.msgType;
 
     pEntry->term = pWalHandle->pHead->head.syncMeta.term;
     pEntry->index = index;
@@ -355,6 +357,7 @@ SyncTerm syncRaftLogLastTerm(SSyncRaftLog* pLog) {
   SSyncRaftEntry* pLastEntry = syncRaftLogGetLastEntry(pLog);
   if (pLastEntry != NULL) {
     lastTerm = pLastEntry->term;
+    rpcFreeCont(pLastEntry->rpcMsg.pCont);
     taosMemoryFree(pLastEntry);
   }
   return lastTerm;
@@ -405,6 +408,7 @@ cJSON* syncRaftLog2Json(SSyncRaftLog* pLog) {
     for (SyncIndex i = 0; i <= lastIndex; ++i) {
       SSyncRaftEntry* pEntry = syncRaftLogGetEntry(pLog, i);
       cJSON_AddItemToArray(pEntries, syncRaftEntry2Json(pEntry));
+      rpcFreeCont(pEntry->rpcMsg.pCont);
       taosMemoryFree(pEntry);
     }
   }
