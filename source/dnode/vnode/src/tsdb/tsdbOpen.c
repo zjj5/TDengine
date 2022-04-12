@@ -24,7 +24,7 @@ int tsdbOpen(SVnode *pVnode, STsdb **ppTsdb) {
   *ppTsdb = NULL;
   slen = strlen(pVnode->path) + strlen(VND_TSDB_DIR) + 2;
 
-  pTsdb = taosMemoryCalloc(1, sizeof(*pTsdb));
+  pTsdb = taosMemoryCalloc(1, sizeof(*pTsdb) + slen);
   if (pTsdb == NULL) {
     terrno = TSDB_CODE_OUT_OF_MEMORY;
     return -1;
