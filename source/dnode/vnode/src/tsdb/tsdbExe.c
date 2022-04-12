@@ -15,20 +15,7 @@
 
 #include "vnodeInt.h"
 
-const SMetaCfg defaultMetaOptions = {.lruSize = 0};
-
-/* ------------------------ EXPOSED METHODS ------------------------ */
-void metaOptionsInit(SMetaCfg *pMetaOptions) { metaOptionsCopy(pMetaOptions, &defaultMetaOptions); }
-
-void metaOptionsClear(SMetaCfg *pMetaOptions) {
-  // TODO
-}
-
-int metaValidateOptions(const SMetaCfg *pMetaOptions) {
+int tsdbBegin(STsdb *pTsdb) {
   // TODO
   return 0;
 }
-
-void metaOptionsCopy(SMetaCfg *pDest, const SMetaCfg *pSrc) { memcpy(pDest, pSrc, sizeof(*pSrc)); }
-
-/* ------------------------ STATIC METHODS ------------------------ */

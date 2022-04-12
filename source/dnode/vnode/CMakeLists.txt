@@ -17,8 +17,8 @@ target_sources(
     # meta
     "src/meta/metaOpen.c"
     "src/meta/metaRead.c"
+    "src/meta/metaExe.c"
     # "src/meta/metaBDBImpl.c"
-    # "src/meta/metaCfg.c"
     # "src/meta/metaIdx.c"
     # "src/meta/metaQuery.c"
     # "src/meta/metaTable.c"
@@ -31,6 +31,7 @@ target_sources(
     "src/tsdb/tsdbOpen.c"
     "src/tsdb/tsdbMemTable.c"
     "src/tsdb/tsdbRead.c"
+    "src/tsdb/tsdbExe.c"
     # "src/tsdb/tsdbBDBImpl.c"
     # "src/tsdb/tsdbCommit.c"
     # "src/tsdb/tsdbCompact.c"
@@ -45,6 +46,7 @@ target_sources(
 
     # tq
     "src/tq/tqOpen.c"
+    "src/tq/tqExe.c"
     "src/tq/tqRead.c"
     # "src/tq/tq.c"
     # "src/tq/tqMetaStore.c"

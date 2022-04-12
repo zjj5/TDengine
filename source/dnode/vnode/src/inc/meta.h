@@ -20,6 +20,12 @@
 extern "C" {
 #endif
 
+typedef struct STbDbKey     STbDbKey;
+typedef struct SSkmDbKey    SSkmDbKey;
+typedef struct SCtbIdxKey   SCtbIdxKey;
+typedef struct SCtimeIdxKey SCtimeIdxKey;
+
+// metaDebug ==================
 // clang-format off
 #define metaFatal(...) do { if (metaDebugFlag & DEBUG_FATAL) { taosPrintLog("META FATAL ", DEBUG_FATAL, 255, __VA_ARGS__); }}     while(0)
 #define metaError(...) do { if (metaDebugFlag & DEBUG_ERROR) { taosPrintLog("META ERROR ", DEBUG_ERROR, 255, __VA_ARGS__); }}     while(0)
@@ -29,32 +35,12 @@ extern "C" {
 #define metaTrace(...) do { if (metaDebugFlag & DEBUG_TRACE) { taosPrintLog("META ", DEBUG_TRACE, metaDebugFlag, __VA_ARGS__); }} while(0)
 // clang-format on
 
-// pTbDB
-typedef struct __attribute__((__packed__)) {
-  tb_uid_t uid;
-  int64_t  ver;
-} STbDbKey;
-
-// pSkmDB
-typedef struct __attribute__((__packed__)) {
-  tb_uid_t uid;
-  int32_t  sver;
-} SSkmDbKey;
-
-// pCtbIdx
-typedef struct __attribute__((__packed__)) {
-  tb_uid_t suid;
-  tb_uid_t uid;
-} SCtbIdxKey;
-
-// pCtimeIdx
-typedef struct __attribute__((__packed__)) {
-  TSKEY    ctime;
-  tb_uid_t uid;
-} SCtimeIdxKey;
-
+// metaOpen ==================
 int metaOpen(SVnode* pVnode, SMeta** ppMeta);
 int metaClose(SMeta* pMeta);
+
+// metaExe ==================
+int metaBegin(SMeta* pMeta);
 
 struct SMeta {
   char*   path;
@@ -68,6 +54,30 @@ struct SMeta {
   TDB*    pCtbIdx;
   TDB*    pCtimeIdx;
   // TODO: hash for tags
+};
+
+// pTbDB
+struct __attribute__((__packed__)) STbDbKey {
+  tb_uid_t uid;
+  int64_t  ver;
+};
+
+// pSkmDB
+struct __attribute__((__packed__)) SSkmDbKey {
+  tb_uid_t uid;
+  int32_t  sver;
+};
+
+// pCtbIdx
+struct __attribute__((__packed__)) SCtbIdxKey {
+  tb_uid_t suid;
+  tb_uid_t uid;
+};
+
+// pCtimeIdx
+struct __attribute__((__packed__)) SCtimeIdxKey {
+  TSKEY    ctime;
+  tb_uid_t uid;
 };
 
 #ifdef __cplusplus

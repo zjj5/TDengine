@@ -36,6 +36,9 @@ typedef struct STqMetaStore STqMetaStore;
 int  tqOpen(SVnode* pVnode, STQ** ppTq);
 void tqClose(STQ* pTq);
 
+// tqExe ===================
+int tqBegin(STQ* pTq);
+
 struct STQ {
   char*         path;
   SVnode*       pVnode;

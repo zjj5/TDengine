@@ -16,7 +16,19 @@
 #include "vnodeInt.h"
 
 int vnodeBegin(SVnode *pVnode) {
-  // TODO
+  ASSERT(pVnode->inUse == NULL);
+
+  // allocate a pool in use
+  // TODO: use vnodeBufPoolBegin()
+  pVnode->inUse = pVnode->pPool;
+  pVnode->pPool = pVnode->inUse->next;
+  pVnode->inUse->next = 0;
+
+  // begin sub-systems
+  metaBegin(pVnode->pMeta);
+  tsdbBegin(pVnode->pTsdb);
+  tqBegin(pVnode->pTq);
+
   return 0;
 }
 

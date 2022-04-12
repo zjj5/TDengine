@@ -37,14 +37,17 @@ typedef struct SMemTableCurosr SMemTableCurosr;
 int tsdbOpen(SVnode *pVnode, STsdb **ppTsdb);
 int tsdbClose(STsdb *pTsdb);
 
+// tsdbMemTable ================
+
+// tsdbExe ================
+int tsdbBegin(STsdb *pTsdb);
+
 struct STsdb {
   char      *path;
   SVnode    *pVnode;
   SMemTable *mem;
   SMemTable *imem;
 };
-
-// tsdbMemTable ================
 
 #if 0
 
