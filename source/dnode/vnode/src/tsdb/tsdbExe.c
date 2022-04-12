@@ -16,7 +16,14 @@
 #include "vnodeInt.h"
 
 int tsdbBegin(STsdb *pTsdb) {
+#if 0
+  pTsdb->mem = tsdbMemTableCreate(pTsdb->pVnode->inUse);
+  if (pTsdb->mem == NULL) {
+    ASSERT(0);
+    return -1;
+  }
   // TODO
+#endif
   return 0;
 }
 

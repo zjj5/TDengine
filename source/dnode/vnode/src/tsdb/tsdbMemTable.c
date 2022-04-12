@@ -17,8 +17,8 @@
 
 typedef struct STbData {
   tb_uid_t   uid;
-  TSKEY      keyMin;
-  TSKEY      keyMax;
+  TSKEY      minKey;
+  TSKEY      maxKey;
   int64_t    minVer;
   int64_t    maxVer;
   int64_t    nRows;
@@ -27,14 +27,75 @@ typedef struct STbData {
 
 struct SMemTable {
   SVBufPool *pPool;
-  TSKEY      keyMin;
-  TSKEY      keyMax;
+  int32_t    nRef;
+  TSKEY      minKey;
+  TSKEY      maxKey;
   int64_t    minVer;
   int64_t    maxVer;
   int64_t    nRows;
   SHashObj  *pHash;
   SSkipList *pList;
 };
+
+SMemTable *tsdbMemTableCreate(STsdb *pTsdb) {
+  SMemTable *pMem = NULL;
+  SVBufPool *pPool = pTsdb->pVnode->inUse;
+
+  pMem = vnodeBufPoolMalloc(pPool, sizeof(*pMem));
+  if (pMem == NULL) {
+    tsdbError("vgId: %d failed to create mem table since %s", TD_VNODE_ID(pTsdb->pVnode), tstrerror(terrno));
+    ASSERT(0);
+  }
+
+  VND_REF_POOL(pPool);
+  pMem->pPool = pPool;
+  pMem->nRef = 1;
+  pMem->minKey = TSKEY_MAX;
+  pMem->maxKey = TSKEY_MIN;
+  pMem->minVer = INT64_MAX;
+  pMem->maxVer = 0;
+  pMem->nRows = 0;
+
+  return pMem;
+}
+
+void tsdbMemTableDestroy(SMemTable *pMem) {
+  // TODO
+  VND_UNREF_POOL(pMem->pPool);
+}
+
+int tsdbInsertData(STsdb *pTsdb, SSubmitReq *pReq, SSubmitRsp *pRsp) {
+#if 0
+  SSubmitBlk    *pBlock = NULL;
+  SSubmitMsgIter msgIter = {0};
+  int32_t        affectedrows = 0, numOfRows = 0;
+
+  if (tsdbScanAndConvertSubmitMsg(pTsdb, pReq) < 0) {
+    if (terrno != TSDB_CODE_TDB_TABLE_RECONFIGURE) {
+      tsdbError("vgId:%d failed to insert data since %s", REPO_ID(pTsdb), tstrerror(terrno));
+    }
+    return -1;
+  }
+
+  tInitSubmitMsgIter(pReq, &msgIter);
+  while (true) {
+    tGetSubmitMsgNext(&msgIter, &pBlock);
+    if (pBlock == NULL) break;
+    if (tsdbMemTableInsertTbData(pTsdb, pBlock, &affectedrows) < 0) {
+      return -1;
+    }
+
+    numOfRows += pBlock->numOfRows;
+  }
+
+  if (pRsp != NULL) 
+    pRsp->affectedRows = htonl(affectedrows);
+    pRsp->numOfRows = htonl(numOfRows);
+  }
+
+#endif
+  return 0;
+}
 
 #if 0
 static int      tsdbScanAndConvertSubmitMsg(STsdb *pTsdb, SSubmitReq *pMsg);
@@ -93,37 +154,6 @@ void tsdbFreeMemTable(STsdb *pTsdb, STsdbMemTable *pMemTable) {
     }
     taosMemoryFree(pMemTable);
   }
-}
-
-int tsdbMemTableInsert(STsdb *pTsdb, STsdbMemTable *pMemTable, SSubmitReq *pMsg, SSubmitRsp *pRsp) {
-  SSubmitBlk    *pBlock = NULL;
-  SSubmitMsgIter msgIter = {0};
-  int32_t        affectedrows = 0, numOfRows = 0;
-
-  if (tsdbScanAndConvertSubmitMsg(pTsdb, pMsg) < 0) {
-    if (terrno != TSDB_CODE_TDB_TABLE_RECONFIGURE) {
-      tsdbError("vgId:%d failed to insert data since %s", REPO_ID(pTsdb), tstrerror(terrno));
-    }
-    return -1;
-  }
-
-  tInitSubmitMsgIter(pMsg, &msgIter);
-  while (true) {
-    tGetSubmitMsgNext(&msgIter, &pBlock);
-    if (pBlock == NULL) break;
-    if (tsdbMemTableInsertTbData(pTsdb, pBlock, &affectedrows) < 0) {
-      return -1;
-    }
-
-    numOfRows += pBlock->numOfRows;
-  }
-
-  if (pRsp != NULL) {
-    pRsp->affectedRows = htonl(affectedrows);
-    pRsp->numOfRows = htonl(numOfRows);
-  }
-
-  return 0;
 }
 
 /**

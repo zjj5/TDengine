@@ -181,13 +181,12 @@ int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
 }
 
 static int vnodeConvertAndCopyReq(SVnode *pVnode, SRpcMsg *pMsg, void **ppCont, int *contLen) {
-  if (pMsg->msgType == TDMT_VND_SUBMIT) {
-    // TODO: do convert and copy
-  } else {
-    *ppCont = POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead));
-    *contLen = pMsg->contLen - sizeof(SMsgHead);
-  }
+  *ppCont = POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead));
+  *contLen = pMsg->contLen - sizeof(SMsgHead);
 
+  if (pMsg->msgType == TDMT_VND_SUBMIT) {
+    // TODO: do other submit
+  }
   return 0;
 }
 
