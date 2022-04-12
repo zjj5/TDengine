@@ -650,8 +650,73 @@ tsdbReaderT* tsdbQueryTables(STsdb* tsdb, STsdbQueryCond* pCond, STableGroupInfo
 //     return true;
 //   }
 
+<<<<<<< HEAD
 //   pCheckInfo->initBuf = true;
 //   int32_t order = pHandle->order;
+=======
+static TSKEY extractFirstTraverseKey(STableCheckInfo* pCheckInfo, int32_t order, int32_t update) {
+  STSRow *rmem = NULL, *rimem = NULL;
+  if (pCheckInfo->iter) {
+    SSkipListNode* node = tSkipListIterGet(pCheckInfo->iter);
+    if (node != NULL) {
+      rmem = (STSRow*)SL_GET_NODE_DATA(node);
+    }
+  }
+
+  if (pCheckInfo->iiter) {
+    SSkipListNode* node = tSkipListIterGet(pCheckInfo->iiter);
+    if (node != NULL) {
+      rimem = (STSRow*)SL_GET_NODE_DATA(node);
+    }
+  }
+
+  if (rmem == NULL && rimem == NULL) {
+    return TSKEY_INITIAL_VAL;
+  }
+
+  if (rmem != NULL && rimem == NULL) {
+    pCheckInfo->chosen = CHECKINFO_CHOSEN_MEM;
+    return TD_ROW_KEY(rmem);
+  }
+
+  if (rmem == NULL && rimem != NULL) {
+    pCheckInfo->chosen = CHECKINFO_CHOSEN_IMEM;
+    return TD_ROW_KEY(rimem);
+  }
+
+  TSKEY r1 = TD_ROW_KEY(rmem);
+  TSKEY r2 = TD_ROW_KEY(rimem);
+
+  if (r1 == r2) {
+#if 0
+    if(update == TD_ROW_DISCARD_UPDATE){
+      pCheckInfo->chosen = CHECKINFO_CHOSEN_IMEM;
+      tSkipListIterNext(pCheckInfo->iter);
+    }
+    else if(update == TD_ROW_OVERWRITE_UPDATE) {
+      pCheckInfo->chosen = CHECKINFO_CHOSEN_MEM;
+      tSkipListIterNext(pCheckInfo->iiter);
+    } else {
+      pCheckInfo->chosen = CHECKINFO_CHOSEN_BOTH;
+    }
+#endif
+    if (TD_SUPPORT_UPDATE(update)) {
+      pCheckInfo->chosen = CHECKINFO_CHOSEN_BOTH;
+    } else {
+      pCheckInfo->chosen = CHECKINFO_CHOSEN_IMEM;
+      tSkipListIterNext(pCheckInfo->iter);
+    }
+    return r1;
+  } else if (r1 < r2 && ASCENDING_TRAVERSE(order)) {
+    pCheckInfo->chosen = CHECKINFO_CHOSEN_MEM;
+    return r1;
+  }
+  else {
+    pCheckInfo->chosen = CHECKINFO_CHOSEN_IMEM;
+    return r2;
+  }
+}
+>>>>>>> fc58e2392d95eb6567d5754e40217fa4f3fc07db
 
 //   STbData** pMem = NULL;
 //   STbData** pIMem = NULL;
