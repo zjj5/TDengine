@@ -25,17 +25,25 @@
 extern "C" {
 #endif
 
-#if 0
-#define MAX_SKIP_LIST_LEVEL          15
-#define SKIP_LIST_RECORD_PERFORMANCE 0
+#define TSL_MAX_LEVEL 15
 
+typedef struct SSkipList2 SSkipList2;
+typedef struct SSLCursor  SSLCursor;
+
+int tslCreate(int8_t maxLevel, int kLen, int vLen, __compar_fn_t comparFn, void *(*xMalloc)(void *, int),
+              void (*xFree)(void *, void *), void *pPool, SSkipList2 **ppSl);
+int tslDestroy(SSkipList2 *pSl);
+int tslPut(SSkipList2 *pSl, void *pKey, int kLen, void *pVal, int vLen);
+int tslGet(SSkipList2 *pSl, void *pKey, int kLen);
+
+#if 0
 // For key property setting
-#define SL_ALLOW_DUP_KEY             (uint8_t)0x0  // Allow duplicate key exists (for tag index usage)
-#define SL_DISCARD_DUP_KEY           (uint8_t)0x1  // Discard duplicate key (for data update=0 case)
-#define SL_UPDATE_DUP_KEY            (uint8_t)0x2  // Update duplicate key by remove/insert (for data update!=0 case)
+#define SL_ALLOW_DUP_KEY   (uint8_t)0x0  // Allow duplicate key exists (for tag index usage)
+#define SL_DISCARD_DUP_KEY (uint8_t)0x1  // Discard duplicate key (for data update=0 case)
+#define SL_UPDATE_DUP_KEY  (uint8_t)0x2  // Update duplicate key by remove/insert (for data update!=0 case)
 
 // For thread safety setting
-#define SL_THREAD_SAFE               (uint8_t)0x4
+#define SL_THREAD_SAFE     (uint8_t)0x4
 
 typedef char *SSkipListKey;
 typedef char *(*__sl_key_fn_t)(const void *);

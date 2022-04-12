@@ -14,11 +14,121 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "tskiplist2.h"
+
+typedef struct SSLNode SSLNode;
+struct __attribute__((__packed__)) SSLNode {
+  int8_t   level;
+  SSLNode *forward[];
+};
+
+#define SL_NODE_FORWARD(n, l)  (n)->forward[(l)]
+#define SL_NODE_BACKWARD(n, l) (n)->forward[(n)->level + (l)]
+#define SL_NODE_DATA(n)        &(n)->forward[(n)->level * 2]
+
+struct SSkipList2 {
+  int8_t   maxLevel;
+  uint32_t seed;
+  int      kLen;
+  int      vLen;
+  void *(*xMalloc)(void *, int);
+  void (*xFree)(void *, void *);
+  void *pPool;
+};
+
+struct SSLCursor {
+  // data
+};
+
+static SSLNode *tslNodeNew(SSkipList2 *pSl, int8_t level, int size);
+static void     tslNodeFree(SSkipList2 *pSl, SSLNode *pNode);
+
+int tslCreate(int8_t maxLevel, int kLen, int vLen, __compar_fn_t comparFn, void *(*xMalloc)(void *, int),
+              void (*xFree)(void *, void *), void *pPool, SSkipList2 **ppSl) {
+  SSkipList2 *pSl = NULL;
+
+  *ppSl = NULL;
+  pSl = (SSkipList2 *)xMalloc(pPool, sizeof(*pSl));
+  if (pSl == NULL) {
+    return -1;
+  }
+
+  pSl->seed = taosRand();
+  pSl->maxLevel = maxLevel;
+  pSl->kLen = kLen;
+  pSl->vLen = vLen;
+  pSl->xMalloc = xMalloc;
+  pSl->xFree = xFree;
+  pSl->pPool = pPool;
+
+  *ppSl = pSl;
+  return 0;
+}
+
+int tslDestroy(SSkipList2 *pSl) {
+  if (pSl && pSl->xFree) {
+    pSl->xFree(pSl->pPool, pSl);
+  }
+  return 0;
+}
+
+int tslPut(SSkipList2 *pSl, void *pKey, int kLen, void *pVal, int vLen) {
+  // TODO
+  return 0;
+}
+
+int tslGet(SSkipList2 *pSl, void *pKey, int kLen) {
+  // TODO
+  return 0;
+}
+
+static SSLNode *tslNodeNew(SSkipList2 *pSl, int8_t level, int size) {
+  SSLNode *pNode;
+  int      tsize;
+
+  pNode = NULL;
+  tsize = sizeof(*pNode) + sizeof(SSLNode *) * level * 2 + size;
+
+  pNode = pSl->xMalloc(pSl->pPool, tsize);
+  if (pNode) {
+    pNode->level = level;
+  }
+
+  return pNode;
+}
+
+static void tslNodeFree(SSkipList2 *pSl, SSLNode *pNode) {
+  if (pSl->xFree && pNode) {
+    pSl->xFree(pSl->pPool, pNode);
+  }
+}
+
+static int tslEncode(SSkipList2 *pSl, void *pKey, int kLen, void *pVal, int vLen, uint8_t *p) {
+  int n = 0;
+
+  ASSERT(kLen != 0);
+  ASSERT(pSl->kLen < 0 || pSl->kLen == vLen);
+  ASSERT(pSl->vLen < 0 || pSl->vLen == vLen);
+
+  if (pSl->kLen < 0) {
+    // n += tslEncodeInt(p, kLen);
+  }
+
+  if (pSl->vLen < 0) {
+    // n += tslEncodeInt(p + n, vLen)
+  }
+
+  n += kLen;
+  n += vLen;
+
+  return n;
+}
+
 #if 0
 #define _DEFAULT_SOURCE
-#include "tskiplist2.h"
 #include "tcompare.h"
 #include "tlog.h"
+#include "tskiplist2.h"
 #include "tutil.h"
 
 static int32_t            initForwardBackwardPtr(SSkipList *pSkipList);
