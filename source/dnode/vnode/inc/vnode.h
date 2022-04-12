@@ -17,7 +17,7 @@
 #define _TD_VNODE_H_
 
 #include "os.h"
-// #include "tmsgcb.h"
+#include "tmsgcb.h"
 #include "tqueue.h"
 #include "trpc.h"
 
@@ -49,7 +49,7 @@ int  vnodeInit(int nthreads);
 void vnodeCleanup();
 int  vnodeCreate(const char *path, SVnodeCfg *pCfg, STfs *pTfs);
 void vnodeDestroy(const char *path, STfs *pTfs);
-int  vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs);
+int  vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs, SMsgCb msgCb);
 void vnodeClose(SVnode *pVnode);
 int  vnodeProcessQueryMsg(SVnode *pVnode, SRpcMsg *pMsg);
 int  vnodeProcessFetchMsg(SVnode *pVnode, SRpcMsg *pMsg, SQueueInfo *pInfo);

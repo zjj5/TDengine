@@ -22,57 +22,6 @@ int32_t tqInit() { return tqPushMgrInit(); }
 
 void tqCleanUp() { tqPushMgrCleanUp(); }
 
-STQ* tqOpen(const char* path, SVnode* pVnode, SWal* pWal, SMeta* pVnodeMeta, STqCfg* tqConfig,
-            SMemAllocatorFactory* allocFac) {
-  STQ* pTq = taosMemoryMalloc(sizeof(STQ));
-  if (pTq == NULL) {
-    terrno = TSDB_CODE_TQ_OUT_OF_MEMORY;
-    return NULL;
-  }
-  pTq->path = strdup(path);
-  pTq->tqConfig = tqConfig;
-  pTq->pVnode = pVnode;
-  pTq->pWal = pWal;
-  pTq->pVnodeMeta = pVnodeMeta;
-#if 0
-  pTq->tqMemRef.pAllocatorFactory = allocFac;
-  pTq->tqMemRef.pAllocator = allocFac->create(allocFac);
-  if (pTq->tqMemRef.pAllocator == NULL) {
-    // TODO: error code of buffer pool
-  }
-#endif
-  pTq->tqMeta = tqStoreOpen(pTq, path, (FTqSerialize)tqSerializeConsumer, (FTqDeserialize)tqDeserializeConsumer,
-                            (FTqDelete)taosMemoryFree, 0);
-  if (pTq->tqMeta == NULL) {
-    taosMemoryFree(pTq);
-#if 0
-    allocFac->destroy(allocFac, pTq->tqMemRef.pAllocator);
-#endif
-    return NULL;
-  }
-
-#if 0
-  pTq->tqPushMgr = tqPushMgrOpen();
-  if (pTq->tqPushMgr == NULL) {
-    // free store
-    taosMemoryFree(pTq);
-    return NULL;
-  }
-#endif
-
-  pTq->pStreamTasks = taosHashInit(64, taosGetDefaultHashFunction(TSDB_DATA_TYPE_INT), true, HASH_NO_LOCK);
-
-  return pTq;
-}
-
-void tqClose(STQ* pTq) {
-  if (pTq) {
-    taosMemoryFreeClear(pTq->path);
-    taosMemoryFree(pTq);
-  }
-  // TODO
-}
-
 int tqPushMsg(STQ* pTq, void* msg, int32_t msgLen, tmsg_t msgType, int64_t version) {
   if (msgType != TDMT_VND_SUBMIT) return 0;
   void* data = taosMemoryMalloc(msgLen);

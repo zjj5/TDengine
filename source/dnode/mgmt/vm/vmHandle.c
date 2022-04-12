@@ -163,7 +163,7 @@ int32_t vmProcessCreateVnodeReq(SVnodesMgmt *pMgmt, SNodeMsg *pMsg) {
     return -1;
   }
 
-  if (vnodeOpen(wrapperCfg.path, &pImpl, pMgmt->pTfs) < 0) {
+  if (vnodeOpen(wrapperCfg.path, &pImpl, pMgmt->pTfs, msgCb) < 0) {
     tFreeSCreateVnodeReq(&createReq);
     dError("vgId:%d, failed to open vnode since %s", createReq.vgId, terrstr());
     return -1;

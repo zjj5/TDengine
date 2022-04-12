@@ -47,7 +47,7 @@ int vnodeCreate(const char *path, SVnodeCfg *pCfg, STfs *pTfs) {
 
 void vnodeDestroy(const char *path, STfs *pTfs) { tfsRmdir(pTfs, path); }
 
-int vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs) {
+int vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs, SMsgCb msgCb) {
   SVnode   *pVnode;
   char      dir[TSDB_FILENAME_LEN];
   int       ret;
@@ -83,6 +83,7 @@ int vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs) {
   memcpy(pVnode->path, path, slen);
   pVnode->path[slen] = '\0';
   pVnode->pTfs = pTfs;
+  pVnode->msgCb = msgCb;
 
   // open buffer pool sub-system
   ret = vnodeOpenBufPool(pVnode, pVnode->config.isHeap ? 0 : pVnode->config.szBuf / 3);
@@ -174,7 +175,8 @@ static int vnodeOpenTsdb(SVnode *pVnode) {
 static int vnodeOpenWal(SVnode *pVnode) {
   char path[TSDB_FILENAME_LEN];
 
-  snprintf(path, TSDB_FILENAME_LEN, "%s/%s", pVnode->path, VND_WAL_DIR);
+  snprintf(path, TSDB_FILENAME_LEN, "%s%s%s%s%s", tfsGetPrimaryPath(pVnode->pTfs), TD_DIRSEP, pVnode->path, TD_DIRSEP,
+           VND_WAL_DIR);
 
   pVnode->pWal = walOpen(path, &pVnode->config.walCfg);
   if (pVnode->pWal == NULL) {

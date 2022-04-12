@@ -20,7 +20,9 @@
 extern "C" {
 #endif
 
-// tqInt.h
+typedef struct STqMetaStore STqMetaStore;
+
+// tqDebug ===================
 // clang-format off
 #define tqFatal(...) do { if (tqDebugFlag & DEBUG_FATAL) { taosPrintLog("TQ FATAL ", DEBUG_FATAL, 255, __VA_ARGS__); }}     while(0)
 #define tqError(...) do { if (tqDebugFlag & DEBUG_ERROR) { taosPrintLog("TQ ERROR ", DEBUG_ERROR, 255, __VA_ARGS__); }}     while(0)
@@ -29,6 +31,18 @@ extern "C" {
 #define tqDebug(...) do { if (tqDebugFlag & DEBUG_DEBUG) { taosPrintLog("TQ ", DEBUG_DEBUG, tqDebugFlag, __VA_ARGS__); }} while(0)
 #define tqTrace(...) do { if (tqDebugFlag & DEBUG_TRACE) { taosPrintLog("TQ ", DEBUG_TRACE, tqDebugFlag, __VA_ARGS__); }} while(0)
 // clang-format on
+
+// tqOpen ===================
+int  tqOpen(SVnode* pVnode, STQ** ppTq);
+void tqClose(STQ* pTq);
+
+struct STQ {
+  char*         path;
+  SVnode*       pVnode;
+  bool          writeTrigger;
+  SHashObj*     pStreamTasks;
+  STqMetaStore* tqMeta;
+};
 
 #if 0
 int  tqInit();
@@ -139,26 +153,6 @@ typedef struct {
   FTqDeserialize pDeserializer;
   FTqDelete      pDeleter;
 } STqMetaStore;
-
-typedef struct {
-  SMemAllocatorFactory* pAllocatorFactory;
-  SMemAllocator*        pAllocator;
-} STqMemRef;
-
-struct STQ {
-  // the collection of groups
-  // the handle of meta kvstore
-  bool          writeTrigger;
-  char*         path;
-  STqCfg*       tqConfig;
-  STqMemRef     tqMemRef;
-  STqMetaStore* tqMeta;
-  // STqPushMgr*   tqPushMgr;
-  SHashObj* pStreamTasks;
-  SVnode*   pVnode;
-  SWal*     pWal;
-  SMeta*    pVnodeMeta;
-};
 
 typedef struct {
   int8_t inited;

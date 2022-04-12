@@ -44,9 +44,9 @@ target_sources(
     # "src/tsdb/tsdbWrite.c"
 
     # tq
+    "src/tq/tqOpen.c"
     "src/tq/tqRead.c"
     # "src/tq/tq.c"
-    # "src/tq/tqCommit.c"
     # "src/tq/tqMetaStore.c"
     # "src/tq/tqOffset.c"
     # "src/tq/tqPush.c"
