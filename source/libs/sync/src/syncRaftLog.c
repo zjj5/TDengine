@@ -112,7 +112,7 @@ int32_t logStoreUpdateCommitIndex(SSyncLogStore* pLogStore, SyncIndex index) {
   SSyncLogStoreData* pData = pLogStore->data;
   SWal*              pWal = pData->pWal;
   assert(walCommit(pWal, index) == 0);
-  return 0;  // to avoid compiler error
+  return 0;
 }
 
 SyncIndex logStoreGetCommitIndex(SSyncLogStore* pLogStore) {
@@ -281,43 +281,224 @@ void syncRaftLogDestory(SSyncRaftLog* pLog) {
   }
 }
 
-int32_t syncRaftLogAppendEntry(SSyncRaftLog* pLog, SSyncRaftEntry* pEntry) {}
+int32_t syncRaftLogAppendEntry(SSyncRaftLog* pLog, SSyncRaftEntry* pEntry) {
+  SSyncRaftLogData* pData = pLog->data;
+  SWal*             pWal = pData->pWal;
 
-SSyncRaftEntry* syncRaftLogGetEntry(SSyncRaftLog* pLog, SyncIndex index) {}
+  SyncIndex lastIndex = syncRaftLogLastIndex(pLog);
+  assert(pEntry->index == lastIndex + 1);
 
-int32_t syncRaftLogTruncate(SSyncRaftLog* pLog, SyncIndex fromIndex) {}
+  assert(pEntry->rpcMsg.pCont != NULL);
+  assert(pEntry->rpcMsg.contLen >= 0);
 
-SyncIndex syncRaftLogLastIndex(SSyncRaftLog* pLog) {}
+  int          code = 0;
+  SSyncLogMeta syncMeta;
+  syncMeta.isWeek = pEntry->isWeak;
+  syncMeta.seqNum = pEntry->seqNum;
+  syncMeta.term = pEntry->term;
+  code = walWriteWithSyncInfo(pWal, pEntry->index, pEntry->msgType, syncMeta, pEntry->rpcMsg.pCont,
+                              pEntry->rpcMsg.contLen);
+  assert(code == 0);
+  walFsync(pWal, true);
+  return code;
+}
 
-SyncTerm syncRaftLogLastTerm(SSyncRaftLog* pLog) {}
+SSyncRaftEntry* syncRaftLogGetEntry(SSyncRaftLog* pLog, SyncIndex index) {
+  SSyncRaftLogData* pData = pLog->data;
+  SWal*             pWal = pData->pWal;
 
-int32_t syncRaftLogUpdateCommitIndex(SSyncRaftLog* pLog, SyncIndex index) {}
+  if (index >= SYNC_INDEX_BEGIN && index <= syncRaftLogLastIndex(pLog)) {
+    SSyncRaftEntry* pEntry = taosMemoryMalloc(sizeof(SSyncRaftEntry));
+    assert(pEntry != NULL);
 
-SyncIndex syncRaftLogGetCommitIndex(SSyncRaftLog* pLog) {}
+    SWalReadHandle* pWalHandle = walOpenReadHandle(pWal);
+    assert(walReadWithHandle(pWalHandle, index) == 0);
 
-SSyncRaftEntry* syncRaftLogGetLastEntry(SSyncRaftLog* pLog) {}
+    pEntry->seqNum = pWalHandle->pHead->head.syncMeta.seqNum;
+    pEntry->isWeak = pWalHandle->pHead->head.syncMeta.isWeek;
 
-cJSON* syncRaftLog2Json(SSyncRaftLog* pLog) {}
+    pEntry->rpcMsg.contLen = pWalHandle->pHead->head.len;
+    pEntry->rpcMsg.pCont = rpcMallocCont(pEntry->rpcMsg.contLen);
+    memcpy(pEntry->rpcMsg.pCont, pWalHandle->pHead->head.body, pEntry->rpcMsg.contLen);
+    SMsgHead* pHead = pEntry->rpcMsg.pCont;
+    pEntry->vgId = pHead->vgId;
+    pEntry->msgType = pWalHandle->pHead->head.msgType;
 
-char* syncRaftLog2Str(SSyncRaftLog* pLog) {}
+    pEntry->term = pWalHandle->pHead->head.syncMeta.term;
+    pEntry->index = index;
 
-cJSON* syncRaftLogSimple2Json(SSyncRaftLog* pLog) {}
+    // need to hold, do not new every time!!
+    walCloseReadHandle(pWalHandle);
 
-char* syncRaftLogSimple2Str(SSyncRaftLog* pLog) {}
+    return pEntry;
+  } else {
+    return NULL;
+  }
+}
+
+int32_t syncRaftLogTruncate(SSyncRaftLog* pLog, SyncIndex fromIndex) {
+  SSyncRaftLogData* pData = pLog->data;
+  SWal*             pWal = pData->pWal;
+  assert(walRollback(pWal, fromIndex) == 0);
+  return 0;
+}
+
+SyncIndex syncRaftLogLastIndex(SSyncRaftLog* pLog) {
+  SSyncRaftLogData* pData = pLog->data;
+  SWal*             pWal = pData->pWal;
+  SyncIndex         lastIndex = walGetLastVer(pWal);
+  return lastIndex;
+}
+
+SyncTerm syncRaftLogLastTerm(SSyncRaftLog* pLog) {
+  SyncTerm        lastTerm = 0;
+  SSyncRaftEntry* pLastEntry = syncRaftLogGetLastEntry(pLog);
+  if (pLastEntry != NULL) {
+    lastTerm = pLastEntry->term;
+    taosMemoryFree(pLastEntry);
+  }
+  return lastTerm;
+}
+
+int32_t syncRaftLogUpdateCommitIndex(SSyncRaftLog* pLog, SyncIndex index) {
+  SSyncRaftLogData* pData = pLog->data;
+  SWal*             pWal = pData->pWal;
+  assert(walCommit(pWal, index) == 0);
+  return 0;
+}
+
+SyncIndex syncRaftLogGetCommitIndex(SSyncRaftLog* pLog) {
+  SSyncRaftLogData* pData = pLog->data;
+  return pData->pSyncNode->commitIndex;
+}
+
+SSyncRaftEntry* syncRaftLogGetLastEntry(SSyncRaftLog* pLog) {
+  SSyncRaftLogData* pData = pLog->data;
+  SWal*             pWal = pData->pWal;
+  SyncIndex         lastIndex = walGetLastVer(pWal);
+
+  SSyncRaftEntry* pEntry = NULL;
+  if (lastIndex > 0) {
+    pEntry = syncRaftLogGetEntry(pLog, lastIndex);
+  }
+  return pEntry;
+}
+
+cJSON* syncRaftLog2Json(SSyncRaftLog* pLog) {
+  char              u64buf[128];
+  SSyncRaftLogData* pData = (SSyncRaftLogData*)pLog->data;
+  cJSON*            pRoot = cJSON_CreateObject();
+
+  if (pData != NULL && pData->pWal != NULL) {
+    snprintf(u64buf, sizeof(u64buf), "%p", pData->pSyncNode);
+    cJSON_AddStringToObject(pRoot, "pSyncNode", u64buf);
+    snprintf(u64buf, sizeof(u64buf), "%p", pData->pWal);
+    cJSON_AddStringToObject(pRoot, "pWal", u64buf);
+    snprintf(u64buf, sizeof(u64buf), "%ld", syncRaftLogLastIndex(pLog));
+    cJSON_AddStringToObject(pRoot, "LastIndex", u64buf);
+    snprintf(u64buf, sizeof(u64buf), "%lu", syncRaftLogLastTerm(pLog));
+    cJSON_AddStringToObject(pRoot, "LastTerm", u64buf);
+
+    cJSON* pEntries = cJSON_CreateArray();
+    cJSON_AddItemToObject(pRoot, "pEntries", pEntries);
+    SyncIndex lastIndex = syncRaftLogLastIndex(pLog);
+    for (SyncIndex i = 0; i <= lastIndex; ++i) {
+      SSyncRaftEntry* pEntry = syncRaftLogGetEntry(pLog, i);
+      cJSON_AddItemToArray(pEntries, syncRaftEntry2Json(pEntry));
+      taosMemoryFree(pEntry);
+    }
+  }
+
+  cJSON* pJson = cJSON_CreateObject();
+  cJSON_AddItemToObject(pJson, "SSyncRaftLog", pRoot);
+  return pJson;
+}
+
+char* syncRaftLog2Str(SSyncRaftLog* pLog) {
+  cJSON* pJson = syncRaftLog2Json(pLog);
+  char*  serialized = cJSON_Print(pJson);
+  cJSON_Delete(pJson);
+  return serialized;
+}
+
+cJSON* syncRaftLogSimple2Json(SSyncRaftLog* pLog) {
+  char              u64buf[128];
+  SSyncRaftLogData* pData = (SSyncRaftLogData*)pLog->data;
+  cJSON*            pRoot = cJSON_CreateObject();
+
+  if (pData != NULL && pData->pWal != NULL) {
+    snprintf(u64buf, sizeof(u64buf), "%p", pData->pSyncNode);
+    cJSON_AddStringToObject(pRoot, "pSyncNode", u64buf);
+    snprintf(u64buf, sizeof(u64buf), "%p", pData->pWal);
+    cJSON_AddStringToObject(pRoot, "pWal", u64buf);
+    snprintf(u64buf, sizeof(u64buf), "%ld", syncRaftLogLastIndex(pLog));
+    cJSON_AddStringToObject(pRoot, "LastIndex", u64buf);
+    snprintf(u64buf, sizeof(u64buf), "%lu", syncRaftLogLastTerm(pLog));
+    cJSON_AddStringToObject(pRoot, "LastTerm", u64buf);
+  }
+
+  cJSON* pJson = cJSON_CreateObject();
+  cJSON_AddItemToObject(pJson, "SSyncRaftLog", pRoot);
+  return pJson;
+}
+
+char* syncRaftLogSimple2Str(SSyncRaftLog* pLog) {
+  cJSON* pJson = syncRaftLogSimple2Json(pLog);
+  char*  serialized = cJSON_Print(pJson);
+  cJSON_Delete(pJson);
+  return serialized;
+}
 
 // for debug
-void syncRaftLogPrint(SSyncRaftLog* pLog) {}
+void syncRaftLogPrint(SSyncRaftLog* pLog) {
+  char* serialized = syncRaftLog2Str(pLog);
+  printf("syncRaftLogPrint | len:%lu | %s \n", strlen(serialized), serialized);
+  fflush(NULL);
+  taosMemoryFree(serialized);
+}
 
-void syncRaftLogPrint2(char* s, SSyncRaftLog* pLog) {}
+void syncRaftLogPrint2(char* s, SSyncRaftLog* pLog) {
+  char* serialized = syncRaftLog2Str(pLog);
+  printf("syncRaftLogPrint2 | len:%lu | %s | %s \n", strlen(serialized), s, serialized);
+  fflush(NULL);
+  taosMemoryFree(serialized);
+}
 
-void syncRaftLogLog(SSyncRaftLog* pLog) {}
+void syncRaftLogLog(SSyncRaftLog* pLog) {
+  char* serialized = syncRaftLog2Str(pLog);
+  sTrace("syncRaftLogLog | len:%lu | %s", strlen(serialized), serialized);
+  taosMemoryFree(serialized);
+}
 
-void syncRaftLogLog2(char* s, SSyncRaftLog* pLog) {}
+void syncRaftLogLog2(char* s, SSyncRaftLog* pLog) {
+  char* serialized = syncRaftLog2Str(pLog);
+  sTrace("syncRaftLogLog2 | len:%lu | %s | %s", strlen(serialized), s, serialized);
+  taosMemoryFree(serialized);
+}
 
-void syncRaftLogSimplePrint(SSyncRaftLog* pLog) {}
+// for debug
+void syncRaftLogSimplePrint(SSyncRaftLog* pLog) {
+  char* serialized = syncRaftLogSimple2Str(pLog);
+  printf("syncRaftLogSimplePrint | len:%lu | %s \n", strlen(serialized), serialized);
+  fflush(NULL);
+  taosMemoryFree(serialized);
+}
 
-void syncRaftLogSimplePrint2(char* s, SSyncRaftLog* pLog) {}
+void syncRaftLogSimplePrint2(char* s, SSyncRaftLog* pLog) {
+  char* serialized = syncRaftLogSimple2Str(pLog);
+  printf("syncRaftLogSimplePrint2 | len:%lu | %s | %s \n", strlen(serialized), s, serialized);
+  fflush(NULL);
+  taosMemoryFree(serialized);
+}
 
-void syncRaftLogSimpleLog(SSyncRaftLog* pLog) {}
+void syncRaftLogSimpleLog(SSyncRaftLog* pLog) {
+  char* serialized = syncRaftLogSimple2Str(pLog);
+  sTrace("syncRaftLogSimpleLog | len:%lu | %s", strlen(serialized), serialized);
+  taosMemoryFree(serialized);
+}
 
-void syncRaftLogSimpleLog2(char* s, SSyncRaftLog* pLog) {}
+void syncRaftLogSimpleLog2(char* s, SSyncRaftLog* pLog) {
+  char* serialized = syncRaftLogSimple2Str(pLog);
+  sTrace("syncRaftLogSimpleLog2 | len:%lu | %s | %s", strlen(serialized), s, serialized);
+  taosMemoryFree(serialized);
+}
