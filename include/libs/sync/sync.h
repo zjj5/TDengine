@@ -127,6 +127,34 @@ typedef struct SSyncLogStore {
 
 } SSyncLogStore;
 
+// abstract definition of log store in raft
+// SWal implements it
+typedef struct SSyncRaftLog {
+  void* data;
+
+  // append one log entry
+  int32_t (*appendEntry)(struct SSyncRaftLog* pLogStore, SSyncRaftEntry* pEntry);
+
+  // get one log entry, user need to free pEntry->pCont
+  SSyncRaftEntry* (*getEntry)(struct SSyncRaftLog* pLogStore, SyncIndex index);
+
+  // truncate log with index, entries after the given index (>=index) will be deleted
+  int32_t (*truncate)(struct SSyncRaftLog* pLogStore, SyncIndex fromIndex);
+
+  // return index of last entry
+  SyncIndex (*getLastIndex)(struct SSyncRaftLog* pLogStore);
+
+  // return term of last entry
+  SyncTerm (*getLastTerm)(struct SSyncRaftLog* pLogStore);
+
+  // update log store commit index with "index"
+  int32_t (*updateCommitIndex)(struct SSyncRaftLog* pLogStore, SyncIndex index);
+
+  // return commit index of log
+  SyncIndex (*getCommitIndex)(struct SSyncRaftLog* pLogStore);
+
+} SSyncRaftLog;
+
 // raft need to persist two variables in storage: currentTerm, voteFor
 typedef struct SStateMgr {
   void* data;

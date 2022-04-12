@@ -168,49 +168,46 @@ void syncEntryLog2(char* s, const SSyncEntry* pObj) {
 
 // ======================================
 
-SSyncRaftEntry* syncRaftEntryBuild(SyncClientRequest* pMsg, SyncTerm term, SyncIndex index) {
+void syncRaftEntryInit(SSyncRaftEntry* pEntry, SyncClientRequest* pMsg, SyncTerm term, SyncIndex index) {
   assert(pMsg->rpcMsg.contLen >= 0);
+  assert(pMsg->rpcMsg.pCont != NULL);
+  memset(pEntry, 0, sizeof(SSyncRaftEntry));
 
-  uint32_t        bytes = sizeof(SSyncRaftEntry) + pMsg->rpcMsg.contLen;
-  SSyncRaftEntry* pEntry = taosMemoryMalloc(bytes);
-  assert(pEntry != NULL);
-  memset(pEntry, 0, bytes);
-
-  pEntry->bytes = bytes;
-  pEntry->msgType = pMsg->rpcMsg.msgType;
+  pEntry->seqNum = pMsg->seqNum;
+  pEntry->isWeak = pMsg->isWeak;
+  pEntry->rpcMsg = pMsg->rpcMsg;
 
   SMsgHead* pHead = pMsg->rpcMsg.pCont;
   pEntry->vgId = pHead->vgId;
+  pEntry->msgType = pMsg->rpcMsg.msgType;
 
   pEntry->term = term;
   pEntry->index = index;
-  pEntry->dataLen = pMsg->rpcMsg.contLen;
-  memcpy(pEntry->data, pMsg->rpcMsg.pCont, pMsg->rpcMsg.contLen);
-
-  return pEntry;
 }
 
-SSyncRaftEntry* syncRaftEntryBuildNoop(SyncTerm term, SyncIndex index) {
-  uint32_t        bytes = sizeof(SSyncRaftEntry);
-  SSyncRaftEntry* pEntry = taosMemoryMalloc(bytes);
-  assert(pEntry != NULL);
-  memset(pEntry, 0, bytes);
+void syncRaftEntryInitNoop(SSyncRaftEntry* pEntry, SyncTerm term, SyncIndex index, int32_t vgId) {
+  memset(pEntry, 0, sizeof(SSyncRaftEntry));
 
-  pEntry->bytes = bytes;
+  pEntry->seqNum = 0;
+  pEntry->isWeak = 0;
+
+  // init rpcMsg
+  SMsgHead head;
+  head.vgId = vgId;
+  head.contLen = sizeof(SMsgHead);
+  SRpcMsg rpcMsg;
+  memset(&rpcMsg, 0, sizeof(SRpcMsg));
+  rpcMsg.contLen = head.contLen;
+  rpcMsg.pCont = rpcMallocCont(rpcMsg.contLen);
+  rpcMsg.msgType = TDMT_VND_SYNC_NOOP_ENTRY;
+  memcpy(rpcMsg.pCont, &head, sizeof(head));
+  pEntry->rpcMsg = rpcMsg;
+
+  pEntry->vgId = vgId;
   pEntry->msgType = TDMT_VND_SYNC_NOOP_ENTRY;
-  pEntry->vgId = -1;
 
   pEntry->term = term;
   pEntry->index = index;
-  pEntry->dataLen = 0;
-
-  return pEntry;
-}
-
-void syncRaftEntryDestory(SSyncRaftEntry* pEntry) {
-  if (pEntry != NULL) {
-    taosMemoryFree(pEntry);
-  }
 }
 
 cJSON* syncRaftEntry2Json(const SSyncRaftEntry* pEntry) {
@@ -218,29 +215,20 @@ cJSON* syncRaftEntry2Json(const SSyncRaftEntry* pEntry) {
   cJSON* pRoot = cJSON_CreateObject();
 
   if (pEntry != NULL) {
-    cJSON_AddNumberToObject(pRoot, "bytes", pEntry->bytes);
-    cJSON_AddNumberToObject(pRoot, "msgType", pEntry->msgType);
-    cJSON_AddNumberToObject(pRoot, "vgId", pEntry->vgId);
-
     snprintf(u64buf, sizeof(u64buf), "%lu", pEntry->seqNum);
     cJSON_AddStringToObject(pRoot, "seqNum", u64buf);
     cJSON_AddNumberToObject(pRoot, "isWeak", pEntry->isWeak);
+
+    cJSON* pJsonRpc = syncRpcMsg2Json((SRpcMsg*)&(pEntry->rpcMsg));
+    cJSON_AddItemToObject(pRoot, "rpcMsg", pJsonRpc);
+
+    cJSON_AddNumberToObject(pRoot, "vgId", pEntry->vgId);
+    cJSON_AddNumberToObject(pRoot, "msgType", pEntry->msgType);
 
     snprintf(u64buf, sizeof(u64buf), "%lu", pEntry->term);
     cJSON_AddStringToObject(pRoot, "term", u64buf);
     snprintf(u64buf, sizeof(u64buf), "%lu", pEntry->index);
     cJSON_AddStringToObject(pRoot, "index", u64buf);
-
-    cJSON_AddNumberToObject(pRoot, "dataLen", pEntry->dataLen);
-
-    char* s;
-    s = syncUtilprintBin((char*)(pEntry->data), pEntry->dataLen);
-    cJSON_AddStringToObject(pRoot, "data", s);
-    taosMemoryFree(s);
-
-    s = syncUtilprintBin2((char*)(pEntry->data), pEntry->dataLen);
-    cJSON_AddStringToObject(pRoot, "data2", s);
-    taosMemoryFree(s);
   }
 
   cJSON* pJson = cJSON_CreateObject();
@@ -258,9 +246,7 @@ char* syncRaftEntry2Str(const SSyncRaftEntry* pEntry) {
 void syncRaftEntry2RpcMsg(const SSyncRaftEntry* pEntry, SRpcMsg* pRpcMsg) {
   memset(pRpcMsg, 0, sizeof(SRpcMsg));
   pRpcMsg->msgType = pEntry->msgType;
-  pRpcMsg->contLen = pEntry->dataLen;
-  pRpcMsg->pCont = rpcMallocCont(pRpcMsg->contLen);
-  memcpy(pRpcMsg->pCont, pEntry->data, pRpcMsg->contLen);
+  *pRpcMsg = pEntry->rpcMsg;
 }
 
 // for debug ----------------------

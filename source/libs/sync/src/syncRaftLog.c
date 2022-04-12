@@ -250,3 +250,74 @@ void logStoreSimpleLog2(char* s, SSyncLogStore* pLogStore) {
   sTrace("logStoreSimpleLog2 | len:%lu | %s | %s", strlen(serialized), s, serialized);
   taosMemoryFree(serialized);
 }
+
+// ======================
+
+SSyncRaftLog* syncRaftLogCreate(SSyncNode* pSyncNode) {
+  SSyncRaftLog* pLog = taosMemoryMalloc(sizeof(SSyncRaftLog));
+  assert(pLog != NULL);
+
+  pLog->data = taosMemoryMalloc(sizeof(SSyncRaftLogData));
+  assert(pLog->data != NULL);
+
+  SSyncRaftLogData* pData = pLog->data;
+  pData->pSyncNode = pSyncNode;
+  pData->pWal = pSyncNode->pWal;
+
+  pLog->appendEntry = syncRaftLogAppendEntry;
+  pLog->getEntry = syncRaftLogGetEntry;
+  pLog->truncate = syncRaftLogTruncate;
+  pLog->getLastIndex = syncRaftLogLastIndex;
+  pLog->getLastTerm = syncRaftLogLastTerm;
+  pLog->updateCommitIndex = syncRaftLogUpdateCommitIndex;
+  pLog->getCommitIndex = syncRaftLogGetCommitIndex;
+  return pLog;
+}
+
+void syncRaftLogDestory(SSyncRaftLog* pLog) {
+  if (pLog != NULL) {
+    taosMemoryFree(pLog->data);
+    taosMemoryFree(pLog);
+  }
+}
+
+int32_t syncRaftLogAppendEntry(SSyncRaftLog* pLog, SSyncRaftEntry* pEntry) {}
+
+SSyncRaftEntry* syncRaftLogGetEntry(SSyncRaftLog* pLog, SyncIndex index) {}
+
+int32_t syncRaftLogTruncate(SSyncRaftLog* pLog, SyncIndex fromIndex) {}
+
+SyncIndex syncRaftLogLastIndex(SSyncRaftLog* pLog) {}
+
+SyncTerm syncRaftLogLastTerm(SSyncRaftLog* pLog) {}
+
+int32_t syncRaftLogUpdateCommitIndex(SSyncRaftLog* pLog, SyncIndex index) {}
+
+SyncIndex syncRaftLogGetCommitIndex(SSyncRaftLog* pLog) {}
+
+SSyncRaftEntry* syncRaftLogGetLastEntry(SSyncRaftLog* pLog) {}
+
+cJSON* syncRaftLog2Json(SSyncRaftLog* pLog) {}
+
+char* syncRaftLog2Str(SSyncRaftLog* pLog) {}
+
+cJSON* syncRaftLogSimple2Json(SSyncRaftLog* pLog) {}
+
+char* syncRaftLogSimple2Str(SSyncRaftLog* pLog) {}
+
+// for debug
+void syncRaftLogPrint(SSyncRaftLog* pLog) {}
+
+void syncRaftLogPrint2(char* s, SSyncRaftLog* pLog) {}
+
+void syncRaftLogLog(SSyncRaftLog* pLog) {}
+
+void syncRaftLogLog2(char* s, SSyncRaftLog* pLog) {}
+
+void syncRaftLogSimplePrint(SSyncRaftLog* pLog) {}
+
+void syncRaftLogSimplePrint2(char* s, SSyncRaftLog* pLog) {}
+
+void syncRaftLogSimpleLog(SSyncRaftLog* pLog) {}
+
+void syncRaftLogSimpleLog2(char* s, SSyncRaftLog* pLog) {}

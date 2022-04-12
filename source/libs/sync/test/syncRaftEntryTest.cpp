@@ -56,26 +56,31 @@ void test2() {
 }
 
 void test3() {
-  SyncClientRequest msg;
-  initSyncClientRequest(&msg);
+  SyncClientRequest syncMsg;
+  initSyncClientRequest(&syncMsg);
 
-  SSyncRaftEntry* pEntry = syncRaftEntryBuild(&msg, 100, 9527);
-  syncRaftEntryPrint2((char*)"==test3 syncRaftEntryBuild==", pEntry);
+  SSyncRaftEntry entry;
+  syncRaftEntryInit(&entry, &syncMsg, 100, 9527);
+
+  syncRaftEntryPrint2((char*)"==test3 syncRaftEntryInit==", &entry);
 
   SRpcMsg rpcMsg;
-  syncRaftEntry2RpcMsg(pEntry, &rpcMsg);
+  syncRaftEntry2RpcMsg(&entry, &rpcMsg);
   syncRpcMsgPrint2((char*)"==test3 syncRaftEntry2RpcMsg==", &rpcMsg);
 
-  rpcFreeCont(msg.rpcMsg.pCont);
   rpcFreeCont(rpcMsg.pCont);
-
-  syncRaftEntryDestory(pEntry);
 }
 
 void test4() {
-  SSyncRaftEntry* pEntry = syncRaftEntryBuildNoop(100, 9527);
-  syncRaftEntryPrint2((char*)"==test4 syncRaftEntryBuildNoop==", pEntry);
-  syncRaftEntryDestory(pEntry);
+  SSyncRaftEntry entry;
+  syncRaftEntryInitNoop(&entry, 100, 9527, 1000);
+  syncRaftEntryPrint2((char*)"==test4 syncRaftEntryInitNoop==", &entry);
+
+  SRpcMsg rpcMsg;
+  syncRaftEntry2RpcMsg(&entry, &rpcMsg);
+  syncRpcMsgPrint2((char*)"==test4 syncRaftEntry2RpcMsg==", &rpcMsg);
+
+  rpcFreeCont(entry.rpcMsg.pCont);
 }
 
 int main(int argc, char** argv) {

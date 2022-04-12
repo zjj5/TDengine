@@ -61,6 +61,39 @@ void logStoreSimplePrint2(char* s, SSyncLogStore* pLogStore);
 void logStoreSimpleLog(SSyncLogStore* pLogStore);
 void logStoreSimpleLog2(char* s, SSyncLogStore* pLogStore);
 
+//=======================
+
+typedef struct SSyncRaftLogData {
+  SSyncNode* pSyncNode;
+  SWal*      pWal;
+} SSyncRaftLogData;
+
+SSyncRaftLog*   syncRaftLogCreate(SSyncNode* pSyncNode);
+void            syncRaftLogDestory(SSyncRaftLog* pLog);
+int32_t         syncRaftLogAppendEntry(SSyncRaftLog* pLog, SSyncRaftEntry* pEntry);
+SSyncRaftEntry* syncRaftLogGetEntry(SSyncRaftLog* pLog, SyncIndex index);
+int32_t         syncRaftLogTruncate(SSyncRaftLog* pLog, SyncIndex fromIndex);
+SyncIndex       syncRaftLogLastIndex(SSyncRaftLog* pLog);
+SyncTerm        syncRaftLogLastTerm(SSyncRaftLog* pLog);
+int32_t         syncRaftLogUpdateCommitIndex(SSyncRaftLog* pLog, SyncIndex index);
+SyncIndex       syncRaftLogGetCommitIndex(SSyncRaftLog* pLog);
+SSyncRaftEntry* syncRaftLogGetLastEntry(SSyncRaftLog* pLog);
+cJSON*          syncRaftLog2Json(SSyncRaftLog* pLog);
+char*           syncRaftLog2Str(SSyncRaftLog* pLog);
+cJSON*          syncRaftLogSimple2Json(SSyncRaftLog* pLog);
+char*           syncRaftLogSimple2Str(SSyncRaftLog* pLog);
+
+// for debug
+void syncRaftLogPrint(SSyncRaftLog* pLog);
+void syncRaftLogPrint2(char* s, SSyncRaftLog* pLog);
+void syncRaftLogLog(SSyncRaftLog* pLog);
+void syncRaftLogLog2(char* s, SSyncRaftLog* pLog);
+
+void syncRaftLogSimplePrint(SSyncRaftLog* pLog);
+void syncRaftLogSimplePrint2(char* s, SSyncRaftLog* pLog);
+void syncRaftLogSimpleLog(SSyncRaftLog* pLog);
+void syncRaftLogSimpleLog2(char* s, SSyncRaftLog* pLog);
+
 #ifdef __cplusplus
 }
 #endif
