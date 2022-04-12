@@ -76,6 +76,7 @@ int vnodeProcessWriteMsg(SVnode *pVnode, SRpcMsg *pMsg, int64_t version, SRpcMsg
     ASSERT(0);
   }
 
+  // process request
   switch (pMsg->msgType) {
     // meta =================
     case TDMT_VND_CREATE_STB:
@@ -99,20 +100,15 @@ int vnodeProcessWriteMsg(SVnode *pVnode, SRpcMsg *pMsg, int64_t version, SRpcMsg
       break;
     // tq =================
     case TDMT_VND_MQ_SET_CONN:
-      // TODO
-      break;
+      return tqProcessSetConnReq(pVnode->pTq, pCont);
     case TDMT_VND_MQ_REB:
-      // TODO
-      break;
+      return tqProcessRebReq(pVnode->pTq, pCont);
     case TDMT_VND_MQ_CANCEL_CONN:
-      // TODO
-      break;
+      return tqProcessCancelConnReq(pVnode->pTq, pCont);
     case TDMT_VND_TASK_DEPLOY:
-      // TODO
-      break;
+      return tqProcessTaskDeploy(pVnode->pTq, pCont, contLen);
     case TDMT_VND_TASK_WRITE_EXEC:
-      // TODO
-      break;
+      return tqProcessTaskExec(pVnode->pTq, pCont, contLen, 0);
     default:
       ASSERT(0);
   }
@@ -185,7 +181,13 @@ int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
 }
 
 static int vnodeConvertAndCopyReq(SVnode *pVnode, SRpcMsg *pMsg, void **ppCont, int *contLen) {
-  // TODO
+  if (pMsg->msgType == TDMT_VND_SUBMIT) {
+    // TODO: do convert and copy
+  } else {
+    *ppCont = POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead));
+    *contLen = pMsg->contLen - sizeof(SMsgHead);
+  }
+
   return 0;
 }
 

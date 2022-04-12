@@ -18,6 +18,7 @@
 #include "tstream.h"
 #include "vnodeInt.h"
 
+#if 0
 int32_t tqInit() { return tqPushMgrInit(); }
 
 void tqCleanUp() { tqPushMgrCleanUp(); }
@@ -74,9 +75,13 @@ int tqPushMsg(STQ* pTq, void* msg, int32_t msgLen, tmsg_t msgType, int64_t versi
 #endif
   return 0;
 }
+#endif
 
+#if 0
 int tqCommit(STQ* pTq) { return tqStorePersist(pTq->tqMeta); }
+#endif
 
+#if 0
 int32_t tqGetTopicHandleSize(const STqTopic* pTopic) {
   return strlen(pTopic->topicName) + strlen(pTopic->sql) + strlen(pTopic->logicalPlan) + strlen(pTopic->physicalPlan) +
          strlen(pTopic->qmsg) + sizeof(int64_t) * 3;
@@ -170,7 +175,9 @@ int tqSerializeConsumer(const STqConsumer* pConsumer, STqSerializedHead** ppHead
 
   return 0;
 }
+#endif
 
+#if 0
 int32_t tqDeserializeConsumer(STQ* pTq, const STqSerializedHead* pHead, STqConsumer** ppConsumer) {
   const void* str = pHead->content;
   *ppConsumer = taosMemoryCalloc(1, sizeof(STqConsumer));
@@ -204,7 +211,9 @@ int32_t tqDeserializeConsumer(STQ* pTq, const STqSerializedHead* pHead, STqConsu
 
   return 0;
 }
+#endif
 
+#if 0
 int32_t tqProcessPollReq(STQ* pTq, SRpcMsg* pMsg, int32_t workerId) {
   SMqPollReq* pReq = pMsg->pCont;
   int64_t     consumerId = pReq->consumerId;
@@ -382,8 +391,10 @@ int32_t tqProcessPollReq(STQ* pTq, SRpcMsg* pMsg, int32_t workerId) {
 
   return 0;
 }
+#endif
 
 int32_t tqProcessRebReq(STQ* pTq, char* msg) {
+#if 0
   SMqMVRebReq req = {0};
   terrno = TSDB_CODE_SUCCESS;
   tDecodeSMqMVRebReq(msg, &req);
@@ -434,10 +445,12 @@ int32_t tqProcessRebReq(STQ* pTq, char* msg) {
     }
     //
   }
+#endif
   return 0;
 }
 
 int32_t tqProcessSetConnReq(STQ* pTq, char* msg) {
+#if 0
   SMqSetCVgReq req = {0};
   tDecodeSMqSetCVgReq(msg, &req);
   bool create = false;
@@ -495,6 +508,7 @@ int32_t tqProcessSetConnReq(STQ* pTq, char* msg) {
     tqHandleCommit(pTq->tqMeta, req.consumerId);
   }
   terrno = TSDB_CODE_SUCCESS;
+#endif
   return 0;
 }
 
@@ -503,6 +517,7 @@ int32_t tqProcessCancelConnReq(STQ* pTq, char* msg) {
   return 0;
 }
 
+#if 0
 int32_t tqExpandTask(STQ* pTq, SStreamTask* pTask, int32_t parallel) {
   if (pTask->execType == TASK_EXEC__NONE) return 0;
 
@@ -523,8 +538,10 @@ int32_t tqExpandTask(STQ* pTq, SStreamTask* pTask, int32_t parallel) {
   }
   return 0;
 }
+#endif
 
 int32_t tqProcessTaskDeploy(STQ* pTq, char* msg, int32_t msgLen) {
+#if 0
   SStreamTask* pTask = taosMemoryMalloc(sizeof(SStreamTask));
   if (pTask == NULL) {
     return -1;
@@ -549,9 +566,11 @@ int32_t tqProcessTaskDeploy(STQ* pTq, char* msg, int32_t msgLen) {
 
   taosHashPut(pTq->pStreamTasks, &pTask->taskId, sizeof(int32_t), pTask, sizeof(SStreamTask));
 
+#endif
   return 0;
 }
 
+#if 0
 int32_t tqProcessStreamTrigger(STQ* pTq, void* data, int32_t dataLen, int32_t workerId) {
   void* pIter = NULL;
 
@@ -566,8 +585,10 @@ int32_t tqProcessStreamTrigger(STQ* pTq, void* data, int32_t dataLen, int32_t wo
   }
   return 0;
 }
+#endif
 
 int32_t tqProcessTaskExec(STQ* pTq, char* msg, int32_t msgLen, int32_t workerId) {
+#if 0
   SStreamTaskExecReq req;
   tDecodeSStreamTaskExecReq(msg, &req);
 
@@ -580,5 +601,6 @@ int32_t tqProcessTaskExec(STQ* pTq, char* msg, int32_t msgLen, int32_t workerId)
   if (streamExecTask(pTask, &pTq->pVnode->msgCb, req.data, STREAM_DATA_TYPE_SSDATA_BLOCK, workerId) < 0) {
     // TODO
   }
+#endif
   return 0;
 }

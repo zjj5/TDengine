@@ -48,7 +48,7 @@ target_sources(
     "src/tq/tqOpen.c"
     "src/tq/tqExe.c"
     "src/tq/tqRead.c"
-    # "src/tq/tq.c"
+    "src/tq/tq.c"
     # "src/tq/tqMetaStore.c"
     # "src/tq/tqOffset.c"
     # "src/tq/tqPush.c"

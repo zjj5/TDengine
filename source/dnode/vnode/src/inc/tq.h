@@ -40,6 +40,13 @@ void tqClose(STQ* pTq);
 int tqBegin(STQ* pTq);
 int tqCommit(STQ* pTq);
 
+// tqHandle ===================
+int32_t tqProcessSetConnReq(STQ* pTq, char* msg);
+int32_t tqProcessRebReq(STQ* pTq, char* msg);
+int32_t tqProcessCancelConnReq(STQ* pTq, char* msg);
+int32_t tqProcessTaskDeploy(STQ* pTq, char* msg, int32_t msgLen);
+int32_t tqProcessTaskExec(STQ* pTq, char* msg, int32_t msgLen, int32_t workerId);
+
 struct STQ {
   char*         path;
   SVnode*       pVnode;
