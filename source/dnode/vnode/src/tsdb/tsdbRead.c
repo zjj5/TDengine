@@ -1802,7 +1802,7 @@ static int32_t doCopyRowsFromFileBlock(STsdbReadHandle* pTsdbReadHandle, int32_t
           }
 
           if (sVal.valType == TD_VTYPE_NULL) {
-            colDataAppend(pColInfo, k, NULL, true);
+            colDataAppendNULL(pColInfo, k);
           } else {
             colDataAppend(pColInfo, k, sVal.val, false);
           }
@@ -1815,7 +1815,11 @@ static int32_t doCopyRowsFromFileBlock(STsdbReadHandle* pTsdbReadHandle, int32_t
             TASSERT(0);
           }
 
-          colDataAppend(pColInfo, k, sVal.val, false);
+          if (sVal.valType == TD_VTYPE_NULL) {
+            colDataAppendNULL(pColInfo, k);
+          } else {
+            colDataAppend(pColInfo, k, sVal.val, false);
+          }
         }
       }
 
