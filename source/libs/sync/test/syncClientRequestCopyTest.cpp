@@ -34,12 +34,13 @@ void test1() {
 
 void test2() {
   SyncClientRequestCopy *pMsg = createMsg();
-  uint32_t           len = pMsg->bytes;
-  char *             serialized = (char *)taosMemoryMalloc(len);
+  uint32_t               len = pMsg->bytes;
+  char *                 serialized = (char *)taosMemoryMalloc(len);
   syncClientRequestCopySerialize(pMsg, serialized, len);
   SyncClientRequestCopy *pMsg2 = syncClientRequestCopyBuild(pMsg->dataLen);
   syncClientRequestCopyDeserialize(serialized, len, pMsg2);
-  syncClientRequestCopyPrint2((char *)"test2: syncClientRequestCopySerialize -> syncClientRequestCopyDeserialize ", pMsg2);
+  syncClientRequestCopyPrint2((char *)"test2: syncClientRequestCopySerialize -> syncClientRequestCopyDeserialize ",
+                              pMsg2);
 
   taosMemoryFree(serialized);
   syncClientRequestCopyDestroy(pMsg);
@@ -48,10 +49,11 @@ void test2() {
 
 void test3() {
   SyncClientRequestCopy *pMsg = createMsg();
-  uint32_t           len;
-  char *             serialized = syncClientRequestCopySerialize2(pMsg, &len);
+  uint32_t               len;
+  char *                 serialized = syncClientRequestCopySerialize2(pMsg, &len);
   SyncClientRequestCopy *pMsg2 = syncClientRequestCopyDeserialize2(serialized, len);
-  syncClientRequestCopyPrint2((char *)"test3: syncClientRequestCopySerialize3 -> syncClientRequestCopyDeserialize2 ", pMsg2);
+  syncClientRequestCopyPrint2((char *)"test3: syncClientRequestCopySerialize3 -> syncClientRequestCopyDeserialize2 ",
+                              pMsg2);
 
   taosMemoryFree(serialized);
   syncClientRequestCopyDestroy(pMsg);
@@ -60,7 +62,7 @@ void test3() {
 
 void test4() {
   SyncClientRequestCopy *pMsg = createMsg();
-  SRpcMsg            rpcMsg;
+  SRpcMsg                rpcMsg;
   syncClientRequestCopy2RpcMsg(pMsg, &rpcMsg);
   SyncClientRequestCopy *pMsg2 = (SyncClientRequestCopy *)taosMemoryMalloc(rpcMsg.contLen);
   syncClientRequestCopyFromRpcMsg(&rpcMsg, pMsg2);
@@ -73,10 +75,11 @@ void test4() {
 
 void test5() {
   SyncClientRequestCopy *pMsg = createMsg();
-  SRpcMsg            rpcMsg;
+  SRpcMsg                rpcMsg;
   syncClientRequestCopy2RpcMsg(pMsg, &rpcMsg);
   SyncClientRequestCopy *pMsg2 = syncClientRequestCopyFromRpcMsg2(&rpcMsg);
-  syncClientRequestCopyPrint2((char *)"test5: syncClientRequestCopy2RpcMsg -> syncClientRequestCopyFromRpcMsg2 ", pMsg2);
+  syncClientRequestCopyPrint2((char *)"test5: syncClientRequestCopy2RpcMsg -> syncClientRequestCopyFromRpcMsg2 ",
+                              pMsg2);
 
   rpcFreeCont(rpcMsg.pCont);
   syncClientRequestCopyDestroy(pMsg);

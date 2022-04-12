@@ -210,6 +210,7 @@ enum {
   TD_DEF_MSG_TYPE(TDMT_VND_SYNC_REQUEST_VOTE_REPLY, "vnode-sync-request-vote-reply", NULL, NULL)
   TD_DEF_MSG_TYPE(TDMT_VND_SYNC_APPEND_ENTRIES, "vnode-sync-append-entries", NULL, NULL)
   TD_DEF_MSG_TYPE(TDMT_VND_SYNC_APPEND_ENTRIES_REPLY, "vnode-sync-append-entries-reply", NULL, NULL)
+  TD_DEF_MSG_TYPE(TDMT_VND_SYNC_NOOP_ENTRY, "vnode-sync-noop-entry", NULL, NULL)
 
   // Requests handled by QNODE
   TD_NEW_MSG_SEG(TDMT_QND_MSG)

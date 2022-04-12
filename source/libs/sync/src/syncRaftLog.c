@@ -44,7 +44,7 @@ void logStoreDestory(SSyncLogStore* pLogStore) {
   }
 }
 
-int32_t logStoreAppendEntry(SSyncLogStore* pLogStore, SSyncRaftEntry* pEntry) {
+int32_t logStoreAppendEntry(SSyncLogStore* pLogStore, SSyncEntry* pEntry) {
   SSyncLogStoreData* pData = pLogStore->data;
   SWal*              pWal = pData->pWal;
 
@@ -66,10 +66,10 @@ int32_t logStoreAppendEntry(SSyncLogStore* pLogStore, SSyncRaftEntry* pEntry) {
   return code;
 }
 
-SSyncRaftEntry* logStoreGetEntry(SSyncLogStore* pLogStore, SyncIndex index) {
+SSyncEntry* logStoreGetEntry(SSyncLogStore* pLogStore, SyncIndex index) {
   SSyncLogStoreData* pData = pLogStore->data;
   SWal*              pWal = pData->pWal;
-  SSyncRaftEntry*    pEntry = NULL;
+  SSyncEntry*        pEntry = NULL;
 
   if (index >= SYNC_INDEX_BEGIN && index <= logStoreLastIndex(pLogStore)) {
     SWalReadHandle* pWalHandle = walOpenReadHandle(pWal);
@@ -99,8 +99,8 @@ SyncIndex logStoreLastIndex(SSyncLogStore* pLogStore) {
 }
 
 SyncTerm logStoreLastTerm(SSyncLogStore* pLogStore) {
-  SyncTerm        lastTerm = 0;
-  SSyncRaftEntry* pLastEntry = logStoreGetLastEntry(pLogStore);
+  SyncTerm    lastTerm = 0;
+  SSyncEntry* pLastEntry = logStoreGetLastEntry(pLogStore);
   if (pLastEntry != NULL) {
     lastTerm = pLastEntry->term;
     taosMemoryFree(pLastEntry);
@@ -120,12 +120,12 @@ SyncIndex logStoreGetCommitIndex(SSyncLogStore* pLogStore) {
   return pData->pSyncNode->commitIndex;
 }
 
-SSyncRaftEntry* logStoreGetLastEntry(SSyncLogStore* pLogStore) {
+SSyncEntry* logStoreGetLastEntry(SSyncLogStore* pLogStore) {
   SSyncLogStoreData* pData = pLogStore->data;
   SWal*              pWal = pData->pWal;
   SyncIndex          lastIndex = walGetLastVer(pWal);
 
-  SSyncRaftEntry* pEntry = NULL;
+  SSyncEntry* pEntry = NULL;
   if (lastIndex > 0) {
     pEntry = logStoreGetEntry(pLogStore, lastIndex);
   }
@@ -151,7 +151,7 @@ cJSON* logStore2Json(SSyncLogStore* pLogStore) {
     cJSON_AddItemToObject(pRoot, "pEntries", pEntries);
     SyncIndex lastIndex = logStoreLastIndex(pLogStore);
     for (SyncIndex i = 0; i <= lastIndex; ++i) {
-      SSyncRaftEntry* pEntry = logStoreGetEntry(pLogStore, i);
+      SSyncEntry* pEntry = logStoreGetEntry(pLogStore, i);
       cJSON_AddItemToArray(pEntries, syncEntry2Json(pEntry));
       syncEntryDestory(pEntry);
     }

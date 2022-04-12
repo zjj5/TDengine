@@ -17,7 +17,7 @@ void logTest() {
 }
 
 void test1() {
-  SSyncRaftEntry* pEntry = syncEntryBuild(10);
+  SSyncEntry* pEntry = syncEntryBuild(10);
   assert(pEntry != NULL);
   pEntry->msgType = 1;
   pEntry->originalRpcType = 2;
@@ -38,7 +38,7 @@ void test2() {
   pSyncMsg->isWeak = 1;
   strcpy(pSyncMsg->data, "test2");
 
-  SSyncRaftEntry* pEntry = syncEntryBuild2(pSyncMsg, 100, 200);
+  SSyncEntry* pEntry = syncEntryBuild2(pSyncMsg, 100, 200);
   syncEntryPrint(pEntry);
 
   syncClientRequestCopyDestroy(pSyncMsg);
@@ -52,7 +52,7 @@ void test3() {
   pSyncMsg->isWeak = 1;
   strcpy(pSyncMsg->data, "test3");
 
-  SSyncRaftEntry* pEntry = syncEntryBuild3(pSyncMsg, 100, 200, SYNC_RAFT_ENTRY_NOOP);
+  SSyncEntry* pEntry = syncEntryBuild3(pSyncMsg, 100, 200, SYNC_RAFT_ENTRY_NOOP);
   syncEntryPrint(pEntry);
 
   syncClientRequestCopyDestroy(pSyncMsg);
@@ -60,7 +60,7 @@ void test3() {
 }
 
 void test4() {
-  SSyncRaftEntry* pEntry = syncEntryBuild(10);
+  SSyncEntry* pEntry = syncEntryBuild(10);
   assert(pEntry != NULL);
   pEntry->msgType = 11;
   pEntry->originalRpcType = 22;
@@ -75,7 +75,7 @@ void test4() {
   uint32_t len;
   char*    serialized = syncEntrySerialize(pEntry, &len);
   assert(serialized != NULL);
-  SSyncRaftEntry* pEntry2 = syncEntryDeserialize(serialized, len);
+  SSyncEntry* pEntry2 = syncEntryDeserialize(serialized, len);
   syncEntryPrint(pEntry2);
 
   taosMemoryFree(serialized);

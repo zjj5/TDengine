@@ -117,22 +117,22 @@ SyncClientRequestCopy *step3(const SRpcMsg *pMsg) {
   return pRetMsg;
 }
 
-SSyncRaftEntry *step4(const SyncClientRequestCopy *pMsg) {
-  SSyncRaftEntry *pRetMsg = syncEntryBuild2((SyncClientRequestCopy *)pMsg, 100, 0);
+SSyncEntry *step4(const SyncClientRequestCopy *pMsg) {
+  SSyncEntry *pRetMsg = syncEntryBuild2((SyncClientRequestCopy *)pMsg, 100, 0);
   return pRetMsg;
 }
 
-char *step5(const SSyncRaftEntry *pMsg, uint32_t *len) {
+char *step5(const SSyncEntry *pMsg, uint32_t *len) {
   char *pRetMsg = syncEntrySerialize(pMsg, len);
   return pRetMsg;
 }
 
-SSyncRaftEntry *step6(const char *pMsg, uint32_t len) {
-  SSyncRaftEntry *pRetMsg = syncEntryDeserialize(pMsg, len);
+SSyncEntry *step6(const char *pMsg, uint32_t len) {
+  SSyncEntry *pRetMsg = syncEntryDeserialize(pMsg, len);
   return pRetMsg;
 }
 
-SRpcMsg *step7(const SSyncRaftEntry *pMsg) {
+SRpcMsg *step7(const SSyncEntry *pMsg) {
   SRpcMsg *pRetMsg = (SRpcMsg *)taosMemoryMalloc(sizeof(SRpcMsg));
   syncEntry2OriginalRpc(pMsg, pRetMsg);
   return pRetMsg;
@@ -174,15 +174,15 @@ int main(int argc, char **argv) {
   syncClientRequestCopyPrint2((char *)"==step3==", pMsg3);
 
   // step4
-  SSyncRaftEntry *pMsg4 = step4(pMsg3);
+  SSyncEntry *pMsg4 = step4(pMsg3);
   syncEntryPrint2((char *)"==step4==", pMsg4);
 
   // log, relog
   SSyncNode *pSyncNode = syncNodeInit();
   assert(pSyncNode != NULL);
-  SSyncRaftEntry *pEntry = pMsg4;
+  SSyncEntry *pEntry = pMsg4;
   pSyncNode->pLogStore->appendEntry(pSyncNode->pLogStore, pEntry);
-  SSyncRaftEntry *pEntry2 = pSyncNode->pLogStore->getEntry(pSyncNode->pLogStore, pEntry->index);
+  SSyncEntry *pEntry2 = pSyncNode->pLogStore->getEntry(pSyncNode->pLogStore, pEntry->index);
   syncEntryPrint2((char *)"==pEntry2==", pEntry2);
 
   // step5
@@ -193,7 +193,7 @@ int main(int argc, char **argv) {
   taosMemoryFree(s);
 
   // step6
-  SSyncRaftEntry *pMsg6 = step6(pMsg5, len);
+  SSyncEntry *pMsg6 = step6(pMsg5, len);
   syncEntryPrint2((char *)"==step6==", pMsg6);
 
   // step7

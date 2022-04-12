@@ -64,7 +64,7 @@ int32_t syncNodeAppendEntriesPeers(SSyncNode* pSyncNode) {
     // set preLogTerm
     SyncTerm preLogTerm = 0;
     if (preLogIndex >= SYNC_INDEX_BEGIN) {
-      SSyncRaftEntry* pPreEntry = pSyncNode->pLogStore->getEntry(pSyncNode->pLogStore, preLogIndex);
+      SSyncEntry* pPreEntry = pSyncNode->pLogStore->getEntry(pSyncNode->pLogStore, preLogIndex);
       assert(pPreEntry != NULL);
 
       preLogTerm = pPreEntry->term;
@@ -75,7 +75,7 @@ int32_t syncNodeAppendEntriesPeers(SSyncNode* pSyncNode) {
     // SyncIndex lastIndex = syncUtilMinIndex(pSyncNode->pLogStore->getLastIndex(pSyncNode->pLogStore), nextIndex);
 
     SyncAppendEntries* pMsg = NULL;
-    SSyncRaftEntry*    pEntry = logStoreGetEntry(pSyncNode->pLogStore, nextIndex);
+    SSyncEntry*        pEntry = logStoreGetEntry(pSyncNode->pLogStore, nextIndex);
     if (pEntry != NULL) {
       pMsg = syncAppendEntriesBuild(pEntry->bytes, pSyncNode->vgId);
       assert(pMsg != NULL);

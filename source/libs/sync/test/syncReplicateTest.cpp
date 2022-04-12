@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
     syncClientRequestCopyPrint2((char *)"==step1==", pMsg1);
 
     SyncClientRequestCopy *pSyncClientRequestCopy = pMsg1;
-    SRpcMsg            rpcMsg;
+    SRpcMsg                rpcMsg;
     syncClientRequestCopy2RpcMsg(pSyncClientRequestCopy, &rpcMsg);
     gSyncNode->FpEqMsg(gSyncNode->queue, &rpcMsg);
 

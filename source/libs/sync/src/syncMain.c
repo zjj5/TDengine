@@ -225,7 +225,7 @@ int32_t syncPropose2(int64_t rid, const SRpcMsg* pMsg, bool isWeak, uint64_t seq
 
   if (pSyncNode->state == TAOS_SYNC_STATE_LEADER) {
     SyncClientRequestCopy* pSyncMsg = syncClientRequestCopyBuild2(pMsg, seqNum, isWeak, pSyncNode->vgId);
-    SRpcMsg            rpcMsg;
+    SRpcMsg                rpcMsg;
     syncClientRequestCopy2RpcMsg(pSyncMsg, &rpcMsg);
     if (pSyncNode->FpEqMsg != NULL) {
       pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
@@ -1016,13 +1016,13 @@ static int32_t syncNodeEqNoop(SSyncNode* ths) {
   int32_t ret = 0;
   assert(ths->state == TAOS_SYNC_STATE_LEADER);
 
-  SyncIndex       index = ths->pLogStore->getLastIndex(ths->pLogStore) + 1;
-  SyncTerm        term = ths->pRaftStore->currentTerm;
-  SSyncRaftEntry* pEntry = syncEntryBuildNoop(term, index);
+  SyncIndex   index = ths->pLogStore->getLastIndex(ths->pLogStore) + 1;
+  SyncTerm    term = ths->pRaftStore->currentTerm;
+  SSyncEntry* pEntry = syncEntryBuildNoop(term, index);
   assert(pEntry != NULL);
 
-  uint32_t           entryLen;
-  char*              serialized = syncEntrySerialize(pEntry, &entryLen);
+  uint32_t               entryLen;
+  char*                  serialized = syncEntrySerialize(pEntry, &entryLen);
   SyncClientRequestCopy* pSyncMsg = syncClientRequestCopyBuild(entryLen);
   assert(pSyncMsg->dataLen == entryLen);
   memcpy(pSyncMsg->data, serialized, entryLen);
@@ -1044,9 +1044,9 @@ static int32_t syncNodeEqNoop(SSyncNode* ths) {
 static int32_t syncNodeAppendNoop(SSyncNode* ths) {
   int32_t ret = 0;
 
-  SyncIndex       index = ths->pLogStore->getLastIndex(ths->pLogStore) + 1;
-  SyncTerm        term = ths->pRaftStore->currentTerm;
-  SSyncRaftEntry* pEntry = syncEntryBuildNoop(term, index);
+  SyncIndex   index = ths->pLogStore->getLastIndex(ths->pLogStore) + 1;
+  SyncTerm    term = ths->pRaftStore->currentTerm;
+  SSyncEntry* pEntry = syncEntryBuildNoop(term, index);
   assert(pEntry != NULL);
 
   if (ths->state == TAOS_SYNC_STATE_LEADER) {
@@ -1105,9 +1105,9 @@ int32_t syncNodeOnClientRequestCopyCb(SSyncNode* ths, SyncClientRequestCopy* pMs
   int32_t ret = 0;
   syncClientRequestCopyLog2("==syncNodeOnClientRequestCopyCb==", pMsg);
 
-  SyncIndex       index = ths->pLogStore->getLastIndex(ths->pLogStore) + 1;
-  SyncTerm        term = ths->pRaftStore->currentTerm;
-  SSyncRaftEntry* pEntry = syncEntryBuild2((SyncClientRequestCopy*)pMsg, term, index);
+  SyncIndex   index = ths->pLogStore->getLastIndex(ths->pLogStore) + 1;
+  SyncTerm    term = ths->pRaftStore->currentTerm;
+  SSyncEntry* pEntry = syncEntryBuild2((SyncClientRequestCopy*)pMsg, term, index);
   assert(pEntry != NULL);
 
   if (ths->state == TAOS_SYNC_STATE_LEADER) {

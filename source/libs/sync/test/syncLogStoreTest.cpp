@@ -86,8 +86,8 @@ void logStoreTest() {
   assert(pSyncNode->pLogStore->getLastIndex(pSyncNode->pLogStore) == SYNC_INDEX_INVALID);
 
   for (int i = 0; i < 5; ++i) {
-    int32_t         dataLen = 10;
-    SSyncRaftEntry* pEntry = syncEntryBuild(dataLen);
+    int32_t     dataLen = 10;
+    SSyncEntry* pEntry = syncEntryBuild(dataLen);
     assert(pEntry != NULL);
     pEntry->msgType = 1;
     pEntry->originalRpcType = 2;

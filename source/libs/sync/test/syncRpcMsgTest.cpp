@@ -156,7 +156,7 @@ void test7() {
 
 void test8() {
   SyncClientRequestCopy *pMsg = createSyncClientRequestCopy();
-  SRpcMsg            rpcMsg;
+  SRpcMsg                rpcMsg;
   syncClientRequestCopy2RpcMsg(pMsg, &rpcMsg);
   syncRpcMsgPrint2((char *)"test8", &rpcMsg);
   syncClientRequestCopyDestroy(pMsg);

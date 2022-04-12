@@ -787,10 +787,10 @@ void syncPingReplyLog2(char* s, const SyncPingReply* pMsg) {
 }
 
 // ---- message process SyncClientRequest----
-void syncClientRequestInit(SRpcMsg* pRpcMsg, uint64_t seqNum, bool isWeak, SyncClientRequest* pMsg) {
+void syncClientRequestInit(SyncClientRequest* pMsg, SRpcMsg* pRpcMsg, uint64_t seqNum, bool isWeak) {
   pMsg->seqNum = seqNum;
   pMsg->isWeak = isWeak;
-  pMsg->pRpcMsg = pRpcMsg;
+  memcpy(&(pMsg->rpcMsg), pRpcMsg, sizeof(SRpcMsg));
 }
 
 // ---- message process SyncClientRequestCopy----

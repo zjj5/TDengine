@@ -33,7 +33,7 @@ typedef enum EntryType {
   SYNC_RAFT_ENTRY_CONFIG = 2,
 } EntryType;
 
-typedef struct SSyncRaftEntry {
+typedef struct SSyncEntry {
   uint32_t  bytes;
   uint32_t  msgType;
   uint32_t  originalRpcType;
@@ -44,24 +44,60 @@ typedef struct SSyncRaftEntry {
   EntryType entryType;
   uint32_t  dataLen;
   char      data[];
-} SSyncRaftEntry;
+} SSyncEntry;
 
-SSyncRaftEntry* syncEntryBuild(uint32_t dataLen);
-SSyncRaftEntry* syncEntryBuild2(SyncClientRequestCopy* pMsg, SyncTerm term, SyncIndex index);  // step 4
-SSyncRaftEntry* syncEntryBuild3(SyncClientRequestCopy* pMsg, SyncTerm term, SyncIndex index, EntryType entryType);
-SSyncRaftEntry* syncEntryBuildNoop(SyncTerm term, SyncIndex index);
-void            syncEntryDestory(SSyncRaftEntry* pEntry);
-char*           syncEntrySerialize(const SSyncRaftEntry* pEntry, uint32_t* len);  // step 5
-SSyncRaftEntry* syncEntryDeserialize(const char* buf, uint32_t len);              // step 6
-cJSON*          syncEntry2Json(const SSyncRaftEntry* pEntry);
-char*           syncEntry2Str(const SSyncRaftEntry* pEntry);
-void            syncEntry2OriginalRpc(const SSyncRaftEntry* pEntry, SRpcMsg* pRpcMsg);  // step 7
+SSyncEntry* syncEntryBuild(uint32_t dataLen);
+SSyncEntry* syncEntryBuild2(SyncClientRequestCopy* pMsg, SyncTerm term, SyncIndex index);  // step 4
+SSyncEntry* syncEntryBuild3(SyncClientRequestCopy* pMsg, SyncTerm term, SyncIndex index, EntryType entryType);
+SSyncEntry* syncEntryBuildNoop(SyncTerm term, SyncIndex index);
+void        syncEntryDestory(SSyncEntry* pEntry);
+char*       syncEntrySerialize(const SSyncEntry* pEntry, uint32_t* len);  // step 5
+SSyncEntry* syncEntryDeserialize(const char* buf, uint32_t len);          // step 6
+cJSON*      syncEntry2Json(const SSyncEntry* pEntry);
+char*       syncEntry2Str(const SSyncEntry* pEntry);
+void        syncEntry2OriginalRpc(const SSyncEntry* pEntry, SRpcMsg* pRpcMsg);  // step 7
 
 // for debug ----------------------
-void syncEntryPrint(const SSyncRaftEntry* pObj);
-void syncEntryPrint2(char* s, const SSyncRaftEntry* pObj);
-void syncEntryLog(const SSyncRaftEntry* pObj);
-void syncEntryLog2(char* s, const SSyncRaftEntry* pObj);
+void syncEntryPrint(const SSyncEntry* pObj);
+void syncEntryPrint2(char* s, const SSyncEntry* pObj);
+void syncEntryLog(const SSyncEntry* pObj);
+void syncEntryLog2(char* s, const SSyncEntry* pObj);
+
+// =================================================
+
+typedef struct SSyncRaftEntry {
+  uint32_t bytes;
+
+  // RpcMsg
+  uint32_t msgType;
+  int32_t  vgId;
+
+  // ClientRequest
+  uint64_t seqNum;
+  bool     isWeak;
+
+  // log
+  SyncTerm  term;
+  SyncIndex index;
+
+  // RpcMsg contLen, pCont
+  uint32_t dataLen;
+  char     data[];
+
+} SSyncRaftEntry;
+
+SSyncRaftEntry* syncRaftEntryBuild(SyncClientRequest* pMsg, SyncTerm term, SyncIndex index);  // step 4
+SSyncRaftEntry* syncRaftEntryBuildNoop(SyncTerm term, SyncIndex index);
+void            syncRaftEntryDestory(SSyncRaftEntry* pEntry);
+cJSON*          syncRaftEntry2Json(const SSyncRaftEntry* pEntry);
+char*           syncRaftEntry2Str(const SSyncRaftEntry* pEntry);
+void            syncRaftEntry2RpcMsg(const SSyncRaftEntry* pEntry, SRpcMsg* pRpcMsg);
+
+// for debug ----------------------
+void syncRaftEntryPrint(const SSyncRaftEntry* pObj);
+void syncRaftEntryPrint2(char* s, const SSyncRaftEntry* pObj);
+void syncRaftcEntryLog(const SSyncRaftEntry* pObj);
+void syncRaftEntryLog2(char* s, const SSyncRaftEntry* pObj);
 
 #ifdef __cplusplus
 }

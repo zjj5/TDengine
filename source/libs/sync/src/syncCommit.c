@@ -56,7 +56,7 @@ void syncMaybeAdvanceCommitIndex(SSyncNode* pSyncNode) {
            pSyncNode->commitIndex);
     if (agree) {
       // term
-      SSyncRaftEntry* pEntry = pSyncNode->pLogStore->getEntry(pSyncNode->pLogStore, index);
+      SSyncEntry* pEntry = pSyncNode->pLogStore->getEntry(pSyncNode->pLogStore, index);
       assert(pEntry != NULL);
 
       // cannot commit, even if quorum agree. need check term!
@@ -91,7 +91,7 @@ void syncMaybeAdvanceCommitIndex(SSyncNode* pSyncNode) {
     if (pSyncNode->pFsm != NULL) {
       for (SyncIndex i = beginIndex; i <= endIndex; ++i) {
         if (i != SYNC_INDEX_INVALID) {
-          SSyncRaftEntry* pEntry = pSyncNode->pLogStore->getEntry(pSyncNode->pLogStore, i);
+          SSyncEntry* pEntry = pSyncNode->pLogStore->getEntry(pSyncNode->pLogStore, i);
           assert(pEntry != NULL);
 
           SRpcMsg rpcMsg;

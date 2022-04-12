@@ -106,7 +106,7 @@ int32_t syncNodeOnAppendEntriesCb(SSyncNode* ths, SyncAppendEntries* pMsg) {
 
   SyncTerm localPreLogTerm = 0;
   if (pMsg->prevLogIndex >= SYNC_INDEX_BEGIN && pMsg->prevLogIndex <= ths->pLogStore->getLastIndex(ths->pLogStore)) {
-    SSyncRaftEntry* pEntry = logStoreGetEntry(ths->pLogStore, pMsg->prevLogIndex);
+    SSyncEntry* pEntry = logStoreGetEntry(ths->pLogStore, pMsg->prevLogIndex);
     assert(pEntry != NULL);
     localPreLogTerm = pEntry->term;
     syncEntryDestory(pEntry);
@@ -173,11 +173,11 @@ int32_t syncNodeOnAppendEntriesCb(SSyncNode* ths, SyncAppendEntries* pMsg) {
       // not conflict by default
       bool conflict = false;
 
-      SyncIndex       extraIndex = pMsg->prevLogIndex + 1;
-      SSyncRaftEntry* pExtraEntry = logStoreGetEntry(ths->pLogStore, extraIndex);
+      SyncIndex   extraIndex = pMsg->prevLogIndex + 1;
+      SSyncEntry* pExtraEntry = logStoreGetEntry(ths->pLogStore, extraIndex);
       assert(pExtraEntry != NULL);
 
-      SSyncRaftEntry* pAppendEntry = syncEntryDeserialize(pMsg->data, pMsg->dataLen);
+      SSyncEntry* pAppendEntry = syncEntryDeserialize(pMsg->data, pMsg->dataLen);
       assert(pAppendEntry != NULL);
 
       // log not match, conflict
@@ -196,7 +196,7 @@ int32_t syncNodeOnAppendEntriesCb(SSyncNode* ths, SyncAppendEntries* pMsg) {
         // notice! reverse roll back!
         for (SyncIndex index = delEnd; index >= delBegin; --index) {
           if (ths->pFsm->FpRollBackCb != NULL) {
-            SSyncRaftEntry* pRollBackEntry = logStoreGetEntry(ths->pLogStore, index);
+            SSyncEntry* pRollBackEntry = logStoreGetEntry(ths->pLogStore, index);
             assert(pRollBackEntry != NULL);
 
             // maybe is a NOOP ENTRY
@@ -235,7 +235,7 @@ int32_t syncNodeOnAppendEntriesCb(SSyncNode* ths, SyncAppendEntries* pMsg) {
       // do nothing
 
     } else if (!hasExtraEntries && hasAppendEntries) {
-      SSyncRaftEntry* pAppendEntry = syncEntryDeserialize(pMsg->data, pMsg->dataLen);
+      SSyncEntry* pAppendEntry = syncEntryDeserialize(pMsg->data, pMsg->dataLen);
       assert(pAppendEntry != NULL);
 
       // append new entries
@@ -295,7 +295,7 @@ int32_t syncNodeOnAppendEntriesCb(SSyncNode* ths, SyncAppendEntries* pMsg) {
         if (ths->pFsm != NULL) {
           for (SyncIndex i = beginIndex; i <= endIndex; ++i) {
             if (i != SYNC_INDEX_INVALID) {
-              SSyncRaftEntry* pEntry = ths->pLogStore->getEntry(ths->pLogStore, i);
+              SSyncEntry* pEntry = ths->pLogStore->getEntry(ths->pLogStore, i);
               assert(pEntry != NULL);
 
               SRpcMsg rpcMsg;

@@ -96,16 +96,19 @@ typedef struct SSyncFSM {
 struct SSyncRaftEntry;
 typedef struct SSyncRaftEntry SSyncRaftEntry;
 
+struct SSyncEntry;
+typedef struct SSyncEntry SSyncEntry;
+
 // abstract definition of log store in raft
 // SWal implements it
 typedef struct SSyncLogStore {
   void* data;
 
   // append one log entry
-  int32_t (*appendEntry)(struct SSyncLogStore* pLogStore, SSyncRaftEntry* pEntry);
+  int32_t (*appendEntry)(struct SSyncLogStore* pLogStore, SSyncEntry* pEntry);
 
   // get one log entry, user need to free pEntry->pCont
-  SSyncRaftEntry* (*getEntry)(struct SSyncLogStore* pLogStore, SyncIndex index);
+  SSyncEntry* (*getEntry)(struct SSyncLogStore* pLogStore, SyncIndex index);
 
   // truncate log with index, entries after the given index (>=index) will be deleted
   int32_t (*truncate)(struct SSyncLogStore* pLogStore, SyncIndex fromIndex);
@@ -311,10 +314,13 @@ void syncTimeoutLog2(char* s, const SyncTimeout* pMsg);
 typedef struct SyncClientRequest {
   uint64_t seqNum;
   bool     isWeak;
-  SRpcMsg* pRpcMsg;
+  SRpcMsg  rpcMsg;
 } SyncClientRequest;
 
-void syncClientRequestInit(SRpcMsg* pRpcMsg, uint64_t seqNum, bool isWeak, SyncClientRequest* pMsg);
+void syncClientRequestInit(SyncClientRequest* pMsg, SRpcMsg* pRpcMsg, uint64_t seqNum, bool isWeak);
+
+cJSON* syncClientRequest2Json(const SyncClientRequest* pMsg);
+char*  syncClientRequest2Str(const SyncClientRequest* pMsg);
 
 // ---------------------------------------------
 typedef struct SyncClientRequestCopy {
