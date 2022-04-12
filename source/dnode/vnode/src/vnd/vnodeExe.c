@@ -15,6 +15,7 @@
 
 #include "vnodeInt.h"
 
+#if 0
 static int  vnodeStartCommit(SVnode *pVnode);
 static int  vnodeEndCommit(SVnode *pVnode);
 static int  vnodeCommit(void *arg);
@@ -72,3 +73,4 @@ static int vnodeEndCommit(SVnode *pVnode) {
 }
 
 static FORCE_INLINE void vnodeWaitCommit(SVnode *pVnode) { tsem_wait(&pVnode->canCommit); }
+#endif

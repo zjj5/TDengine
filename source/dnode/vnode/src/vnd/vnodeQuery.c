@@ -32,15 +32,17 @@ int vnodeGetLoad(SVnode *pVnode, SVnodeLoad *pLoad) {
   return 0;
 }
 
+int vnodeQueryOpen(SVnode *pVnode) {
+  return qWorkerInit(NODE_TYPE_VNODE, TD_VNODE_ID(pVnode), NULL, (void **)&pVnode->pQuery, &pVnode->msgCb);
+}
+
+void vnodeQueryClose(SVnode *pVnode) { qWorkerDestroy((void **)&pVnode->pQuery); }
+
 #if 0
 static int32_t vnodeGetTableList(SVnode *pVnode, SRpcMsg *pMsg);
 static int     vnodeGetTableMeta(SVnode *pVnode, SRpcMsg *pMsg);
 
-int vnodeQueryOpen(SVnode *pVnode) {
-  return qWorkerInit(NODE_TYPE_VNODE, pVnode->vgId, NULL, (void **)&pVnode->pQuery, &pVnode->msgCb);
-}
 
-void vnodeQueryClose(SVnode *pVnode) { qWorkerDestroy((void **)&pVnode->pQuery); }
 
 static int vnodeGetTableMeta(SVnode *pVnode, SRpcMsg *pMsg) {
   STbCfg         *pTbCfg = NULL;
