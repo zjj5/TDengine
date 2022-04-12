@@ -15,6 +15,27 @@
 
 #include "vnodeInt.h"
 
+typedef struct STbData {
+  tb_uid_t   uid;
+  TSKEY      keyMin;
+  TSKEY      keyMax;
+  int64_t    minVer;
+  int64_t    maxVer;
+  int64_t    nRows;
+  SSkipList *pData;
+} STbData;
+
+struct SMemTable {
+  SVBufPool *pPool;
+  TSKEY      keyMin;
+  TSKEY      keyMax;
+  int64_t    minVer;
+  int64_t    maxVer;
+  int64_t    nRows;
+  SHashObj  *pHash;
+  SSkipList *pList;
+};
+
 #if 0
 static int      tsdbScanAndConvertSubmitMsg(STsdb *pTsdb, SSubmitReq *pMsg);
 static int      tsdbMemTableInsertTbData(STsdb *pRepo, SSubmitBlk *pBlock, int32_t *pAffectedRows);

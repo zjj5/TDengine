@@ -20,7 +20,8 @@
 extern "C" {
 #endif
 
-typedef struct SMemTable SMemTable;
+typedef struct SMemTable       SMemTable;
+typedef struct SMemTableCurosr SMemTableCurosr;
 
 // tsdbDebug ================
 // clang-format off
@@ -36,13 +37,14 @@ typedef struct SMemTable SMemTable;
 int tsdbOpen(SVnode *pVnode, STsdb **ppTsdb);
 int tsdbClose(STsdb *pTsdb);
 
-
 struct STsdb {
   char      *path;
   SVnode    *pVnode;
   SMemTable *mem;
   SMemTable *imem;
 };
+
+// tsdbMemTable ================
 
 #if 0
 
@@ -102,14 +104,6 @@ typedef struct {
   TSKEY minKey;
 } SRtn;
 
-typedef struct STbData {
-  tb_uid_t   uid;
-  TSKEY      keyMin;
-  TSKEY      keyMax;
-  int64_t    nrows;
-  SSkipList *pData;
-} STbData;
-
 typedef struct STsdbMemTable {
   T_REF_DECLARE()
   SRWLatch       latch;
@@ -154,10 +148,7 @@ struct STsdb {
   STsdbMemTable        *mem;
   STsdbMemTable        *imem;
   SRtn                  rtn;
-  SMemAllocatorFactory *pmaf;
   STsdbFS              *fs;
-  SMeta                *pMeta;
-  STfs                 *pTfs;
   SSmaEnvs              smaEnvs;
 };
 

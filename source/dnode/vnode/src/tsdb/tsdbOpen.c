@@ -15,10 +15,14 @@
 
 #include "vnodeInt.h"
 
+static int tsdbOpenImpl(STsdb *pTsdb);
+
 int tsdbOpen(SVnode *pVnode, STsdb **ppTsdb) {
   STsdb *pTsdb;
+  int    slen;
 
   *ppTsdb = NULL;
+  slen = strlen(pVnode->path) + strlen(VND_TSDB_DIR) + 2;
 
   pTsdb = taosMemoryCalloc(1, sizeof(*pTsdb));
   if (pTsdb == NULL) {
@@ -26,9 +30,15 @@ int tsdbOpen(SVnode *pVnode, STsdb **ppTsdb) {
     return -1;
   }
 
+  pTsdb->path = (char *)&pTsdb[1];
+  sprintf(pTsdb->path, "%s%s%s", pVnode->path, TD_DIRSEP, VND_TSDB_DIR);
   pTsdb->pVnode = pVnode;
 
-  // TODO: loop to load all file infos
+  if (tsdbOpenImpl(pTsdb) < 0) {
+    tsdbError("vgId:%d failed to open vnode tsdb since %s", TD_VNODE_ID(pVnode), tstrerror(terrno));
+    // TODO
+    return -1;
+  }
 
   *ppTsdb = pTsdb;
   return 0;
@@ -36,5 +46,17 @@ int tsdbOpen(SVnode *pVnode, STsdb **ppTsdb) {
 
 int tsdbClose(STsdb *pTsdb) {
   // TODO
+  return 0;
+}
+
+static int tsdbOpenImpl(STsdb *pTsdb) {
+  STfs *pTfs = pTsdb->pVnode->pTfs;
+  char  path[TSDB_FILENAME_LEN];
+
+  snprintf(path, TSDB_FILENAME_LEN, "%s%s%s", tfsGetPrimaryPath(pTfs), TD_DIRSEP, pTsdb->path);
+  taosMkDir(path);
+
+  // TODO
+
   return 0;
 }
