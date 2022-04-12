@@ -91,7 +91,7 @@ static void vmGenerateVnodeCfg(SCreateVnodeReq *pCreate, SVnodeCfg *pCfg) {
     flag |= VND_FLG_STREM_MODE;
   }
   pCfg->flag = flag;
-  pCfg->szBuf = pCreate->cacheBlockSize;
+  pCfg->szBuf = pCreate->cacheBlockSize * 1024 * 1024;
   pCfg->walCfg.fsyncPeriod = pCreate->fsyncPeriod;
   pCfg->walCfg.level = pCreate->walLevel;
   pCfg->walCfg.retentionPeriod = 10;

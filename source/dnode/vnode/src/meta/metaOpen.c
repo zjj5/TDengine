@@ -27,18 +27,18 @@ int metaOpen(SVnode* pVnode, SMeta** ppMeta) {
   SMeta* pMeta;
 
   *ppMeta = NULL;
-  slen = strlen(pVnode->path);
+  slen = strlen(pVnode->path) + strlen(tfsGetPrimaryPath(pVnode->pTfs)) + strlen(VND_META_DIR) + 3;
 
   // allocate handle
-  pMeta = (SMeta*)taosMemoryCalloc(1, sizeof(*pMeta) + slen + strlen(VND_META_DIR) + 2);
+  pMeta = (SMeta*)taosMemoryCalloc(1, sizeof(*pMeta) + slen);
   if (pMeta == NULL) {
     terrno = TSDB_CODE_OUT_OF_MEMORY;
     return -1;
   }
 
   pMeta->path = (char*)&pMeta[1];
+  sprintf(pMeta->path, "%s%s%s%s%s", tfsGetPrimaryPath(pVnode->pTfs), TD_DIRSEP, pVnode->path, TD_DIRSEP, VND_META_DIR);
   pMeta->pVnode = pVnode;
-  sprintf(pMeta->path, "%s/%s", pVnode->path, VND_META_DIR);
 
   // open env
   ret = tdbEnvOpen(pMeta->path, pVnode->config.szPage, pVnode->config.szCache, &pMeta->pEnv);

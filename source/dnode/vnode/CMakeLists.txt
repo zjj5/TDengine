@@ -29,6 +29,7 @@ target_sources(
 
     # tsdb
     "src/tsdb/tsdbOpen.c"
+    "src/tsdb/tsdbMemTable.c"
     "src/tsdb/tsdbRead.c"
     # "src/tsdb/tsdbBDBImpl.c"
     # "src/tsdb/tsdbCommit.c"
@@ -36,7 +37,6 @@ target_sources(
     # "src/tsdb/tsdbFile.c"
     # "src/tsdb/tsdbFS.c"
     # "src/tsdb/tsdbMain.c"
-    # "src/tsdb/tsdbMemTable.c"
     # "src/tsdb/tsdbOptions.c"
     # "src/tsdb/tsdbReadImpl.c"
     # "src/tsdb/tsdbScan.c"

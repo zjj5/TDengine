@@ -85,7 +85,7 @@ int vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs) {
   pVnode->pTfs = pTfs;
 
   // open buffer pool sub-system
-  ret = vnodeOpenBufPool(pVnode, pVnode->config.isHeap ? 0 : pVnode->config.szBuf * 1024 * 1024 / 3);
+  ret = vnodeOpenBufPool(pVnode, pVnode->config.isHeap ? 0 : pVnode->config.szBuf / 3);
   if (ret < 0) {
     return -1;
   }
