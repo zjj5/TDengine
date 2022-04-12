@@ -15,8 +15,8 @@
 
 #include "vnodeInt.h"
 
-#define VND_CFG_FILENAME     "config.json"
-#define VND_CFG_FILENAME_TMP "config.json_tmp"
+#define VND_CFG_FILENAME     "vnode.json"
+#define VND_CFG_FILENAME_TMP "vnode.json_tmp"
 
 static char *vnodeCfgToStr(SVnodeCfg *pCfg);
 static int   vnodeStrToCfg(char *pStr, SVnodeCfg *pCfg);
@@ -42,8 +42,6 @@ const SVnodeCfg vnodeCfgDefault = {
     .keep1 = 60 * 24 * 3650,  // 10 years
     .keep2 = 60 * 24 * 3650   // 10 years
 };
-
-const SVnodeCfg *vnodeGetDefaultCfg() { return &vnodeCfgDefault; }
 
 int vnodeCheckCfg(SVnodeCfg *pCfg) {
   // vgId

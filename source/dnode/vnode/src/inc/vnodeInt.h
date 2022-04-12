@@ -50,8 +50,8 @@ typedef struct SQWorkerMgmt SQHandle;
 
 typedef struct {
   int64_t processed;
-  int64_t committed;
   int64_t applied;
+  int64_t committed;
 } SVState;
 
 struct SVnode {

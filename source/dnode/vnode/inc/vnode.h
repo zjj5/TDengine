@@ -44,6 +44,8 @@ typedef struct SMCtbCursor    SMCtbCursor;
 typedef struct STsdbQueryCond STsdbQueryCond;
 typedef struct SDataStatis    SDataStatis;
 
+extern const SVnodeCfg vnodeCfgDefault;
+
 // vnode
 int  vnodeInit(int nthreads);
 void vnodeCleanup();
@@ -53,15 +55,13 @@ int  vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs, SMsgCb msgCb);
 void vnodeClose(SVnode *pVnode);
 int  vnodeProcessQueryMsg(SVnode *pVnode, SRpcMsg *pMsg);
 int  vnodeProcessFetchMsg(SVnode *pVnode, SRpcMsg *pMsg, SQueueInfo *pInfo);
-void vnodeProcessWMsgs(SVnode *pVnode, SArray *pMsgs);
-int  vnodeApplyWMsg(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp);
+int  vnodePreProcessWriteMsgs(SVnode *pVnode, SArray *pMsgs, int64_t *pVer);
+int  vnodeProcessWriteMsg(SVnode *pVnode, SRpcMsg *pMsg, int64_t version, SRpcMsg **pRsp);
 int  vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp);
 int  vnodeGetLoad(SVnode *pVnode, SVnodeLoad *pLoad);
 int  vnodeAlter(SVnode *pVnode, const SVnodeCfg *pCfg);
 int  vnodeCompact(SVnode *pVnode);
 int  vnodeSync(SVnode *pVnode);
-
-const SVnodeCfg *vnodeGetDefaultCfg();
 
 // meta
 typedef struct SMeta SMeta;  // TODO: remove the dec

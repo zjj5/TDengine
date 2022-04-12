@@ -82,12 +82,9 @@ int32_t vmProcessGetVnodeLoadsReq(SMgmtWrapper *pWrapper, SNodeMsg *pReq) {
 }
 
 static void vmGenerateVnodeCfg(SCreateVnodeReq *pCreate, SVnodeCfg *pCfg) {
-  int32_t          flag = 0;
-  const SVnodeCfg *pDefCfg;
+  int32_t flag = 0;
 
-  pDefCfg = vnodeGetDefaultCfg();
-
-  memcpy(pCfg, pDefCfg, sizeof(*pCfg));
+  memcpy(pCfg, &vnodeCfgDefault, sizeof(*pCfg));
 
   pCfg->vgId = pCreate->vgId;
   if (pCreate->streamMode) {

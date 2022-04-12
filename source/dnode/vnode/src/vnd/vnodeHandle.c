@@ -15,37 +15,48 @@
 
 #include "vnodeInt.h"
 
-void vnodeProcessWMsgs(SVnode *pVnode, SArray *pMsgs) {
-#if 0
-  SNodeMsg *pMsg;
-  SRpcMsg  *pRpc;
+int vnodePreProcessWriteMsgs(SVnode *pVnode, SArray *pMsgs, int64_t *pVer) {
+  SRpcMsg *pMsg;
+  int64_t  version;
+
+  version = ++pVnode->state.processed;
 
   for (int i = 0; i < taosArrayGetSize(pMsgs); i++) {
-    pMsg = *(SNodeMsg **)taosArrayGet(pMsgs, i);
-    pRpc = &pMsg->rpcMsg;
+    pMsg = &(*(SNodeMsg **)taosArrayGet(pMsgs, i))[0].rpcMsg;
 
-    // set request version
-    void   *pBuf = POINTER_SHIFT(pRpc->pCont, sizeof(SMsgHead));
-    int64_t ver = pVnode->state.processed++;
-    taosEncodeFixedI64(&pBuf, ver);
-
-    if (walWrite(pVnode->pWal, ver, pRpc->msgType, pRpc->pCont, pRpc->contLen) < 0) {
-      // TODO: handle error
-      /*ASSERT(false);*/
-      vError("vnode:%d  write wal error since %s", pVnode->vgId, terrstr());
+    if (walWrite(pVnode->pWal, version, pMsg->msgType, pMsg->pCont, pMsg->contLen) < 0) {
+      vError("vgId: %d failed to pre-process write message, version %" PRId64 " since: %s", TD_VNODE_ID(pVnode),
+             version, tstrerror(terrno));
+      return -1;
     }
   }
 
   walFsync(pVnode->pWal, false);
 
-  // TODO: Integrate RAFT module here
-
-  // No results are returned because error handling is difficult
-  // return 0;
-#endif
+  *pVer = version;
+  return 0;
 }
 
-int vnodeApplyWMsg(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
+int vnodeProcessWriteMsg(SVnode *pVnode, SRpcMsg *pMsg, int64_t version, SRpcMsg **pRsp) {
+  ASSERT(pVnode->state.applied <= version);
+
+  // check commit
+  if (version > pVnode->state.applied && pVnode->pPool->size >= pVnode->config.szBuf / 3) {
+    // async commit
+    if (vnodeAsyncCommit(pVnode) < 0) {
+      vError("vgId: %d failed to async commit", TD_VNODE_ID(pVnode));
+      ASSERT(0);
+    }
+
+    // start a new write session
+    if (vnodeBegin(pVnode) < 0) {
+      vError("vgId: %d failed to begin vnode since %s", TD_VNODE_ID(pVnode), tstrerror(terrno));
+      ASSERT(0);
+    }
+  }
+
+  pVnode->state.applied = version;
+
 #if 0
   void *ptr = NULL;
 
