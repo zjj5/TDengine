@@ -41,6 +41,7 @@ int tsdbClose(STsdb *pTsdb);
 
 // tsdbExe ================
 int tsdbBegin(STsdb *pTsdb);
+int tsdbCommit(STsdb *pTsdb);
 
 struct STsdb {
   char      *path;

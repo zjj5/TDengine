@@ -19,3 +19,8 @@ int metaBegin(SMeta *pMeta) {
   // TODO
   return 0;
 }
+
+int metaCommit(SMeta *pMeta) {
+  // TODO
+  return 0;
+}

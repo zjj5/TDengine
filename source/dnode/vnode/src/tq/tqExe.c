@@ -19,3 +19,8 @@ int tqBegin(STQ* pTq) {
   // TODO
   return 0;
 }
+
+int tqCommit(STQ* pTq) {
+  // TODO
+  return 0;
+}

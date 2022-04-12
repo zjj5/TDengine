@@ -35,11 +35,14 @@ int vnodeBegin(SVnode *pVnode) {
   metaBegin(pVnode->pMeta);
   tsdbBegin(pVnode->pTsdb);
   tqBegin(pVnode->pTq);
+  // walBegin(pVnode->pWal);
 
   return 0;
 }
 
 int vnodeAsyncCommit(SVnode *pVnode) {
+  tsem_wait(&(pVnode->canCommit));
+
   // TODO
   vnodeScheduleTask(vnodeCommit, pVnode);
   return 0;
@@ -51,7 +54,24 @@ int vnodeSyncCommit(SVnode *pVnode) {
 }
 
 static int vnodeCommit(void *arg) {
-  // TODO
+  SVnode *pVnode = (SVnode *)arg;
+  int     ret;
+
+  // commit meta
+  if (metaCommit(pVnode->pMeta) < 0) {
+    ASSERT(0);
+  }
+
+  // commit tsdb
+  if (tsdbCommit(pVnode->pTsdb) < 0) {
+    ASSERT(0);
+  }
+
+  // commit tq
+  if (tqCommit(pVnode->pTq) < 0) {
+    ASSERT(0);
+  }
+
   return 0;
 }
 

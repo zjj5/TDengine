@@ -38,6 +38,7 @@ void tqClose(STQ* pTq);
 
 // tqExe ===================
 int tqBegin(STQ* pTq);
+int tqCommit(STQ* pTq);
 
 struct STQ {
   char*         path;

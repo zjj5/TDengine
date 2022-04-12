@@ -19,3 +19,8 @@ int tsdbBegin(STsdb *pTsdb) {
   // TODO
   return 0;
 }
+
+int tsdbCommit(STsdb *pTsdb) {
+  // TODO
+  return 0;
+}

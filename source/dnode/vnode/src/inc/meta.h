@@ -41,6 +41,7 @@ int metaClose(SMeta* pMeta);
 
 // metaExe ==================
 int metaBegin(SMeta* pMeta);
+int metaCommit(SMeta* pMeta);
 
 struct SMeta {
   char*   path;
