@@ -47,7 +47,6 @@ typedef struct SDataStatis    SDataStatis;
 // vnode
 int  vnodeInit(int nthreads);
 void vnodeCleanup();
-void vnodeGetDefaultCfg(SVnodeCfg *pCfg);
 int  vnodeCreate(const char *path, SVnodeCfg *pCfg, STfs *pTfs);
 void vnodeDestroy(const char *path, STfs *pTfs);
 int  vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs);
@@ -61,6 +60,8 @@ int  vnodeGetLoad(SVnode *pVnode, SVnodeLoad *pLoad);
 int  vnodeAlter(SVnode *pVnode, const SVnodeCfg *pCfg);
 int  vnodeCompact(SVnode *pVnode);
 int  vnodeSync(SVnode *pVnode);
+
+const SVnodeCfg *vnodeGetDefaultCfg();
 
 // meta
 typedef struct SMeta SMeta;  // TODO: remove the dec

@@ -43,7 +43,7 @@ const SVnodeCfg vnodeCfgDefault = {
     .keep2 = 60 * 24 * 3650   // 10 years
 };
 
-void vnodeGetDefaultCfg(SVnodeCfg *pCfg) { memcpy(pCfg, &vnodeCfgDefault, sizeof(*pCfg)); }
+const SVnodeCfg *vnodeGetDefaultCfg() { return &vnodeCfgDefault; }
 
 int vnodeCheckCfg(SVnodeCfg *pCfg) {
   // vgId
@@ -74,7 +74,7 @@ int vnodeSaveCfg(const char *path, SVnodeCfg *pCfg) {
 
   str = vnodeCfgToStr(pCfg);
 
-  pFile = taosOpenFile(tname, TD_FILE_CTEATE | TD_FILE_WRITE);
+  pFile = taosOpenFile(tname, TD_FILE_CREATE | TD_FILE_WRITE);
 
   taosWriteFile(pFile, str, strlen(str));
 
