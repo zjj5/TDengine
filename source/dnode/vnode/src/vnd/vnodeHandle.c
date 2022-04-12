@@ -15,6 +15,14 @@
 
 #include "vnodeInt.h"
 
+static int vnodeConvertAndCopyReq(SVnode *pVnode, SRpcMsg *pMsg);
+static int vnodeProcessCreateStbReq(SVnode *pVnode, void *pCont, int contLen, int64_t version);
+static int vnodeProcessAlterStbReq(SVnode *pVnode, void *pCont, int contLen, int64_t version);
+static int vnodeProcessDropStbReq(SVnode *pVnode, void *pCont, int contLen, int64_t version);
+static int vnodeProcessCreateTableReq(SVnode *pVnode, void *pCont, int contLen, int64_t version);
+static int vnodeProcessAlterTableReq(SVnode *pVnode, void *pCont, int contLen, int64_t version);
+static int vnodeProcessDropTableReq(SVnode *pVnode, void *pCont, int contLen, int64_t version);
+
 int vnodePreProcessWriteMsgs(SVnode *pVnode, SArray *pMsgs, int64_t *pVer) {
   SRpcMsg *pMsg;
   int64_t  version;
@@ -38,6 +46,8 @@ int vnodePreProcessWriteMsgs(SVnode *pVnode, SArray *pMsgs, int64_t *pVer) {
 }
 
 int vnodeProcessWriteMsg(SVnode *pVnode, SRpcMsg *pMsg, int64_t version, SRpcMsg **pRsp) {
+  int ret;
+
   ASSERT(pVnode->state.applied <= version);
 
   // check commit
@@ -56,6 +66,52 @@ int vnodeProcessWriteMsg(SVnode *pVnode, SRpcMsg *pMsg, int64_t version, SRpcMsg
   }
 
   pVnode->state.applied = version;
+
+  ret = vnodeConvertAndCopyReq(pVnode, pMsg);
+  if (ret < 0) {
+    vError("vgId: %d failed to convert and copy request of version %" PRId64, TD_VNODE_ID(pVnode), version);
+    ASSERT(0);
+  }
+
+  switch (pMsg->msgType) {
+    // meta =================
+    case TDMT_VND_CREATE_STB:
+      return vnodeProcessCreateStbReq(pVnode, pMsg->pCont, pMsg->contLen, version);
+    case TDMT_VND_ALTER_STB:
+      return vnodeProcessAlterStbReq(pVnode, pMsg->pCont, pMsg->contLen, version);
+      break;
+    case TDMT_VND_DROP_STB:
+      return vnodeProcessDropStbReq(pVnode, pMsg->pCont, pMsg->contLen, version);
+      break;
+    case TDMT_VND_CREATE_TABLE:
+      return vnodeProcessCreateTableReq(pVnode, pMsg->pCont, pMsg->contLen, version);
+    case TDMT_VND_ALTER_TABLE:
+      return vnodeProcessAlterTableReq(pVnode, pMsg->pCont, pMsg->contLen, version);
+    case TDMT_VND_DROP_TABLE:
+      return vnodeProcessDropTableReq(pVnode, pMsg->pCont, pMsg->contLen, version);
+    // tsdb =================
+    case TDMT_VND_SUBMIT:
+      // TODO
+      break;
+    // tq =================
+    case TDMT_VND_MQ_SET_CONN:
+      // TODO
+      break;
+    case TDMT_VND_MQ_REB:
+      // TODO
+      break;
+    case TDMT_VND_MQ_CANCEL_CONN:
+      // TODO
+      break;
+    case TDMT_VND_TASK_DEPLOY:
+      // TODO
+      break;
+    case TDMT_VND_TASK_WRITE_EXEC:
+      // TODO
+      break;
+    default:
+      ASSERT(0);
+  }
 
 #if 0
   void *ptr = NULL;
@@ -281,17 +337,6 @@ int vnodeProcessWriteMsg(SVnode *pVnode, SRpcMsg *pMsg, int64_t version, SRpcMsg
       ASSERT(0);
       break;
   }
-
-  pVnode->state.applied = ver;
-
-  // Check if it needs to commit
-  if (0) {
-    // tsem_wait(&(pVnode->canCommit));
-    if (vnodeAsyncCommit(pVnode) < 0) {
-      // TODO: handle error
-    }
-  }
-
 #endif
   return 0;
 }
@@ -358,5 +403,40 @@ int vnodeProcessFetchMsg(SVnode *pVnode, SRpcMsg *pMsg, SQueueInfo *pInfo) {
 
 int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
   /*vInfo("sync message is processed");*/
+  return 0;
+}
+
+static int vnodeConvertAndCopyReq(SVnode *pVnode, SRpcMsg *pMsg) {
+  // TODO
+  return 0;
+}
+
+static int vnodeProcessCreateStbReq(SVnode *pVnode, void *pCont, int contLen, int64_t version) {
+  // TODO
+  return 0;
+}
+
+static int vnodeProcessAlterStbReq(SVnode *pVnode, void *pCont, int contLen, int64_t version) {
+  // TODO
+  return 0;
+}
+
+static int vnodeProcessDropStbReq(SVnode *pVnode, void *pCont, int contLen, int64_t version) {
+  // TODO
+  return 0;
+}
+
+static int vnodeProcessCreateTableReq(SVnode *pVnode, void *pCont, int contLen, int64_t version) {
+  // TODO
+  return 0;
+}
+
+static int vnodeProcessAlterTableReq(SVnode *pVnode, void *pCont, int contLen, int64_t version) {
+  // TODO
+  return 0;
+}
+
+static int vnodeProcessDropTableReq(SVnode *pVnode, void *pCont, int contLen, int64_t version) {
+  // TODO
   return 0;
 }
