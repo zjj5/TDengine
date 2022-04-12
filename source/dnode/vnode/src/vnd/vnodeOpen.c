@@ -114,7 +114,6 @@ int vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs) {
     return -1;
   }
 
-#if 0
   // open meta query-system
   ret = vnodeQueryOpen(pVnode);
   if (ret < 0) {
@@ -126,7 +125,6 @@ int vnodeOpen(const char *path, SVnode **ppVnode, STfs *pTfs) {
   if (ret < 0) {
     return -1;
   }
-#endif
 
   *ppVnode = pVnode;
   return 0;

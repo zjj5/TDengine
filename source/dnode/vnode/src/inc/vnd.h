@@ -68,6 +68,9 @@ void  vnodeBufPoolFree(SVBufPool* pPool, void* p);
 int  vnodeQueryOpen(SVnode* pVnode);
 void vnodeQueryClose(SVnode* pVnode);
 
+// vnodeExe ====================
+int vnodeBegin(SVnode* pVnode);
+
 #if 0  // -----------------------------
 typedef struct SVnodeTask {
   TD_DLIST_NODE(SVnodeTask);

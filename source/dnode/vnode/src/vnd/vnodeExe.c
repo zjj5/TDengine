@@ -15,16 +15,16 @@
 
 #include "vnodeInt.h"
 
+int vnodeBegin(SVnode *pVnode) {
+  // TODO
+  return 0;
+}
+
 #if 0
 static int  vnodeStartCommit(SVnode *pVnode);
 static int  vnodeEndCommit(SVnode *pVnode);
 static int  vnodeCommit(void *arg);
 static void vnodeWaitCommit(SVnode *pVnode);
-
-int vnodeBegin(SVnode *pVnode) {
-  // TODO
-  return 0;
-}
 
 int vnodeAsyncCommit(SVnode *pVnode) {
   vnodeWaitCommit(pVnode);

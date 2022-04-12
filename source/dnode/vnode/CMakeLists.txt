@@ -11,7 +11,7 @@ target_sources(
     "src/vnd/vnodeQuery.c"
     "src/vnd/vnodeAlter.c"
     "src/vnd/vnodeBufferPool.c"
-    # "src/vnd/vnodeExe.c"
+    "src/vnd/vnodeExe.c"
     # "src/vnd/vnodeWrite.c"
 
     # meta
