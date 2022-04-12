@@ -15,7 +15,7 @@
 
 #include "vnodeInt.h"
 
-static int vnodeConvertAndCopyReq(SVnode *pVnode, SRpcMsg *pMsg);
+static int vnodeConvertAndCopyReq(SVnode *pVnode, SRpcMsg *pMsg, void **ppCont, int *contLen);
 static int vnodeProcessCreateStbReq(SVnode *pVnode, void *pCont, int contLen, int64_t version);
 static int vnodeProcessAlterStbReq(SVnode *pVnode, void *pCont, int contLen, int64_t version);
 static int vnodeProcessDropStbReq(SVnode *pVnode, void *pCont, int contLen, int64_t version);
@@ -46,7 +46,9 @@ int vnodePreProcessWriteMsgs(SVnode *pVnode, SArray *pMsgs, int64_t *pVer) {
 }
 
 int vnodeProcessWriteMsg(SVnode *pVnode, SRpcMsg *pMsg, int64_t version, SRpcMsg **pRsp) {
-  int ret;
+  int   ret;
+  void *pCont;
+  int   contLen;
 
   ASSERT(pVnode->state.applied <= version);
 
@@ -67,7 +69,8 @@ int vnodeProcessWriteMsg(SVnode *pVnode, SRpcMsg *pMsg, int64_t version, SRpcMsg
 
   pVnode->state.applied = version;
 
-  ret = vnodeConvertAndCopyReq(pVnode, pMsg);
+  // convert and copy the request
+  ret = vnodeConvertAndCopyReq(pVnode, pMsg, &pCont, &contLen);
   if (ret < 0) {
     vError("vgId: %d failed to convert and copy request of version %" PRId64, TD_VNODE_ID(pVnode), version);
     ASSERT(0);
@@ -76,19 +79,20 @@ int vnodeProcessWriteMsg(SVnode *pVnode, SRpcMsg *pMsg, int64_t version, SRpcMsg
   switch (pMsg->msgType) {
     // meta =================
     case TDMT_VND_CREATE_STB:
-      return vnodeProcessCreateStbReq(pVnode, pMsg->pCont, pMsg->contLen, version);
+      return vnodeProcessCreateStbReq(pVnode, pCont, contLen, version);
     case TDMT_VND_ALTER_STB:
-      return vnodeProcessAlterStbReq(pVnode, pMsg->pCont, pMsg->contLen, version);
-      break;
+      return vnodeProcessAlterStbReq(pVnode, pCont, contLen, version);
     case TDMT_VND_DROP_STB:
-      return vnodeProcessDropStbReq(pVnode, pMsg->pCont, pMsg->contLen, version);
-      break;
+      return vnodeProcessDropStbReq(pVnode, pCont, contLen, version);
     case TDMT_VND_CREATE_TABLE:
-      return vnodeProcessCreateTableReq(pVnode, pMsg->pCont, pMsg->contLen, version);
+      return vnodeProcessCreateTableReq(pVnode, pCont, contLen, version);
     case TDMT_VND_ALTER_TABLE:
-      return vnodeProcessAlterTableReq(pVnode, pMsg->pCont, pMsg->contLen, version);
+      return vnodeProcessAlterTableReq(pVnode, pCont, contLen, version);
     case TDMT_VND_DROP_TABLE:
-      return vnodeProcessDropTableReq(pVnode, pMsg->pCont, pMsg->contLen, version);
+      return vnodeProcessDropTableReq(pVnode, pCont, contLen, version);
+    case TDMT_VND_CREATE_SMA:
+      // TODO
+      break;
     // tsdb =================
     case TDMT_VND_SUBMIT:
       // TODO
@@ -112,232 +116,6 @@ int vnodeProcessWriteMsg(SVnode *pVnode, SRpcMsg *pMsg, int64_t version, SRpcMsg
     default:
       ASSERT(0);
   }
-
-#if 0
-  void *ptr = NULL;
-
-  if (pVnode->config.streamMode == 0) {
-    ptr = vnodeBufPoolMalloc(pVnode->inUse, pMsg->contLen);
-    if (ptr == NULL) {
-      // TODO: handle error
-    }
-
-    // TODO: copy here need to be extended
-    memcpy(ptr, pMsg->pCont, pMsg->contLen);
-  }
-
-  // todo: change the interface here
-  int64_t ver;
-  taosDecodeFixedI64(POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead)), &ver);
-  if (tqPushMsg(pVnode->pTq, pMsg->pCont, pMsg->contLen, pMsg->msgType, ver) < 0) {
-    // TODO: handle error
-  }
-
-  switch (pMsg->msgType) {
-    case TDMT_VND_CREATE_STB: {
-      SVCreateTbReq vCreateTbReq = {0};
-      tDeserializeSVCreateTbReq(POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead)), &vCreateTbReq);
-      if (metaCreateTable(pVnode->pMeta, &(vCreateTbReq)) < 0) {
-        // TODO: handle error
-      }
-
-      // TODO: to encapsule a free API
-      taosMemoryFree(vCreateTbReq.stbCfg.pSchema);
-      taosMemoryFree(vCreateTbReq.stbCfg.pTagSchema);
-      if (vCreateTbReq.stbCfg.pRSmaParam) {
-        taosMemoryFree(vCreateTbReq.stbCfg.pRSmaParam->pFuncIds);
-        taosMemoryFree(vCreateTbReq.stbCfg.pRSmaParam);
-      }
-      taosMemoryFree(vCreateTbReq.dbFName);
-      taosMemoryFree(vCreateTbReq.name);
-      break;
-    }
-    case TDMT_VND_CREATE_TABLE: {
-      SVCreateTbBatchReq vCreateTbBatchReq = {0};
-      SVCreateTbBatchRsp vCreateTbBatchRsp = {0};
-      tDeserializeSVCreateTbBatchReq(POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead)), &vCreateTbBatchReq);
-      int reqNum = taosArrayGetSize(vCreateTbBatchReq.pArray);
-      for (int i = 0; i < reqNum; i++) {
-        SVCreateTbReq *pCreateTbReq = taosArrayGet(vCreateTbBatchReq.pArray, i);
-
-        char      tableFName[TSDB_TABLE_FNAME_LEN];
-        SMsgHead *pHead = (SMsgHead *)pMsg->pCont;
-        sprintf(tableFName, "%s.%s", pCreateTbReq->dbFName, pCreateTbReq->name);
-
-        int32_t code = vnodeValidateTableHash(&pVnode->config, tableFName);
-        if (code) {
-          SVCreateTbRsp rsp;
-          rsp.code = code;
-
-          taosArrayPush(vCreateTbBatchRsp.rspList, &rsp);
-        }
-
-        if (metaCreateTable(pVnode->pMeta, pCreateTbReq) < 0) {
-          // TODO: handle error
-          vError("vgId:%d, failed to create table: %s", pVnode->vgId, pCreateTbReq->name);
-        }
-        // TODO: to encapsule a free API
-        taosMemoryFree(pCreateTbReq->name);
-        taosMemoryFree(pCreateTbReq->dbFName);
-        if (pCreateTbReq->type == TD_SUPER_TABLE) {
-          taosMemoryFree(pCreateTbReq->stbCfg.pSchema);
-          taosMemoryFree(pCreateTbReq->stbCfg.pTagSchema);
-          if (pCreateTbReq->stbCfg.pRSmaParam) {
-            taosMemoryFree(pCreateTbReq->stbCfg.pRSmaParam->pFuncIds);
-            taosMemoryFree(pCreateTbReq->stbCfg.pRSmaParam);
-          }
-        } else if (pCreateTbReq->type == TD_CHILD_TABLE) {
-          taosMemoryFree(pCreateTbReq->ctbCfg.pTag);
-        } else {
-          taosMemoryFree(pCreateTbReq->ntbCfg.pSchema);
-          if (pCreateTbReq->ntbCfg.pRSmaParam) {
-            taosMemoryFree(pCreateTbReq->ntbCfg.pRSmaParam->pFuncIds);
-            taosMemoryFree(pCreateTbReq->ntbCfg.pRSmaParam);
-          }
-        }
-      }
-
-      vTrace("vgId:%d process create %" PRIzu " tables", pVnode->vgId, taosArrayGetSize(vCreateTbBatchReq.pArray));
-      taosArrayDestroy(vCreateTbBatchReq.pArray);
-      if (vCreateTbBatchRsp.rspList) {
-        int32_t contLen = tSerializeSVCreateTbBatchRsp(NULL, 0, &vCreateTbBatchRsp);
-        void   *msg = rpcMallocCont(contLen);
-        tSerializeSVCreateTbBatchRsp(msg, contLen, &vCreateTbBatchRsp);
-        taosArrayDestroy(vCreateTbBatchRsp.rspList);
-
-        *pRsp = taosMemoryCalloc(1, sizeof(SRpcMsg));
-        (*pRsp)->msgType = TDMT_VND_CREATE_TABLE_RSP;
-        (*pRsp)->pCont = msg;
-        (*pRsp)->contLen = contLen;
-        (*pRsp)->handle = pMsg->handle;
-        (*pRsp)->ahandle = pMsg->ahandle;
-      }
-      break;
-    }
-    case TDMT_VND_ALTER_STB: {
-      SVCreateTbReq vAlterTbReq = {0};
-      vTrace("vgId:%d, process alter stb req", pVnode->vgId);
-      tDeserializeSVCreateTbReq(POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead)), &vAlterTbReq);
-      // TODO: to encapsule a free API
-      taosMemoryFree(vAlterTbReq.stbCfg.pSchema);
-      taosMemoryFree(vAlterTbReq.stbCfg.pTagSchema);
-      if (vAlterTbReq.stbCfg.pRSmaParam) {
-        taosMemoryFree(vAlterTbReq.stbCfg.pRSmaParam->pFuncIds);
-        taosMemoryFree(vAlterTbReq.stbCfg.pRSmaParam);
-      }
-      taosMemoryFree(vAlterTbReq.dbFName);
-      taosMemoryFree(vAlterTbReq.name);
-      break;
-    }
-    case TDMT_VND_DROP_STB:
-      vTrace("vgId:%d, process drop stb req", pVnode->vgId);
-      break;
-    case TDMT_VND_DROP_TABLE:
-      // if (metaDropTable(pVnode->pMeta, vReq.dtReq.uid) < 0) {
-      //   // TODO: handle error
-      // }
-      break;
-    case TDMT_VND_SUBMIT:
-      /*printf("vnode %d write data %ld\n", pVnode->vgId, ver);*/
-      if (pVnode->config.streamMode == 0) {
-        if (tsdbInsertData(pVnode->pTsdb, (SSubmitReq *)ptr, NULL) < 0) {
-          // TODO: handle error
-        }
-      }
-      break;
-    case TDMT_VND_MQ_SET_CONN: {
-      if (tqProcessSetConnReq(pVnode->pTq, POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead))) < 0) {
-        // TODO: handle error
-      }
-    } break;
-    case TDMT_VND_MQ_REB: {
-      if (tqProcessRebReq(pVnode->pTq, POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead))) < 0) {
-      }
-    } break;
-    case TDMT_VND_MQ_CANCEL_CONN: {
-      if (tqProcessCancelConnReq(pVnode->pTq, POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead))) < 0) {
-      }
-    } break;
-    case TDMT_VND_TASK_DEPLOY: {
-      if (tqProcessTaskDeploy(pVnode->pTq, POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead)),
-                              pMsg->contLen - sizeof(SMsgHead)) < 0) {
-      }
-    } break;
-    case TDMT_VND_TASK_WRITE_EXEC: {
-      if (tqProcessTaskExec(pVnode->pTq, POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead)), pMsg->contLen - sizeof(SMsgHead),
-                            0) < 0) {
-      }
-    } break;
-    case TDMT_VND_CREATE_SMA: {  // timeRangeSMA
-#if 0
-
-      SSmaCfg vCreateSmaReq = {0};
-      if (tDeserializeSVCreateTSmaReq(POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead)), &vCreateSmaReq) == NULL) {
-        terrno = TSDB_CODE_OUT_OF_MEMORY;
-        vWarn("vgId:%d TDMT_VND_CREATE_SMA received but deserialize failed since %s", pVnode->config.vgId,
-              terrstr(terrno));
-        return -1;
-      }
-      vDebug("vgId:%d TDMT_VND_CREATE_SMA msg received for %s:%" PRIi64, pVnode->config.vgId,
-             vCreateSmaReq.tSma.indexName, vCreateSmaReq.tSma.indexUid);
-
-      // record current timezone of server side
-      vCreateSmaReq.tSma.timezoneInt = tsTimezone;
-
-      if (metaCreateTSma(pVnode->pMeta, &vCreateSmaReq) < 0) {
-        // TODO: handle error
-        tdDestroyTSma(&vCreateSmaReq.tSma);
-        return -1;
-      }
-
-      tsdbTSmaAdd(pVnode->pTsdb, 1);
-
-      tdDestroyTSma(&vCreateSmaReq.tSma);
-      // TODO: return directly or go on follow steps?
-#endif
-      //   if (tsdbCreateTSma(pVnode->pTsdb, POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead))) < 0) {
-      //     // TODO
-      //   }
-      // } break;
-      // case TDMT_VND_CANCEL_SMA: {  // timeRangeSMA
-      // } break;
-      // case TDMT_VND_DROP_SMA: {  // timeRangeSMA
-      //   if (tsdbDropTSma(pVnode->pTsdb, POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead))) < 0) {
-      //     // TODO
-      //   }
-#if 0    
-      tsdbTSmaSub(pVnode->pTsdb, 1);
-      SVDropTSmaReq vDropSmaReq = {0};
-      if (tDeserializeSVDropTSmaReq(POINTER_SHIFT(pMsg->pCont, sizeof(SMsgHead)), &vDropSmaReq) == NULL) {
-        terrno = TSDB_CODE_OUT_OF_MEMORY;
-        return -1;
-      }
-
-      // TODO: send msg to stream computing to drop tSma
-      // if ((send msg to stream computing) < 0) {
-      //   tdDestroyTSma(&vCreateSmaReq);
-      //   return -1;
-      // }
-      // 
-
-      if (metaDropTSma(pVnode->pMeta, vDropSmaReq.indexUid) < 0) {
-        // TODO: handle error
-        return -1;
-      }
-
-      if(tsdbDropTSmaData(pVnode->pTsdb, vDropSmaReq.indexUid) < 0) {
-        // TODO: handle error
-        return -1;
-      }
-
-      // TODO: return directly or go on follow steps?
-#endif
-    } break;
-    default:
-      ASSERT(0);
-      break;
-  }
-#endif
   return 0;
 }
 
@@ -406,12 +184,13 @@ int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
   return 0;
 }
 
-static int vnodeConvertAndCopyReq(SVnode *pVnode, SRpcMsg *pMsg) {
+static int vnodeConvertAndCopyReq(SVnode *pVnode, SRpcMsg *pMsg, void **ppCont, int *contLen) {
   // TODO
   return 0;
 }
 
 static int vnodeProcessCreateStbReq(SVnode *pVnode, void *pCont, int contLen, int64_t version) {
+  SVCreateTbReq req;
   // TODO
   return 0;
 }
