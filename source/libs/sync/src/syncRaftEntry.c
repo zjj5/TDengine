@@ -244,7 +244,7 @@ cJSON* syncRaftEntry2Json(const SSyncRaftEntry* pEntry) {
   }
 
   cJSON* pJson = cJSON_CreateObject();
-  cJSON_AddItemToObject(pJson, "SSyncEntry", pRoot);
+  cJSON_AddItemToObject(pJson, "SSyncRaftEntry", pRoot);
   return pJson;
 }
 

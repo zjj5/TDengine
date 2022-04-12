@@ -793,6 +793,57 @@ void syncClientRequestInit(SyncClientRequest* pMsg, SRpcMsg* pRpcMsg, uint64_t s
   memcpy(&(pMsg->rpcMsg), pRpcMsg, sizeof(SRpcMsg));
 }
 
+cJSON* syncClientRequest2Json(const SyncClientRequest* pMsg) {
+  char   u64buf[128];
+  cJSON* pRoot = cJSON_CreateObject();
+
+  if (pMsg != NULL) {
+    cJSON_AddNumberToObject(pRoot, "seqNum", pMsg->seqNum);
+    cJSON_AddNumberToObject(pRoot, "isWeak", pMsg->isWeak);
+
+    cJSON* pJsonRpc = syncRpcMsg2Json((SRpcMsg*)&(pMsg->rpcMsg));
+    cJSON_AddItemToObject(pRoot, "rpcMsg", pJsonRpc);
+  }
+
+  cJSON* pJson = cJSON_CreateObject();
+  cJSON_AddItemToObject(pJson, "SyncClientRequest", pRoot);
+  return pJson;
+}
+
+char* syncClientRequest2Str(const SyncClientRequest* pMsg) {
+  cJSON* pJson = syncClientRequest2Json(pMsg);
+  char*  serialized = cJSON_Print(pJson);
+  cJSON_Delete(pJson);
+  return serialized;
+}
+
+// for debug ----------------------
+void syncClientRequestPrint(const SyncClientRequest* pMsg) {
+  char* serialized = syncClientRequest2Str(pMsg);
+  printf("syncClientRequestPrint | len:%lu | %s \n", strlen(serialized), serialized);
+  fflush(NULL);
+  taosMemoryFree(serialized);
+}
+
+void syncClientRequestPrint2(char* s, const SyncClientRequest* pMsg) {
+  char* serialized = syncClientRequest2Str(pMsg);
+  printf("syncClientRequestPrint2 | len:%lu | %s | %s \n", strlen(serialized), s, serialized);
+  fflush(NULL);
+  taosMemoryFree(serialized);
+}
+
+void syncClientRequestLog(const SyncClientRequest* pMsg) {
+  char* serialized = syncClientRequest2Str(pMsg);
+  sTrace("syncClientRequestLog | len:%lu | %s", strlen(serialized), serialized);
+  taosMemoryFree(serialized);
+}
+
+void syncClientRequestLog2(char* s, const SyncClientRequest* pMsg) {
+  char* serialized = syncClientRequest2Str(pMsg);
+  sTrace("syncClientRequestLog2 | len:%lu | %s | %s", strlen(serialized), s, serialized);
+  taosMemoryFree(serialized);
+}
+
 // ---- message process SyncClientRequestCopy----
 SyncClientRequestCopy* syncClientRequestCopyBuild(uint32_t dataLen) {
   uint32_t               bytes = sizeof(SyncClientRequestCopy) + dataLen;

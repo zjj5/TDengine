@@ -22,7 +22,6 @@ void initRpcMsg(SRpcMsg* pMsg) {
   pMsg->contLen = 50;
   pMsg->code = 1234;
   pMsg->pCont = rpcMallocCont(pMsg->contLen);
-  printf("--------rpcMallocCont: %p \n", pMsg->pCont);
   SMsgHead* pHead = (SMsgHead*)(pMsg->pCont);
   pHead->contLen = pMsg->contLen;
   pHead->vgId = 66;
@@ -46,15 +45,14 @@ void test1() {
 
   syncRpcMsgPrint2((char*)"==test1==", &rpcMsg);
   rpcFreeCont(rpcMsg.pCont);
-  printf("--------rpcFreeCont: %p \n", rpcMsg.pCont);
 }
 
 void test2() {
   SyncClientRequest msg;
   initSyncClientRequest(&msg);
 
+  syncClientRequestPrint2((char*)"==test2==", &msg);
   rpcFreeCont(msg.rpcMsg.pCont);
-  printf("--------rpcFreeCont: %p \n", msg.rpcMsg.pCont);
 }
 
 void test3() {
@@ -68,8 +66,8 @@ void test3() {
   syncRaftEntry2RpcMsg(pEntry, &rpcMsg);
   syncRpcMsgPrint2((char*)"==test3 syncRaftEntry2RpcMsg==", &rpcMsg);
 
+  rpcFreeCont(msg.rpcMsg.pCont);
   rpcFreeCont(rpcMsg.pCont);
-  printf("--------rpcFreeCont: %p \n", rpcMsg.pCont);
 
   syncRaftEntryDestory(pEntry);
 }
@@ -85,10 +83,10 @@ int main(int argc, char** argv) {
   tsAsyncLog = 0;
   sDebugFlag = 143 + 64;
 
-   test1();
-   test2();
+  test1();
+  test2();
   test3();
-   test4();
+  test4();
 
   return 0;
 }

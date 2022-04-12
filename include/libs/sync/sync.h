@@ -317,10 +317,15 @@ typedef struct SyncClientRequest {
   SRpcMsg  rpcMsg;
 } SyncClientRequest;
 
-void syncClientRequestInit(SyncClientRequest* pMsg, SRpcMsg* pRpcMsg, uint64_t seqNum, bool isWeak);
-
+void   syncClientRequestInit(SyncClientRequest* pMsg, SRpcMsg* pRpcMsg, uint64_t seqNum, bool isWeak);
 cJSON* syncClientRequest2Json(const SyncClientRequest* pMsg);
 char*  syncClientRequest2Str(const SyncClientRequest* pMsg);
+
+// for debug ----------------------
+void syncClientRequestPrint(const SyncClientRequest* pMsg);
+void syncClientRequestPrint2(char* s, const SyncClientRequest* pMsg);
+void syncClientRequestLog(const SyncClientRequest* pMsg);
+void syncClientRequestLog2(char* s, const SyncClientRequest* pMsg);
 
 // ---------------------------------------------
 typedef struct SyncClientRequestCopy {
