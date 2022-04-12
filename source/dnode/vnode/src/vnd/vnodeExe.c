@@ -15,20 +15,43 @@
 
 #include "vnodeInt.h"
 
+static int vnodeCommit(void *arg);
+
 int vnodeBegin(SVnode *pVnode) {
+  SVBufPool *pPool;
+  int64_t    nRef;
   ASSERT(pVnode->inUse == NULL);
 
   // allocate a pool in use
-  // TODO: use vnodeBufPoolBegin()
-  pVnode->inUse = pVnode->pPool;
-  pVnode->pPool = pVnode->inUse->next;
-  pVnode->inUse->next = 0;
+  pPool = pVnode->pPool;
+  pVnode->pPool = pPool->next;
+  pPool->next = NULL;
+  nRef = VND_REF_POOL(pPool);
+  pVnode->inUse = pPool;
+
+  ASSERT(nRef == 1);
 
   // begin sub-systems
   metaBegin(pVnode->pMeta);
   tsdbBegin(pVnode->pTsdb);
   tqBegin(pVnode->pTq);
 
+  return 0;
+}
+
+int vnodeAsyncCommit(SVnode *pVnode) {
+  // TODO
+  vnodeScheduleTask(vnodeCommit, pVnode);
+  return 0;
+}
+
+int vnodeSyncCommit(SVnode *pVnode) {
+  // TODO
+  return 0;
+}
+
+static int vnodeCommit(void *arg) {
+  // TODO
   return 0;
 }
 

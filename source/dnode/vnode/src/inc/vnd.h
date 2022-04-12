@@ -20,6 +20,8 @@
 extern "C" {
 #endif
 
+typedef struct SVBufPoolNode SVBufPoolNode;
+
 // vndDebug ====================
 // clang-format off
 #define vFatal(...) do { if (vDebugFlag & DEBUG_FATAL) { taosPrintLog("VND FATAL ", DEBUG_FATAL, 255, __VA_ARGS__); }}     while(0)
@@ -41,7 +43,21 @@ int vnodeSaveCfg(const char* path, SVnodeCfg* pCfg);
 int vnodeLoadCfg(const char* path, SVnodeCfg* pCfg);
 
 // vnodeBufferPool ====================
-typedef struct SVBufPoolNode SVBufPoolNode;
+int   vnodeOpenBufPool(SVnode* pVnode, int64_t size);
+int   vnodeCloseBufPool(SVnode* pVnode);
+void  vnodeBufPoolReset(SVBufPool* pPool);
+void* vnodeBufPoolMalloc(SVBufPool* pPool, size_t size);
+void  vnodeBufPoolFree(SVBufPool* pPool, void* p);
+
+// vnodeQuery ====================
+int  vnodeQueryOpen(SVnode* pVnode);
+void vnodeQueryClose(SVnode* pVnode);
+
+// vnodeExe ====================
+int vnodeBegin(SVnode* pVnode);
+int vnodeAsyncCommit(SVnode* pVnode);
+int vnodeSyncCommit(SVnode* pVnode);
+
 struct SVBufPoolNode {
   SVBufPoolNode*  prev;
   SVBufPoolNode** pnext;
@@ -58,26 +74,11 @@ struct SVBufPool {
   SVBufPoolNode  node;
 };
 
-int   vnodeOpenBufPool(SVnode* pVnode, int64_t size);
-int   vnodeCloseBufPool(SVnode* pVnode);
-void  vnodeBufPoolReset(SVBufPool* pPool);
-void* vnodeBufPoolMalloc(SVBufPool* pPool, size_t size);
-void  vnodeBufPoolFree(SVBufPool* pPool, void* p);
-
-// vnodeQuery ====================
-int  vnodeQueryOpen(SVnode* pVnode);
-void vnodeQueryClose(SVnode* pVnode);
-
-// vnodeExe ====================
-int vnodeBegin(SVnode* pVnode);
+#define VND_REF_POOL(PPOOL)     atomic_add_fetch_64(&(PPOOL)->nRef, 1)
+#define VND_UNREF_POOL(PPOOL)   atomic_sub_fetch_64(&(PPOOL)->nRef, 1)
+#define VND_GET_POOL_REF(PPOOL) atomic_load_64(&(PPOOL)->nRef)
 
 #if 0  // -----------------------------
-typedef struct SVnodeTask {
-  TD_DLIST_NODE(SVnodeTask);
-  void* arg;
-  int (*execute)(void*);
-} SVnodeTask;
-
 
 typedef struct {
   int8_t  streamType;  // sma or other
