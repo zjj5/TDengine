@@ -47,6 +47,8 @@ int tslDel(SSkipList2 *pSl, const void *pKey, int kLen);
 int tslCursorOpen(SSLCursor *pSlc, SSkipList2 *pSl, int flag);
 int tslCursorClose(SSLCursor *pSlc);
 
+int tslCursorSeekToFirst(SSLCursor *pSlc);
+int tslCursorSeekToLast(SSLCursor *pScl);
 int tslCursorSeek(SSLCursor *pSlc, const void *pKey, int kLen, int flag);
 int tslCursorPut(SSLCursor *pSlc, const SSLItem *pItem);
 

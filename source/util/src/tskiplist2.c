@@ -109,22 +109,39 @@ int tslDestroy(SSkipList2 *pSl) {
 }
 
 int tslPut(SSkipList2 *pSl, const SSLItem *pItem) {
-  int      psize;
-  int8_t   level;
-  SSLNode *pNode;
-  SSLNode *pHead;
-  SSLNode *pTail;
+  SSLCursor      slc;
+  const SSLCfg  *pCfg = pSl->pCfg;
+  const SSLItem *cItem = NULL;
+  int            c;
 
-  psize = tslEncode(pSl, pItem, NULL);
-  level = tslRandLevel(pSl);
-  pNode = tslNodeNew(pSl, level, psize);
-  if (pNode == NULL) {
-    return -1;
+  tslCursorOpen(&slc, pSl, 0);
+
+  // compare first
+  tslCursorSeekToFirst(&slc);
+  // cItem = tslCursorGet(&slc);
+  if (pItem == NULL) {
+    return tslCursorPut(&slc, pItem);
+  } else {
+    c = pCfg->xComparFn(pItem->pKey, pItem->kLen, cItem->pKey, cItem->kLen);
+    if (c < 0) {
+      return tslCursorPut(&slc, pItem);
+    }
+
+    ASSERT(c);
   }
 
-  tslEncode(pSl, pItem, (uint8_t *)TSL_NODE_DATA(pNode));
+  // compare last
+  tslCursorSeekToLast(&slc);
+  // cItem = tslCursorGet(&slc);
+  ASSERT(cItem);
+  c = pCfg->xComparFn(pItem->pKey, pItem->kLen, cItem->pKey, cItem->kLen);
+  if (c > 0) {
+    return tslCursorPut(&slc, pItem);
+  }
 
-  return 0;
+  // seek to the key position
+  tslCursorSeek(&slc, pItem->pKey, pItem->kLen, 0);
+  return tslCursorPut(&slc, pItem);
 }
 
 int tslPutBatch(SSkipList2 *pSl, void *iter) {
@@ -148,6 +165,19 @@ int tslCursorOpen(SSLCursor *pSlc, SSkipList2 *pSl, int flag) {
 }
 
 int tslCursorClose(SSLCursor *pSlc) { return 0; }
+
+int tslCursorSeekToFirst(SSLCursor *pSlc) {
+  for (int8_t level = 0; level < TSL_MAX_LEVEL; level++) {
+    pSlc->curs[level] = TSL_HEAD_NODE(pSlc->pSl);
+  }
+
+  return 0;
+}
+
+int tslCursorSeekToLast(SSLCursor *pScl) {
+  // TODO
+  return 0;
+}
 
 int tslCursorSeek(SSLCursor *pSlc, const void *pKey, int kLen, int flag) {
   SSLNode    *pHead, *pTail, *pNode, *p;
@@ -186,7 +216,27 @@ int tslCursorSeek(SSLCursor *pSlc, const void *pKey, int kLen, int flag) {
 }
 
 int tslCursorPut(SSLCursor *pSlc, const SSLItem *pItem) {
-  // TODO
+  int8_t      level;
+  int         psize;
+  SSkipList2 *pSl = pSlc->pSl;
+  SSLNode    *pNode;
+
+  level = tslRandLevel(pSl);
+  psize = tslEncode(pSl, pItem, NULL);
+
+  pNode = tslNodeNew(pSl, level, psize);
+  if (pNode == NULL) {
+    return -1;
+  }
+
+  for (int8_t i = 0; i < level; i++) {
+    // TODO
+    TSL_NODE_FORWARD(pNode, i) = pSlc->curs[i];
+    TSL_NODE_BACKWARD(pNode, i) = NULL;
+  }
+
+  if (pSl->level < level) pSl->level = level;
+
   return 0;
 }
 
