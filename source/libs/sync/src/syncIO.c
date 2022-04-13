@@ -260,8 +260,6 @@ static void *syncIOConsumerFunc(void *param) {
 
       // use switch case instead of if else
       if (pRpcMsg->msgType == TDMT_VND_SYNC_PING) {
-        syncUtilMsgNtoH(pRpcMsg->pCont);
-
         if (io->FpOnSyncPing != NULL) {
           SyncPing *pSyncMsg = syncPingFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -270,8 +268,6 @@ static void *syncIOConsumerFunc(void *param) {
         }
 
       } else if (pRpcMsg->msgType == TDMT_VND_SYNC_PING_REPLY) {
-        syncUtilMsgNtoH(pRpcMsg->pCont);
-
         if (io->FpOnSyncPingReply != NULL) {
           SyncPingReply *pSyncMsg = syncPingReplyFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -288,8 +284,6 @@ static void *syncIOConsumerFunc(void *param) {
         }
 
       } else if (pRpcMsg->msgType == TDMT_VND_SYNC_REQUEST_VOTE) {
-        syncUtilMsgNtoH(pRpcMsg->pCont);
-
         if (io->FpOnSyncRequestVote != NULL) {
           SyncRequestVote *pSyncMsg = syncRequestVoteFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -298,8 +292,6 @@ static void *syncIOConsumerFunc(void *param) {
         }
 
       } else if (pRpcMsg->msgType == TDMT_VND_SYNC_REQUEST_VOTE_REPLY) {
-        syncUtilMsgNtoH(pRpcMsg->pCont);
-
         if (io->FpOnSyncRequestVoteReply != NULL) {
           SyncRequestVoteReply *pSyncMsg = syncRequestVoteReplyFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -308,8 +300,6 @@ static void *syncIOConsumerFunc(void *param) {
         }
 
       } else if (pRpcMsg->msgType == TDMT_VND_SYNC_APPEND_ENTRIES) {
-        syncUtilMsgNtoH(pRpcMsg->pCont);
-
         if (io->FpOnSyncAppendEntries != NULL) {
           SyncAppendEntries *pSyncMsg = syncAppendEntriesFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -318,8 +308,6 @@ static void *syncIOConsumerFunc(void *param) {
         }
 
       } else if (pRpcMsg->msgType == TDMT_VND_SYNC_APPEND_ENTRIES_REPLY) {
-        syncUtilMsgNtoH(pRpcMsg->pCont);
-
         if (io->FpOnSyncAppendEntriesReply != NULL) {
           SyncAppendEntriesReply *pSyncMsg = syncAppendEntriesReplyFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -369,7 +357,10 @@ static void *syncIOConsumerFunc(void *param) {
 }
 
 static void syncIOProcessRequest(void *pParent, SRpcMsg *pMsg, SEpSet *pEpSet) {
+  syncUtilMsgNtoH(pMsg->pCont);
+
   syncRpcMsgPrint2((char *)"==syncIOProcessRequest==", pMsg);
+
   SSyncIO *io = pParent;
   SRpcMsg *pTemp;
   pTemp = taosAllocateQitem(sizeof(SRpcMsg));
