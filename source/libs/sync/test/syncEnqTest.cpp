@@ -22,6 +22,7 @@ int32_t  myIndex = 0;
 SRaftId   ids[TSDB_MAX_REPLICA];
 SSyncInfo syncInfo;
 SSyncFSM* pFsm;
+const char* pDir = "./syncEnqTest";
 
 SSyncNode* syncNodeInit() {
   syncInfo.vgId = 1234;
@@ -30,7 +31,7 @@ SSyncNode* syncNodeInit() {
   syncInfo.queue = gSyncIO->pMsgQ;
   syncInfo.FpEqMsg = syncIOEqMsg;
   syncInfo.pFsm = pFsm;
-  snprintf(syncInfo.path, sizeof(syncInfo.path), "%s", "./");
+  snprintf(syncInfo.path, sizeof(syncInfo.path), "%s", pDir);
 
   SSyncCfg* pCfg = &syncInfo.syncCfg;
   pCfg->myIndex = myIndex;
@@ -38,8 +39,8 @@ SSyncNode* syncNodeInit() {
 
   for (int i = 0; i < replicaNum; ++i) {
     pCfg->nodeInfo[i].nodePort = ports[i];
-    snprintf(pCfg->nodeInfo[i].nodeFqdn, sizeof(pCfg->nodeInfo[i].nodeFqdn), "%s", "127.0.0.1");
-    // taosGetFqdn(pCfg->nodeInfo[0].nodeFqdn);
+    //snprintf(pCfg->nodeInfo[i].nodeFqdn, sizeof(pCfg->nodeInfo[i].nodeFqdn), "%s", "127.0.0.1");
+    taosGetFqdn(pCfg->nodeInfo[0].nodeFqdn);
   }
 
   SSyncNode* pSyncNode = syncNodeOpen(&syncInfo);
