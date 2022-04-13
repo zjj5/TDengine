@@ -43,9 +43,8 @@ typedef struct SSyncRaftEntry {
   bool      isWeak;
   SyncTerm  term;
   SyncIndex index;
-  // EntryType entryType;
-  uint32_t dataLen;  // user RpcMsg.contLen
-  char     data[];   // user RpcMsg.pCont
+  uint32_t  dataLen;  // user RpcMsg.contLen
+  char      data[];   // user RpcMsg.pCont
 } SSyncRaftEntry;
 
 SSyncRaftEntry* syncEntryBuild(uint32_t dataLen);

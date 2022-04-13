@@ -28,6 +28,8 @@ SSyncFSM * pFsm;
 SWal *     pWal;
 SSyncNode *gSyncNode;
 
+const char *pDir = "./syncWriteTest";
+
 void CommitCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SyncIndex index, bool isWeak, int32_t code,
               ESyncState state) {
   char logBuf[256];
@@ -67,7 +69,7 @@ SSyncNode *syncNodeInit() {
   syncInfo.queue = gSyncIO->pMsgQ;
   syncInfo.FpEqMsg = syncIOEqMsg;
   syncInfo.pFsm = pFsm;
-  snprintf(syncInfo.path, sizeof(syncInfo.path), "%s", "./write_test");
+  snprintf(syncInfo.path, sizeof(syncInfo.path), "%s", pDir);
 
   int code = walInit();
   assert(code == 0);
@@ -107,6 +109,8 @@ SSyncNode *syncNodeInit() {
   gSyncIO->FpOnSyncAppendEntriesReply = pSyncNode->FpOnAppendEntriesReply;
   gSyncIO->FpOnSyncTimeout = pSyncNode->FpOnTimeout;
   gSyncIO->pSyncNode = pSyncNode;
+
+  syncNodeStart(pSyncNode);
 
   return pSyncNode;
 }
@@ -174,7 +178,7 @@ int main(int argc, char **argv) {
 
   for (int i = 0; i < 10; ++i) {
     SyncClientRequest *pSyncClientRequest = pMsg1;
-    SRpcMsg            rpcMsg;
+    SRpcMsg                rpcMsg;
     syncClientRequest2RpcMsg(pSyncClientRequest, &rpcMsg);
     gSyncNode->FpEqMsg(gSyncNode->queue, &rpcMsg);
 

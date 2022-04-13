@@ -70,9 +70,15 @@ int32_t syncIOSendMsg(void *clientRpc, const SEpSet *pEpSet, SRpcMsg *pMsg) {
   assert(pEpSet->numOfEps == 1);
 
   int32_t ret = 0;
-  char    logBuf[256];
-  snprintf(logBuf, sizeof(logBuf), "==syncIOSendMsg== %s:%d", pEpSet->eps[0].fqdn, pEpSet->eps[0].port);
-  syncRpcMsgPrint2(logBuf, pMsg);
+  {
+    syncUtilMsgNtoH(pMsg->pCont);
+
+    char logBuf[256];
+    snprintf(logBuf, sizeof(logBuf), "==syncIOSendMsg== %s:%d", pEpSet->eps[0].fqdn, pEpSet->eps[0].port);
+    syncRpcMsgPrint2(logBuf, pMsg);
+
+    syncUtilMsgHtoN(pMsg->pCont);
+  }
 
   pMsg->handle = NULL;
   pMsg->noResp = 1;
@@ -350,6 +356,8 @@ static void *syncIOConsumerFunc(void *param) {
 }
 
 static void syncIOProcessRequest(void *pParent, SRpcMsg *pMsg, SEpSet *pEpSet) {
+  syncUtilMsgNtoH(pMsg->pCont);
+
   syncRpcMsgPrint2((char *)"==syncIOProcessRequest==", pMsg);
   SSyncIO *io = pParent;
   SRpcMsg *pTemp;
