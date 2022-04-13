@@ -50,19 +50,16 @@ int32_t logStoreAppendEntry(SSyncLogStore* pLogStore, SSyncRaftEntry* pEntry) {
 
   SyncIndex lastIndex = logStoreLastIndex(pLogStore);
   assert(pEntry->index == lastIndex + 1);
-  uint32_t len;
-  char*    serialized = syncEntrySerialize(pEntry, &len);
-  assert(serialized != NULL);
 
-  int code = 0;
-  /*
-    code = walWrite(pWal, pEntry->index, pEntry->entryType, serialized, len);
-    assert(code == 0);
-  */
-  assert(walWrite(pWal, pEntry->index, pEntry->entryType, serialized, len) == 0);
+  int          code = 0;
+  SSyncLogMeta syncMeta;
+  syncMeta.isWeek = pEntry->isWeak;
+  syncMeta.seqNum = pEntry->seqNum;
+  syncMeta.term = pEntry->term;
+  code = walWriteWithSyncInfo(pWal, pEntry->index, pEntry->originalRpcType, syncMeta, pEntry->data, pEntry->dataLen);
+  assert(code == 0);
 
   walFsync(pWal, true);
-  taosMemoryFree(serialized);
   return code;
 }
 
@@ -74,8 +71,18 @@ SSyncRaftEntry* logStoreGetEntry(SSyncLogStore* pLogStore, SyncIndex index) {
   if (index >= SYNC_INDEX_BEGIN && index <= logStoreLastIndex(pLogStore)) {
     SWalReadHandle* pWalHandle = walOpenReadHandle(pWal);
     assert(walReadWithHandle(pWalHandle, index) == 0);
-    pEntry = syncEntryDeserialize(pWalHandle->pHead->head.body, pWalHandle->pHead->head.len);
+
+    SSyncRaftEntry* pEntry = syncEntryBuild(pWalHandle->pHead->head.len);
     assert(pEntry != NULL);
+
+    pEntry->msgType = TDMT_VND_SYNC_CLIENT_REQUEST;
+    pEntry->originalRpcType = pWalHandle->pHead->head.msgType;
+    pEntry->seqNum = pWalHandle->pHead->head.syncMeta.seqNum;
+    pEntry->isWeak = pWalHandle->pHead->head.syncMeta.isWeek;
+    pEntry->term = pWalHandle->pHead->head.syncMeta.term;
+    pEntry->index = index;
+    assert(pEntry->dataLen == pWalHandle->pHead->head.len);
+    memcpy(pEntry->data, pWalHandle->pHead->head.body, pWalHandle->pHead->head.len);
 
     // need to hold, do not new every time!!
     walCloseReadHandle(pWalHandle);

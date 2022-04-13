@@ -313,12 +313,12 @@ void syncTimeoutLog2(char* s, const SyncTimeout* pMsg);
 typedef struct SyncClientRequest {
   uint32_t bytes;
   int32_t  vgId;
-  uint32_t msgType;
-  uint32_t originalRpcType;
+  uint32_t msgType;          // SyncClientRequest msgType
+  uint32_t originalRpcType;  // user RpcMsg msgType
   uint64_t seqNum;
   bool     isWeak;
-  uint32_t dataLen;
-  char     data[];
+  uint32_t dataLen;  // user RpcMsg.contLen
+  char     data[];   // user RpcMsg.pCont
 } SyncClientRequest;
 
 SyncClientRequest* syncClientRequestBuild(uint32_t dataLen);

@@ -1018,7 +1018,7 @@ static int32_t syncNodeEqNoop(SSyncNode* ths) {
 
   SyncIndex       index = ths->pLogStore->getLastIndex(ths->pLogStore) + 1;
   SyncTerm        term = ths->pRaftStore->currentTerm;
-  SSyncRaftEntry* pEntry = syncEntryBuildNoop(term, index);
+  SSyncRaftEntry* pEntry = syncEntryBuildNoop(term, index, ths->vgId);
   assert(pEntry != NULL);
 
   uint32_t           entryLen;
@@ -1046,7 +1046,7 @@ static int32_t syncNodeAppendNoop(SSyncNode* ths) {
 
   SyncIndex       index = ths->pLogStore->getLastIndex(ths->pLogStore) + 1;
   SyncTerm        term = ths->pRaftStore->currentTerm;
-  SSyncRaftEntry* pEntry = syncEntryBuildNoop(term, index);
+  SSyncRaftEntry* pEntry = syncEntryBuildNoop(term, index, ths->vgId);
   assert(pEntry != NULL);
 
   if (ths->state == TAOS_SYNC_STATE_LEADER) {
@@ -1121,7 +1121,7 @@ int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg) {
     syncEntry2OriginalRpc(pEntry, &rpcMsg);
 
     if (ths->pFsm != NULL) {
-      if (ths->pFsm->FpPreCommitCb != NULL && pEntry->entryType == SYNC_RAFT_ENTRY_DATA) {
+      if (ths->pFsm->FpPreCommitCb != NULL && pEntry->originalRpcType != TDMT_VND_SYNC_NOOP) {
         ths->pFsm->FpPreCommitCb(ths->pFsm, &rpcMsg, pEntry->index, pEntry->isWeak, 0, ths->state);
       }
     }
@@ -1136,7 +1136,7 @@ int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg) {
     syncEntry2OriginalRpc(pEntry, &rpcMsg);
 
     if (ths->pFsm != NULL) {
-      if (ths->pFsm->FpPreCommitCb != NULL && pEntry->entryType == SYNC_RAFT_ENTRY_DATA) {
+      if (ths->pFsm->FpPreCommitCb != NULL && pEntry->originalRpcType != TDMT_VND_SYNC_NOOP) {
         ths->pFsm->FpPreCommitCb(ths->pFsm, &rpcMsg, pEntry->index, pEntry->isWeak, 1, ths->state);
       }
     }
