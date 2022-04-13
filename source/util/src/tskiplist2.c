@@ -18,7 +18,6 @@
 
 #define TSL_RAND_FACTOR 4
 
-typedef struct SSLNode SSLNode;
 struct __attribute__((__packed__)) SSLNode {
   int8_t   level;
   SSLNode *forward[];
@@ -39,10 +38,6 @@ struct SSkipList2 {
 #define TSL_HEAD_NODE(sl) ((SSLNode *)&(sl)[1])
 #define TSL_TAIL_NODE(sl) ((SSLNode *)POINTER_SHIFT(TSL_HEAD_NODE(sl), TSL_NODE_HALF_SIZE((sl)->pCfg->maxLevel)))
 
-struct SSLCursor {
-  // data
-};
-
 static SSLNode *tslNodeNew(SSkipList2 *pSl, int8_t level, int psize);
 static void     tslNodeFree(SSkipList2 *pSl, SSLNode *pNode);
 static int      tslPutVarInt(uint8_t *p, int v);
@@ -52,7 +47,7 @@ static void     tslDefaultFree(void *pPool, void *p);
 static int      tslDefaultComparFn(const void *pKey1, int kLen1, const void *pKey2, int kLen2);
 static int8_t   tslRandLevel(SSkipList2 *pSl);
 static int      tslCheckCfg(const SSLCfg *pCfg);
-static int      tslEncode(SSkipList2 *pSl, const void *pKey, int kLen, const void *pVal, int vLen, uint8_t *p);
+static int      tslEncode(SSkipList2 *pSl, const SSLItem *pItem, uint8_t *p);
 
 static const SSLCfg defaultCfg = {
     .maxLevel = TSL_MAX_LEVEL,        // maxLevel
@@ -112,23 +107,21 @@ int tslDestroy(SSkipList2 *pSl) {
   return 0;
 }
 
-int tslPut(SSkipList2 *pSl, const void *pKey, int kLen, const void *pVal, int vLen) {
+int tslPut(SSkipList2 *pSl, const SSLItem *pItem) {
   int      psize;
   int8_t   level;
   SSLNode *pNode;
+  SSLNode *pHead;
+  SSLNode *pTail;
 
-  psize = tslEncode(pSl, pKey, kLen, pVal, vLen, NULL);
+  psize = tslEncode(pSl, pItem, NULL);
   level = tslRandLevel(pSl);
   pNode = tslNodeNew(pSl, level, psize);
   if (pNode == NULL) {
     return -1;
   }
 
-  psize = tslEncode(pSl, pKey, kLen, pVal, vLen, (uint8_t *)TSL_NODE_DATA(pNode));
-
-  {
-    // TODO: put the node into the skiplist
-  }
+  tslEncode(pSl, pItem, (uint8_t *)TSL_NODE_DATA(pNode));
 
   return 0;
 }
@@ -142,6 +135,18 @@ int tslGet(SSkipList2 *pSl, void *pKey, int kLen) {
   // TODO
   return 0;
 }
+
+int tslCursorOpen(SSLCursor *pSlc, SSkipList2 *pSl, int flags) {
+  memset(pSlc, 0, sizeof(*pSlc));
+
+  pSlc->flags = flags;
+  pSlc->item.kLen = -1;
+  pSlc->item.vLen = -1;
+
+  return 0;
+}
+
+int tslCursorClose(SSLCursor *pSlc) { return 0; }
 
 static SSLNode *tslNodeNew(SSkipList2 *pSl, int8_t level, int psize) {
   SSLNode      *pNode;
@@ -166,33 +171,68 @@ static void tslNodeFree(SSkipList2 *pSl, SSLNode *pNode) {
   }
 }
 
-static int tslEncode(SSkipList2 *pSl, const void *pKey, int kLen, const void *pVal, int vLen, uint8_t *p) {
+static int tslEncode(SSkipList2 *pSl, const SSLItem *pItem, uint8_t *p) {
   int           n = 0;
   const SSLCfg *pCfg = pSl->pCfg;
 
-  ASSERT(kLen != 0);
-  ASSERT(pCfg->kLen < 0 || pCfg->kLen == vLen);
-  ASSERT(pCfg->vLen < 0 || pCfg->vLen == vLen);
+  ASSERT(pItem->kLen != 0);
+  ASSERT(pCfg->kLen < 0 || pCfg->kLen == pItem->kLen);
+  ASSERT(pCfg->vLen < 0 || pCfg->vLen == pItem->vLen);
 
   if (pCfg->kLen < 0) {
-    n += tslPutVarInt(p, kLen);
+    n += tslPutVarInt(p, pItem->kLen);
   }
 
   if (pCfg->vLen < 0) {
-    n += tslPutVarInt(p ? p + n : p, vLen);
+    n += tslPutVarInt(p ? p + n : p, pItem->vLen);
   }
 
   if (p) {
-    memcpy(p + n, pKey, kLen);
+    memcpy(p + n, pItem->pKey, pItem->kLen);
   }
-  n += kLen;
+  n += pItem->kLen;
 
   if (p) {
-    memcpy(p + n, pVal, vLen);
+    memcpy(p + n, pItem->pVal, pItem->vLen);
   }
-  n += vLen;
+  n += pItem->vLen;
 
   return n;
+}
+
+static int tslDecode(SSkipList2 *pSl, uint8_t *p, int psize, SSLItem *pItem) {
+  int           n = 0;
+  const SSLCfg *pCfg = pSl->pCfg;
+
+  pItem->kLen = -1;
+  pItem->vLen = -1;
+  pItem->pKey = NULL;
+  pItem->pVal = NULL;
+
+  if (pCfg->kLen < 0) {
+    n += tslGetVarInt(p + n, &pItem->kLen);
+  } else {
+    pItem->kLen = pCfg->kLen;
+  }
+
+  ASSERT(n <= psize);
+
+  if (pCfg->vLen < 0) {
+    n += tslGetVarInt(p + n, &pItem->vLen);
+  } else {
+    pItem->vLen = pCfg->vLen;
+  }
+
+  ASSERT(n <= psize);
+
+  pItem->pKey = (void *)(p + n);
+  n += pItem->kLen;
+  pItem->pVal = (void *)(p + n);
+  n += pItem->vLen;
+
+  ASSERT(n == psize);
+
+  return 0;
 }
 
 static inline int tslPutVarInt(uint8_t *p, int v) {

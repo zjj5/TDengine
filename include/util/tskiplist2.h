@@ -30,13 +30,30 @@ extern "C" {
 typedef int (*tslComparFn)(const void *pKey1, int kLen1, const void *pKey2, int kLen2);
 
 typedef struct SSkipList2 SSkipList2;
+typedef struct SSLNode    SSLNode;
 typedef struct SSLCursor  SSLCursor;
 typedef struct SSLCfg     SSLCfg;
+typedef struct SSLItem    SSLItem;
 
+// SSkipList2
 int tslCreate(const SSLCfg *pCfg, SSkipList2 **ppSl);
 int tslDestroy(SSkipList2 *pSl);
-int tslPut(SSkipList2 *pSl, const void *pKey, int kLen, const void *pVal, int vLen);
+int tslPut(SSkipList2 *pSl, const SSLItem *pItem);
 int tslGet(SSkipList2 *pSl, void *pKey, int kLen);
+
+// SSLCursor
+#define TSLC_FLG_BWD 0x1
+int tslCursorOpen(SSLCursor *pSlc, SSkipList2 *pSl, int flags);
+int tslCursorClose(SSLCursor *pSlc);
+int tslCursorPut(SSLCursor *pSlc, const SSLItem *pItem);
+int tslCursorGet(SSLCursor *pSlc, int flags);
+
+struct SSLItem {
+  int         kLen;
+  int         vLen;
+  const void *pKey;
+  const void *pVal;
+};
 
 struct SSLCfg {
   int8_t      maxLevel;
@@ -46,6 +63,13 @@ struct SSLCfg {
   void *(*xMalloc)(void *, int);
   void (*xFree)(void *, void *);
   void *pPool;
+};
+
+struct SSLCursor {
+  int         flags;
+  SSkipList2 *pSl;
+  SSLItem     item;
+  SSLNode    *curs[TSL_MAX_LEVEL];
 };
 
 #ifdef __cplusplus
