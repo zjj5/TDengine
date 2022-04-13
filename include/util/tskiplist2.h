@@ -27,19 +27,22 @@ extern "C" {
 
 #define TSL_MAX_LEVEL 15
 
+typedef int (*tslComparFn)(const void *pKey1, int kLen1, const void *pKey2, int kLen2);
+
 typedef struct SSkipList2 SSkipList2;
 typedef struct SSLCursor  SSLCursor;
 typedef struct SSLCfg     SSLCfg;
 
-int tslCreate(SSLCfg *pCfg, SSkipList2 **ppSl);
+int tslCreate(const SSLCfg *pCfg, SSkipList2 **ppSl);
 int tslDestroy(SSkipList2 *pSl);
-int tslPut(SSkipList2 *pSl, void *pKey, int kLen, void *pVal, int vLen);
+int tslPut(SSkipList2 *pSl, const void *pKey, int kLen, const void *pVal, int vLen);
 int tslGet(SSkipList2 *pSl, void *pKey, int kLen);
 
 struct SSLCfg {
-  int8_t maxLevel;
-  int    kLen;
-  int    vLen;
+  int8_t      maxLevel;
+  int         kLen;
+  int         vLen;
+  tslComparFn xComparFn;
   void *(*xMalloc)(void *, int);
   void (*xFree)(void *, void *);
   void *pPool;

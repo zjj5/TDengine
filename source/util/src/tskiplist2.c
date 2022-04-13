@@ -16,45 +16,89 @@
 
 #include "tskiplist2.h"
 
+#define TSL_RAND_FACTOR 4
+
 typedef struct SSLNode SSLNode;
 struct __attribute__((__packed__)) SSLNode {
   int8_t   level;
   SSLNode *forward[];
 };
 
-#define SL_NODE_FORWARD(n, l)  (n)->forward[(l)]
-#define SL_NODE_BACKWARD(n, l) (n)->forward[(n)->level + (l)]
-#define SL_NODE_DATA(n)        &(n)->forward[(n)->level * 2]
+#define TSL_NODE_FORWARD(n, l)  (n)->forward[(l)]
+#define TSL_NODE_BACKWARD(n, l) (n)->forward[(n)->level + (l)]
+#define TSL_NODE_DATA(n)        (&(n)->forward[(n)->level * 2])
+#define TSL_NODE_SIZE(NL)       (sizeof(SSLNode) + sizeof(SSLNode *) * (NL)*2)
+#define TSL_NODE_HALF_SIZE(NL)  (sizeof(SSLNode) + sizeof(SSLNode *) * (NL))
 
 struct SSkipList2 {
-  uint32_t seed;
-  SSLCfg  *pCfg;
+  int8_t        level;
+  uint32_t      seed;
+  const SSLCfg *pCfg;
 };
+
+#define TSL_HEAD_NODE(sl) ((SSLNode *)&(sl)[1])
+#define TSL_TAIL_NODE(sl) ((SSLNode *)POINTER_SHIFT(TSL_HEAD_NODE(sl), TSL_NODE_HALF_SIZE((sl)->pCfg->maxLevel)))
 
 struct SSLCursor {
   // data
 };
 
-static SSLNode *tslNodeNew(SSkipList2 *pSl, int8_t level, int size);
+static SSLNode *tslNodeNew(SSkipList2 *pSl, int8_t level, int psize);
 static void     tslNodeFree(SSkipList2 *pSl, SSLNode *pNode);
 static int      tslPutVarInt(uint8_t *p, int v);
 static int      tslGetVarInt(const uint8_t *p, int *v);
+static void    *tslDefaultMalloc(void *pPool, int size);
+static void     tslDefaultFree(void *pPool, void *p);
+static int      tslDefaultComparFn(const void *pKey1, int kLen1, const void *pKey2, int kLen2);
+static int8_t   tslRandLevel(SSkipList2 *pSl);
+static int      tslCheckCfg(const SSLCfg *pCfg);
+static int      tslEncode(SSkipList2 *pSl, const void *pKey, int kLen, const void *pVal, int vLen, uint8_t *p);
 
-int tslCreate(SSLCfg *pCfg, SSkipList2 **ppSl) {
+static const SSLCfg defaultCfg = {
+    .maxLevel = TSL_MAX_LEVEL,        // maxLevel
+    .kLen = -1,                       // kLen
+    .vLen = -1,                       // vLen
+    .xComparFn = tslDefaultComparFn,  // xComparFn
+    .xMalloc = tslDefaultMalloc,      // xMalloc
+    .xFree = tslDefaultFree,          // xFree
+    .pPool = NULL                     // pPool
+};
+
+int tslCreate(const SSLCfg *pCfg, SSkipList2 **ppSl) {
   SSkipList2 *pSl = NULL;
+  SSLNode    *pHead;
+  SSLNode    *pTail;
+  int         tsize;
 
   *ppSl = NULL;
   if (pCfg == NULL) {
-    // TODO
+    pCfg = &defaultCfg;
+  } else {
+    if (tslCheckCfg(pCfg) < 0) {
+      return -1;
+    }
   }
 
-  pSl = (SSkipList2 *)pCfg->xMalloc(pCfg->pPool, sizeof(*pSl));
+  tsize = sizeof(*pSl) + 2 * TSL_NODE_HALF_SIZE(pCfg->maxLevel);
+  pSl = (SSkipList2 *)pCfg->xMalloc(pCfg->pPool, tsize);
   if (pSl == NULL) {
     return -1;
   }
 
+  pSl->level = 0;
   pSl->seed = taosRand();
   pSl->pCfg = pCfg;
+
+  pHead = TSL_HEAD_NODE(pSl);
+  pTail = TSL_TAIL_NODE(pSl);
+
+  pHead->level = pCfg->maxLevel;
+  pTail->level = pCfg->maxLevel;
+
+  for (int i = 0; i < pCfg->maxLevel; i++) {
+    TSL_NODE_FORWARD(pHead, i) = pTail;
+    TSL_NODE_BACKWARD(pTail, i) = pHead;
+  }
 
   *ppSl = pSl;
   return 0;
@@ -68,7 +112,28 @@ int tslDestroy(SSkipList2 *pSl) {
   return 0;
 }
 
-int tslPut(SSkipList2 *pSl, void *pKey, int kLen, void *pVal, int vLen) {
+int tslPut(SSkipList2 *pSl, const void *pKey, int kLen, const void *pVal, int vLen) {
+  int      psize;
+  int8_t   level;
+  SSLNode *pNode;
+
+  psize = tslEncode(pSl, pKey, kLen, pVal, vLen, NULL);
+  level = tslRandLevel(pSl);
+  pNode = tslNodeNew(pSl, level, psize);
+  if (pNode == NULL) {
+    return -1;
+  }
+
+  psize = tslEncode(pSl, pKey, kLen, pVal, vLen, (uint8_t *)TSL_NODE_DATA(pNode));
+
+  {
+    // TODO: put the node into the skiplist
+  }
+
+  return 0;
+}
+
+int tslPutBatch(SSkipList2 *pSl, void *iter) {
   // TODO
   return 0;
 }
@@ -78,16 +143,16 @@ int tslGet(SSkipList2 *pSl, void *pKey, int kLen) {
   return 0;
 }
 
-static SSLNode *tslNodeNew(SSkipList2 *pSl, int8_t level, int size) {
-  SSLNode *pNode;
-  SSLCfg  *pCfg;
-  int      tsize;
+static SSLNode *tslNodeNew(SSkipList2 *pSl, int8_t level, int psize) {
+  SSLNode      *pNode;
+  int           tsize;
+  const SSLCfg *pCfg;
 
   pNode = NULL;
   pCfg = pSl->pCfg;
-  tsize = sizeof(*pNode) + sizeof(SSLNode *) * level * 2 + size;
+  tsize = TSL_NODE_SIZE(level) + psize;
 
-  pNode = pCfg->xMalloc(pCfg->pPool, tsize);
+  pNode = (SSLNode *)pCfg->xMalloc(pCfg->pPool, tsize);
   if (pNode) {
     pNode->level = level;
   }
@@ -101,9 +166,9 @@ static void tslNodeFree(SSkipList2 *pSl, SSLNode *pNode) {
   }
 }
 
-static int tslEncode(SSkipList2 *pSl, void *pKey, int kLen, void *pVal, int vLen, uint8_t *p) {
-  int     n = 0;
-  SSLCfg *pCfg = pSl->pCfg;
+static int tslEncode(SSkipList2 *pSl, const void *pKey, int kLen, const void *pVal, int vLen, uint8_t *p) {
+  int           n = 0;
+  const SSLCfg *pCfg = pSl->pCfg;
 
   ASSERT(kLen != 0);
   ASSERT(pCfg->kLen < 0 || pCfg->kLen == vLen);
@@ -175,4 +240,72 @@ static inline int tslGetVarInt(const uint8_t *p, int *v) {
 
   *v = tv;
   return n;
+}
+
+static inline void *tslDefaultMalloc(void *pPool, int size) {
+  void *p = NULL;
+
+  p = taosMemoryMalloc(size);
+
+  return p;
+}
+
+static inline void tslDefaultFree(void *pPool, void *p) { taosMemoryFree(p); }
+
+static inline int tslDefaultComparFn(const void *pKey1, int kLen1, const void *pKey2, int kLen2) {
+  int mlen;
+  int c;
+
+  mlen = kLen1 < kLen2 ? kLen1 : kLen2;
+  c = memcmp(pKey1, pKey2, mlen);
+  if (c == 0) {
+    if (kLen1 < kLen2) {
+      c = -1;
+    } else if (kLen1 > kLen2) {
+      c = 1;
+    } else {
+      c = 0;
+    }
+  }
+  return c;
+}
+
+static int8_t tslRandLevel(SSkipList2 *pSl) {
+  int8_t level = 1;
+
+  if (pSl->level > 0) {
+    while ((taosRandR(&(pSl->seed)) % TSL_RAND_FACTOR) == 0 && level <= pSl->pCfg->maxLevel) {
+      level++;
+    }
+
+    if (level > pSl->level) {
+      if (pSl->level < pSl->pCfg->maxLevel) {
+        level = pSl->level + 1;
+      } else {
+        level = pSl->level;
+      }
+    }
+  }
+
+  return level;
+}
+
+static int tslCheckCfg(const SSLCfg *pCfg) {
+  if (pCfg->maxLevel < 1 || pCfg->maxLevel > TSL_MAX_LEVEL) {
+    return -1;
+  }
+
+  if (pCfg->kLen == 0) {
+    return -1;
+  }
+
+  if (pCfg->xComparFn == NULL) {
+    return -1;
+  }
+
+  if (pCfg->xMalloc == NULL) {
+    return -1;
+  }
+
+  return 0;
 }
