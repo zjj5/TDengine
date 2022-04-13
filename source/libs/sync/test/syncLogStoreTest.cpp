@@ -16,10 +16,10 @@ void logTest() {
   sFatal("--- sync log test: fatal");
 }
 
-SSyncNode* pSyncNode;
-SWal *pWal;
+SSyncNode*     pSyncNode;
+SWal*          pWal;
 SSyncLogStore* pLogStore;
-const char *pWalPath = "./syncLogStoreTest_wal";
+const char*    pWalPath = "./syncLogStoreTest_wal";
 
 void init() {
   walInit();

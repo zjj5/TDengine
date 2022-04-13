@@ -1,9 +1,9 @@
-#include <gtest/gtest.h>
+#include "syncRaftLog.h"
+//#include <gtest/gtest.h>
 #include <stdio.h>
 #include "syncEnv.h"
 #include "syncIO.h"
 #include "syncInt.h"
-#include "syncRaftLog.h"
 #include "syncRaftStore.h"
 #include "syncUtil.h"
 
@@ -16,10 +16,10 @@ void logTest() {
   sFatal("--- sync log test: fatal");
 }
 
-SSyncNode* pSyncNode;
-SWal *pWal;
+SSyncNode*    pSyncNode;
+SWal*         pWal;
 SSyncRaftLog* pLog;
-const char *pWalPath = "./syncRaftLogTest_wal";
+const char*   pWalPath = "./syncRaftLogTest_wal";
 
 void init() {
   walInit();
@@ -81,9 +81,9 @@ void syncRaftLogTest() {
   for (int i = 0; i < 5; ++i) {
     SyncClientRequest syncMsg;
     initSyncClientRequest(&syncMsg, i);
-  
+
     SSyncRaftEntry entry;
-    syncRaftEntryInit(&entry, &syncMsg, 100+i, i);
+    syncRaftEntryInit(&entry, &syncMsg, 100 + i, i);
 
     syncRaftEntryPrint2((char*)"====write entry====", &entry);
     pLog->appendEntry(pLog, &entry);

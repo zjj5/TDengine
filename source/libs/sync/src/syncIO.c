@@ -29,7 +29,7 @@ static int32_t  syncIODestroy(SSyncIO *io);
 static int32_t  syncIOStartInternal(SSyncIO *io);
 static int32_t  syncIOStopInternal(SSyncIO *io);
 
-static void *  syncIOConsumerFunc(void *param);
+static void   *syncIOConsumerFunc(void *param);
 static void    syncIOProcessRequest(void *pParent, SRpcMsg *pMsg, SEpSet *pEpSet);
 static void    syncIOProcessReply(void *pParent, SRpcMsg *pMsg, SEpSet *pEpSet);
 static int32_t syncIOAuth(void *parent, char *meterId, char *spi, char *encrypt, char *secret, char *ckey);
@@ -70,9 +70,16 @@ int32_t syncIOSendMsg(void *clientRpc, const SEpSet *pEpSet, SRpcMsg *pMsg) {
   assert(pEpSet->numOfEps == 1);
 
   int32_t ret = 0;
-  char    logBuf[256];
-  snprintf(logBuf, sizeof(logBuf), "==syncIOSendMsg== %s:%d", pEpSet->eps[0].fqdn, pEpSet->eps[0].port);
-  syncRpcMsgPrint2(logBuf, pMsg);
+
+  {
+    syncUtilMsgNtoH(pMsg->pCont);
+
+    char logBuf[256];
+    snprintf(logBuf, sizeof(logBuf), "==syncIOSendMsg== %s:%d", pEpSet->eps[0].fqdn, pEpSet->eps[0].port);
+    syncRpcMsgPrint2(logBuf, pMsg);
+
+    syncUtilMsgHtoN(pMsg->pCont);
+  }
 
   pMsg->handle = NULL;
   pMsg->noResp = 1;
@@ -235,9 +242,9 @@ static int32_t syncIOStopInternal(SSyncIO *io) {
 }
 
 static void *syncIOConsumerFunc(void *param) {
-  SSyncIO *  io = param;
+  SSyncIO   *io = param;
   STaosQall *qall;
-  SRpcMsg *  pRpcMsg, rpcMsg;
+  SRpcMsg   *pRpcMsg, rpcMsg;
   qall = taosAllocateQall();
 
   while (1) {
@@ -253,6 +260,8 @@ static void *syncIOConsumerFunc(void *param) {
 
       // use switch case instead of if else
       if (pRpcMsg->msgType == TDMT_VND_SYNC_PING) {
+        syncUtilMsgNtoH(pRpcMsg->pCont);
+
         if (io->FpOnSyncPing != NULL) {
           SyncPing *pSyncMsg = syncPingFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -261,6 +270,8 @@ static void *syncIOConsumerFunc(void *param) {
         }
 
       } else if (pRpcMsg->msgType == TDMT_VND_SYNC_PING_REPLY) {
+        syncUtilMsgNtoH(pRpcMsg->pCont);
+
         if (io->FpOnSyncPingReply != NULL) {
           SyncPingReply *pSyncMsg = syncPingReplyFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -277,6 +288,8 @@ static void *syncIOConsumerFunc(void *param) {
         }
 
       } else if (pRpcMsg->msgType == TDMT_VND_SYNC_REQUEST_VOTE) {
+        syncUtilMsgNtoH(pRpcMsg->pCont);
+
         if (io->FpOnSyncRequestVote != NULL) {
           SyncRequestVote *pSyncMsg = syncRequestVoteFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -285,6 +298,8 @@ static void *syncIOConsumerFunc(void *param) {
         }
 
       } else if (pRpcMsg->msgType == TDMT_VND_SYNC_REQUEST_VOTE_REPLY) {
+        syncUtilMsgNtoH(pRpcMsg->pCont);
+
         if (io->FpOnSyncRequestVoteReply != NULL) {
           SyncRequestVoteReply *pSyncMsg = syncRequestVoteReplyFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -293,6 +308,8 @@ static void *syncIOConsumerFunc(void *param) {
         }
 
       } else if (pRpcMsg->msgType == TDMT_VND_SYNC_APPEND_ENTRIES) {
+        syncUtilMsgNtoH(pRpcMsg->pCont);
+
         if (io->FpOnSyncAppendEntries != NULL) {
           SyncAppendEntries *pSyncMsg = syncAppendEntriesFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
@@ -301,6 +318,8 @@ static void *syncIOConsumerFunc(void *param) {
         }
 
       } else if (pRpcMsg->msgType == TDMT_VND_SYNC_APPEND_ENTRIES_REPLY) {
+        syncUtilMsgNtoH(pRpcMsg->pCont);
+
         if (io->FpOnSyncAppendEntriesReply != NULL) {
           SyncAppendEntriesReply *pSyncMsg = syncAppendEntriesReplyFromRpcMsg2(pRpcMsg);
           assert(pSyncMsg != NULL);
