@@ -93,7 +93,7 @@ int tslCreate(const SSLCfg *pCfg, SSkipList2 **ppSl) {
 
   for (int i = 0; i < pCfg->maxLevel; i++) {
     TSL_NODE_FORWARD(pHead, i) = pTail;
-    TSL_NODE_BACKWARD(pTail, i) = pHead;
+    TSL_NODE_FORWARD(pTail, i) = pHead;
   }
 
   *ppSl = pSl;
@@ -140,7 +140,7 @@ int tslPut(SSkipList2 *pSl, const SSLItem *pItem) {
   }
 
   // seek to the key position
-  tslCursorSeek(&slc, pItem->pKey, pItem->kLen, 0);
+  tslCursorSeekTo(&slc, pItem->pKey, pItem->kLen, 0);
   return tslCursorPut(&slc, pItem);
 }
 
@@ -167,19 +167,60 @@ int tslCursorOpen(SSLCursor *pSlc, SSkipList2 *pSl, int flag) {
 int tslCursorClose(SSLCursor *pSlc) { return 0; }
 
 int tslCursorSeekToFirst(SSLCursor *pSlc) {
-  for (int8_t level = 0; level < TSL_MAX_LEVEL; level++) {
-    pSlc->curs[level] = TSL_HEAD_NODE(pSlc->pSl);
+  SSkipList2 *pSl = pSlc->pSl;
+  SSLNode    *pHead = TSL_HEAD_NODE(pSl);
+
+  for (int8_t level = pSl->pCfg->maxLevel - 1; level >= 0; level--) {
+    pSlc->nodes[level] = pHead;
+  }
+
+  // TODO: handle empty case and other cases
+
+  return 0;
+}
+
+int tslCursorSeekToLast(SSLCursor *pSlc) {
+  SSkipList2 *pSl = pSlc->pSl;
+  SSLNode    *pHead = TSL_HEAD_NODE(pSl);
+  SSLNode    *pTail = TSL_TAIL_NODE(pSl);
+  SSLNode    *pNode;
+
+  for (int8_t level = pSl->pCfg->maxLevel - 1; level >= 0; level--) {
+    pNode = TSL_NODE_FORWARD(pTail, level);
+    if (pNode != pHead) {
+      pNode = TSL_NODE_BACKWARD(pNode, level);
+    }
+
+    pSlc->nodes[level] = pNode;
+  }
+
+  // TODO: handle empty case and other cases
+
+  return 0;
+}
+
+int tslCursorSeekToNext(SSLCursor *pSlc) {
+  SSkipList2 *pSl = pSlc->pSl;
+  SSLNode    *pHead, *pTail, *pNode;
+
+  pHead = TSL_HEAD_NODE(pSl);
+  pTail = TSL_TAIL_NODE(pSl);
+  pNode = TSL_NODE_FORWARD(pSlc->nodes[0], 0);
+
+  if (pNode == pTail) {
+    for (int8_t level = pNode->level - 1; level >= 0; level--) {
+      pSlc->nodes[level] = TSL_NODE_FORWARD(pNode, level);
+    }
+  } else {
+    for (int8_t level = pNode->level - 1; level >= 0; level--) {
+      pSlc->nodes[level] = TSL_NODE_BACKWARD(pNode, level);
+    }
   }
 
   return 0;
 }
 
-int tslCursorSeekToLast(SSLCursor *pScl) {
-  // TODO
-  return 0;
-}
-
-int tslCursorSeek(SSLCursor *pSlc, const void *pKey, int kLen, int flag) {
+int tslCursorSeekTo(SSLCursor *pSlc, const void *pKey, int kLen, int flag) {
   SSLNode    *pHead, *pTail, *pNode, *p;
   SSkipList2 *pSl;
   tslComparFn xCompFn;
@@ -192,12 +233,12 @@ int tslCursorSeek(SSLCursor *pSlc, const void *pKey, int kLen, int flag) {
 
   // start from head;
   for (int8_t level = 0; level < TSL_MAX_LEVEL; level++) {
-    pSlc->curs[level] = pHead;
+    pSlc->nodes[level] = pHead;
   }
 
   // forward search
   for (int8_t level = pSl->level - 1; level >= 0; level--) {
-    pNode = pSlc->curs[level];
+    pNode = pSlc->nodes[level];
     p = TSL_NODE_FORWARD(pNode, level);
     while (p != pTail) {
       tslDecode(pSl, (uint8_t *)TSL_NODE_DATA(p), &pSlc->item);
@@ -206,7 +247,7 @@ int tslCursorSeek(SSLCursor *pSlc, const void *pKey, int kLen, int flag) {
         pNode = p;
         p = TSL_NODE_FORWARD(pNode, level);
       } else {
-        pSlc->curs[level] = p;
+        pSlc->nodes[level] = p;
         break;
       }
     }
@@ -231,7 +272,7 @@ int tslCursorPut(SSLCursor *pSlc, const SSLItem *pItem) {
 
   for (int8_t i = 0; i < level; i++) {
     // TODO
-    TSL_NODE_FORWARD(pNode, i) = pSlc->curs[i];
+    TSL_NODE_FORWARD(pNode, i) = pSlc->nodes[i];
     TSL_NODE_BACKWARD(pNode, i) = NULL;
   }
 
