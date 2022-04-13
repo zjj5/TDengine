@@ -66,7 +66,6 @@ int32_t logStoreAppendEntry(SSyncLogStore* pLogStore, SSyncRaftEntry* pEntry) {
 SSyncRaftEntry* logStoreGetEntry(SSyncLogStore* pLogStore, SyncIndex index) {
   SSyncLogStoreData* pData = pLogStore->data;
   SWal*              pWal = pData->pWal;
-  SSyncRaftEntry*    pEntry = NULL;
 
   if (index >= SYNC_INDEX_BEGIN && index <= logStoreLastIndex(pLogStore)) {
     SWalReadHandle* pWalHandle = walOpenReadHandle(pWal);
@@ -86,9 +85,11 @@ SSyncRaftEntry* logStoreGetEntry(SSyncLogStore* pLogStore, SyncIndex index) {
 
     // need to hold, do not new every time!!
     walCloseReadHandle(pWalHandle);
-  }
+    return pEntry;
 
-  return pEntry;
+  } else {
+    return NULL;
+  }
 }
 
 int32_t logStoreTruncate(SSyncLogStore* pLogStore, SyncIndex fromIndex) {

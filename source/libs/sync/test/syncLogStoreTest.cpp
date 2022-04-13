@@ -63,11 +63,11 @@ void logStoreTest() {
     pEntry->originalRpcType = 2;
     pEntry->seqNum = 3;
     pEntry->isWeak = true;
-    pEntry->term = 100;
+    pEntry->term = 100 + i;
     pEntry->index = pLogStore->getLastIndex(pLogStore) + 1;
     snprintf(pEntry->data, dataLen, "value%d", i);
 
-    // syncEntryPrint2((char*)"write entry:", pEntry);
+    syncEntryPrint2((char*)"==write entry== :", pEntry);
     pLogStore->appendEntry(pLogStore, pEntry);
     syncEntryDestory(pEntry);
 
