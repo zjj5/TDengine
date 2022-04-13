@@ -25,6 +25,7 @@ SRaftId   ids[TSDB_MAX_REPLICA];
 SSyncInfo syncInfo;
 SSyncFSM* pFsm;
 SWal*     pWal;
+const char* pDir = "./syncElectTest3";
 
 int64_t syncNodeInit() {
   syncInfo.vgId = 1234;
@@ -33,7 +34,7 @@ int64_t syncNodeInit() {
   syncInfo.queue = gSyncIO->pMsgQ;
   syncInfo.FpEqMsg = syncIOEqMsg;
   syncInfo.pFsm = pFsm;
-  snprintf(syncInfo.path, sizeof(syncInfo.path), "./elect3_test_%d", myIndex);
+  snprintf(syncInfo.path, sizeof(syncInfo.path), "%s_sync_%d", pDir, myIndex);
 
   int code = walInit();
   assert(code == 0);
@@ -48,7 +49,7 @@ int64_t syncNodeInit() {
   walCfg.level = TAOS_WAL_FSYNC;
 
   char tmpdir[128];
-  snprintf(tmpdir, sizeof(tmpdir), "./elect3_test_wal_%d", myIndex);
+  snprintf(tmpdir, sizeof(tmpdir), "%s_wal_%d", pDir, myIndex);
   pWal = walOpen(tmpdir, &walCfg);
   assert(pWal != NULL);
 
@@ -84,6 +85,8 @@ int64_t syncNodeInit() {
   gSyncIO->FpOnSyncPingReply = pSyncNode->FpOnPingReply;
   gSyncIO->FpOnSyncTimeout = pSyncNode->FpOnTimeout;
   gSyncIO->pSyncNode = pSyncNode;
+
+  syncNodeStart(pSyncNode);
 
   syncNodeRelease(pSyncNode);
 
