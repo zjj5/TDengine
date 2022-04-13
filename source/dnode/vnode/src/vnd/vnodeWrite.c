@@ -30,6 +30,9 @@ void vnodeProcessWMsgs(SVnode *pVnode, SArray *pMsgs) {
     pMsg = *(SNodeMsg **)taosArrayGet(pMsgs, i);
     pRpc = &pMsg->rpcMsg;
 
+    syncPropose(pVnode->sync, pRpc, false);
+
+#if 0
     // set request version
     void   *pBuf = POINTER_SHIFT(pRpc->pCont, sizeof(SMsgHead));
     int64_t ver = pVnode->state.processed++;
@@ -40,9 +43,12 @@ void vnodeProcessWMsgs(SVnode *pVnode, SArray *pMsgs) {
       /*ASSERT(false);*/
       vError("vnode:%d  write wal error since %s", pVnode->vgId, terrstr());
     }
+#endif
   }
 
+#if 0
   walFsync(pVnode->pWal, false);
+#endif
 
   // TODO: Integrate RAFT module here
 

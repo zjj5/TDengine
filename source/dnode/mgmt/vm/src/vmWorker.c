@@ -108,6 +108,8 @@ static void vmProcessWriteQueue(SQueueInfo *pInfo, STaosQall *qall, int32_t numO
   vnodeProcessWMsgs(pVnode->pImpl, pArray);
 
   numOfMsgs = taosArrayGetSize(pArray);
+
+#if 0
   for (int32_t i = 0; i < numOfMsgs; i++) {
     SNodeMsg *pMsg = *(SNodeMsg **)taosArrayGet(pArray, i);
     SRpcMsg  *pRpc = &pMsg->rpcMsg;
@@ -122,7 +124,8 @@ static void vmProcessWriteQueue(SQueueInfo *pInfo, STaosQall *qall, int32_t numO
       if (code != 0 && terrno != 0) code = terrno;
       vmSendRsp(pVnode->pWrapper, pMsg, code);
     }
-  }
+}
+#endif
 
   for (int32_t i = 0; i < numOfMsgs; i++) {
     SNodeMsg *pMsg = *(SNodeMsg **)taosArrayGet(pArray, i);

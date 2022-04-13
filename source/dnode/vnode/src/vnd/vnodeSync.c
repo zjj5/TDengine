@@ -29,7 +29,7 @@ int32_t vnodeSyncOpen(SVnode *pVnode) {
   snprintf(syncInfo.path, sizeof(syncInfo.path), "%s/sync", pVnode->path);
   syncInfo.pWal = pVnode->pWal;
 
-  syncInfo.pFsm = NULL;
+  syncInfo.pFsm = syncMakeFsm(pVnode);
   syncInfo.rpcClient = NULL;
   syncInfo.FpSendMsg = vnodeSendMsg;
   syncInfo.queue = NULL;
@@ -100,4 +100,41 @@ int32_t vnodeSendMsg(void *rpcHandle, const SEpSet *pEpSet, SRpcMsg *pMsg) {
   }
 
   return ret;
+}
+
+void CommitCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SyncIndex index, bool isWeak, int32_t code,
+              ESyncState state) {
+  char logBuf[256];
+  snprintf(logBuf, sizeof(logBuf), "==callback== ==CommitCb== pFsm:%p, index:%ld, isWeak:%d, code:%d, state:%d %s \n",
+           pFsm, index, isWeak, code, state, syncUtilState2String(state));
+  syncRpcMsgPrint2(logBuf, (SRpcMsg *)pMsg);
+
+  SVnode *pVnode = (SVnode *)(pFsm->data);
+  tmsgPutToQueue(&(pVnode->msgCb), APPLY_QUEUE, (SRpcMsg *)pMsg);
+}
+
+void PreCommitCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SyncIndex index, bool isWeak, int32_t code,
+                 ESyncState state) {
+  char logBuf[256];
+  snprintf(logBuf, sizeof(logBuf),
+           "==callback== ==PreCommitCb== pFsm:%p, index:%ld, isWeak:%d, code:%d, state:%d %s \n", pFsm, index, isWeak,
+           code, state, syncUtilState2String(state));
+  syncRpcMsgPrint2(logBuf, (SRpcMsg *)pMsg);
+}
+
+void RollBackCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SyncIndex index, bool isWeak, int32_t code,
+                ESyncState state) {
+  char logBuf[256];
+  snprintf(logBuf, sizeof(logBuf), "==callback== ==RollBackCb== pFsm:%p, index:%ld, isWeak:%d, code:%d, state:%d %s \n",
+           pFsm, index, isWeak, code, state, syncUtilState2String(state));
+  syncRpcMsgPrint2(logBuf, (SRpcMsg *)pMsg);
+}
+
+SSyncFSM *syncMakeFsm(SVnode *pVnode) {
+  SSyncFSM *pFsm = (SSyncFSM *)taosMemoryMalloc(sizeof(SSyncFSM));
+  pFsm->data = pVnode;
+  pFsm->FpCommitCb = CommitCb;
+  pFsm->FpPreCommitCb = PreCommitCb;
+  pFsm->FpRollBackCb = RollBackCb;
+  return pFsm;
 }

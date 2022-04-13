@@ -430,6 +430,10 @@ void syncNodeClose(SSyncNode* pSyncNode) {
   syncNodeStopElectTimer(pSyncNode);
   syncNodeStopHeartbeatTimer(pSyncNode);
 
+  if (pSyncNode->pFsm != NULL) {
+    taosMemoryFree(pSyncNode->pFsm);
+  }
+
   // free memory in syncFreeNode
   // taosMemoryFree(pSyncNode);
 }
