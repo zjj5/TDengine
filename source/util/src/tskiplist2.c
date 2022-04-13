@@ -48,6 +48,7 @@ static int      tslDefaultComparFn(const void *pKey1, int kLen1, const void *pKe
 static int8_t   tslRandLevel(SSkipList2 *pSl);
 static int      tslCheckCfg(const SSLCfg *pCfg);
 static int      tslEncode(SSkipList2 *pSl, const SSLItem *pItem, uint8_t *p);
+static int      tslDecode(SSkipList2 *pSl, uint8_t *p, SSLItem *pItem);
 
 static const SSLCfg defaultCfg = {
     .maxLevel = TSL_MAX_LEVEL,        // maxLevel
@@ -131,15 +132,15 @@ int tslPutBatch(SSkipList2 *pSl, void *iter) {
   return 0;
 }
 
-int tslGet(SSkipList2 *pSl, void *pKey, int kLen) {
+int tslGet(SSkipList2 *pSl, const void *pKey, int kLen) {
   // TODO
   return 0;
 }
 
-int tslCursorOpen(SSLCursor *pSlc, SSkipList2 *pSl, int flags) {
+int tslCursorOpen(SSLCursor *pSlc, SSkipList2 *pSl, int flag) {
   memset(pSlc, 0, sizeof(*pSlc));
 
-  pSlc->flags = flags;
+  pSlc->flag = flag;
   pSlc->item.kLen = -1;
   pSlc->item.vLen = -1;
 
@@ -147,6 +148,47 @@ int tslCursorOpen(SSLCursor *pSlc, SSkipList2 *pSl, int flags) {
 }
 
 int tslCursorClose(SSLCursor *pSlc) { return 0; }
+
+int tslCursorSeek(SSLCursor *pSlc, const void *pKey, int kLen, int flag) {
+  SSLNode    *pHead, *pTail, *pNode, *p;
+  SSkipList2 *pSl;
+  tslComparFn xCompFn;
+  int         c;
+
+  pSl = pSlc->pSl;
+  pHead = TSL_HEAD_NODE(pSl);
+  pTail = TSL_TAIL_NODE(pSl);
+  xCompFn = pSl->pCfg->xComparFn;  // TODO: may use a different fn
+
+  // start from head;
+  for (int8_t level = 0; level < TSL_MAX_LEVEL; level++) {
+    pSlc->curs[level] = pHead;
+  }
+
+  // forward search
+  for (int8_t level = pSl->level - 1; level >= 0; level--) {
+    pNode = pSlc->curs[level];
+    p = TSL_NODE_FORWARD(pNode, level);
+    while (p != pTail) {
+      tslDecode(pSl, (uint8_t *)TSL_NODE_DATA(p), &pSlc->item);
+      c = xCompFn(pKey, kLen, pSlc->item.pKey, pSlc->item.kLen);
+      if (c < 0) {
+        pNode = p;
+        p = TSL_NODE_FORWARD(pNode, level);
+      } else {
+        pSlc->curs[level] = p;
+        break;
+      }
+    }
+  }
+
+  return 0;
+}
+
+int tslCursorPut(SSLCursor *pSlc, const SSLItem *pItem) {
+  // TODO
+  return 0;
+}
 
 static SSLNode *tslNodeNew(SSkipList2 *pSl, int8_t level, int psize) {
   SSLNode      *pNode;
@@ -200,7 +242,7 @@ static int tslEncode(SSkipList2 *pSl, const SSLItem *pItem, uint8_t *p) {
   return n;
 }
 
-static int tslDecode(SSkipList2 *pSl, uint8_t *p, int psize, SSLItem *pItem) {
+static int tslDecode(SSkipList2 *pSl, uint8_t *p, SSLItem *pItem) {
   int           n = 0;
   const SSLCfg *pCfg = pSl->pCfg;
 
@@ -215,22 +257,16 @@ static int tslDecode(SSkipList2 *pSl, uint8_t *p, int psize, SSLItem *pItem) {
     pItem->kLen = pCfg->kLen;
   }
 
-  ASSERT(n <= psize);
-
   if (pCfg->vLen < 0) {
     n += tslGetVarInt(p + n, &pItem->vLen);
   } else {
     pItem->vLen = pCfg->vLen;
   }
 
-  ASSERT(n <= psize);
-
   pItem->pKey = (void *)(p + n);
   n += pItem->kLen;
   pItem->pVal = (void *)(p + n);
   n += pItem->vLen;
-
-  ASSERT(n == psize);
 
   return 0;
 }

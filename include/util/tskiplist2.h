@@ -39,14 +39,16 @@ typedef struct SSLItem    SSLItem;
 int tslCreate(const SSLCfg *pCfg, SSkipList2 **ppSl);
 int tslDestroy(SSkipList2 *pSl);
 int tslPut(SSkipList2 *pSl, const SSLItem *pItem);
-int tslGet(SSkipList2 *pSl, void *pKey, int kLen);
+int tslGet(SSkipList2 *pSl, const void *pKey, int kLen);
+int tslDel(SSkipList2 *pSl, const void *pKey, int kLen);
 
 // SSLCursor
 #define TSLC_FLG_BWD 0x1
-int tslCursorOpen(SSLCursor *pSlc, SSkipList2 *pSl, int flags);
+int tslCursorOpen(SSLCursor *pSlc, SSkipList2 *pSl, int flag);
 int tslCursorClose(SSLCursor *pSlc);
+
+int tslCursorSeek(SSLCursor *pSlc, const void *pKey, int kLen, int flag);
 int tslCursorPut(SSLCursor *pSlc, const SSLItem *pItem);
-int tslCursorGet(SSLCursor *pSlc, int flags);
 
 struct SSLItem {
   int         kLen;
@@ -66,7 +68,7 @@ struct SSLCfg {
 };
 
 struct SSLCursor {
-  int         flags;
+  int         flag;
   SSkipList2 *pSl;
   SSLItem     item;
   SSLNode    *curs[TSL_MAX_LEVEL];
