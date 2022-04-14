@@ -43,7 +43,6 @@ int tslGet(SSkipList2 *pSl, const void *pKey, int kLen);
 int tslDel(SSkipList2 *pSl, const void *pKey, int kLen);
 
 // SSLCursor
-#define TSLC_FLG_BWD 0x1
 int tslCursorOpen(SSLCursor *pSlc, SSkipList2 *pSl, int flag);
 int tslCursorClose(SSLCursor *pSlc);
 int tslCursorSeekToFirst(SSLCursor *pSlc);
@@ -52,6 +51,9 @@ int tslCursorSeekToNext(SSLCursor *pSlc);
 int tslCursorSeekTo(SSLCursor *pSlc, const void *pKey, int kLen, int flag);
 int tslCursorPut(SSLCursor *pSlc, const SSLItem *pItem);
 
+const SSLItem *tslCursorGet(SSLCursor *pSlc);
+
+// STRUCT DEFINITIONS
 struct SSLItem {
   int         kLen;
   int         vLen;

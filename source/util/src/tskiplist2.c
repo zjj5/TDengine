@@ -15,6 +15,7 @@
  */
 
 #include "tskiplist2.h"
+// https://stackoverflow.com/questions/879077/is-changing-a-pointer-considered-an-atomic-action-in-c
 
 #define TSL_RAND_FACTOR 4
 
@@ -118,7 +119,7 @@ int tslPut(SSkipList2 *pSl, const SSLItem *pItem) {
 
   // compare first
   tslCursorSeekToFirst(&slc);
-  // cItem = tslCursorGet(&slc);
+  cItem = tslCursorGet(&slc);
   if (pItem == NULL) {
     return tslCursorPut(&slc, pItem);
   } else {
@@ -132,15 +133,18 @@ int tslPut(SSkipList2 *pSl, const SSLItem *pItem) {
 
   // compare last
   tslCursorSeekToLast(&slc);
-  // cItem = tslCursorGet(&slc);
+  cItem = tslCursorGet(&slc);
   ASSERT(cItem);
   c = pCfg->xComparFn(pItem->pKey, pItem->kLen, cItem->pKey, cItem->kLen);
   if (c > 0) {
+    tslCursorSeekToNext(&slc);
     return tslCursorPut(&slc, pItem);
   }
 
+  ASSERT(c);
+
   // seek to the key position
-  tslCursorSeekTo(&slc, pItem->pKey, pItem->kLen, 0);
+  tslCursorSeekTo(&slc, pItem->pKey, pItem->kLen, 0);  // reposition/forward
   return tslCursorPut(&slc, pItem);
 }
 
@@ -279,6 +283,15 @@ int tslCursorPut(SSLCursor *pSlc, const SSLItem *pItem) {
   if (pSl->level < level) pSl->level = level;
 
   return 0;
+}
+
+const SSLItem *tslCursorGet(SSLCursor *pSlc) {
+  SSLNode *pNode;
+
+  pNode = TSL_NODE_FORWARD(pSlc->nodes[0], 0);
+  tslDecode(pSlc->pSl, (uint8_t *)TSL_NODE_DATA(pNode), &pSlc->item);
+
+  return &pSlc->item;
 }
 
 static SSLNode *tslNodeNew(SSkipList2 *pSl, int8_t level, int psize) {
