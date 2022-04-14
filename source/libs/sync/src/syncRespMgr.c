@@ -70,6 +70,20 @@ int32_t syncRespMgrGet(SSyncRespMgr *pObj, uint64_t index, SRespStub *pStub) {
   return 0;  // get none object
 }
 
+int32_t syncRespMgrGetAndDel(SSyncRespMgr *pObj, uint64_t index, SRespStub *pStub) {
+  taosThreadMutexLock(&(pObj->mutex));
+
+  void *pTmp = taosHashGet(pObj->pRespHash, &index, sizeof(index));
+  if (pTmp != NULL) {
+    memcpy(pStub, pTmp, sizeof(SRespStub));
+    taosThreadMutexUnlock(&(pObj->mutex));
+    taosHashRemove(pObj->pRespHash, &index, sizeof(index));
+    return 1;  // get one object
+  }
+  taosThreadMutexUnlock(&(pObj->mutex));
+  return 0;  // get none object
+}
+
 void syncRespClean(SSyncRespMgr *pObj) {
   taosThreadMutexLock(&(pObj->mutex));
   syncRespCleanByTTL(pObj, pObj->ttl);

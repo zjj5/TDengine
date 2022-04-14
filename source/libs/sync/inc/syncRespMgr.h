@@ -44,6 +44,7 @@ void          syncRespMgrDestroy(SSyncRespMgr *pObj);
 int64_t       syncRespMgrAdd(SSyncRespMgr *pObj, SRespStub *pStub);
 int32_t       syncRespMgrDel(SSyncRespMgr *pObj, uint64_t index);
 int32_t       syncRespMgrGet(SSyncRespMgr *pObj, uint64_t index, SRespStub *pStub);
+int32_t       syncRespMgrGetAndDel(SSyncRespMgr *pObj, uint64_t index, SRespStub *pStub);
 void          syncRespClean(SSyncRespMgr *pObj);
 void          syncRespCleanByTTL(SSyncRespMgr *pObj, int64_t ttl);
 

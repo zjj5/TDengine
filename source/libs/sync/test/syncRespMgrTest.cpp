@@ -19,7 +19,7 @@ void syncRespMgrInsert(uint64_t count) {
     SRespStub stub;
     memset(&stub, 0, sizeof(SRespStub));
     stub.createTime = taosGetTimestampMs();
-    stub.rpcMsg.code = pMgr->seqNum;
+    stub.rpcMsg.code = (pMgr->seqNum+1);
     stub.rpcMsg.ahandle = (void *)(200 + i);
     stub.rpcMsg.handle = (void *)(300 + i);
     uint64_t ret = syncRespMgrAdd(pMgr, &stub);
@@ -39,7 +39,7 @@ void printStub(SRespStub *p) {
          (int64_t)(p->rpcMsg.ahandle), (int64_t)(p->rpcMsg.handle));
 }
 void syncRespMgrPrint() {
-  printf("\n-----------------------------------\n");
+  printf("\n----------------syncRespMgrPrint--------------\n");
   taosThreadMutexLock(&(pMgr->mutex));
 
   SRespStub *p = (SRespStub *)taosHashIterate(pMgr->pRespHash, NULL);
@@ -52,7 +52,7 @@ void syncRespMgrPrint() {
 }
 
 void syncRespMgrGetTest(uint64_t i) {
-  printf("------syncRespMgrGetTest------- \n");
+  printf("------syncRespMgrGetTest------- %lu -- \n", i);
   SRespStub stub;
   int32_t   ret = syncRespMgrGet(pMgr, i, &stub);
   if (ret == 1) {
@@ -62,7 +62,19 @@ void syncRespMgrGetTest(uint64_t i) {
   }
 }
 
+void syncRespMgrGetAndDelTest(uint64_t i) {
+  printf("------syncRespMgrGetAndDelTest-------%lu-- \n", i);
+  SRespStub stub;
+  int32_t   ret = syncRespMgrGetAndDel(pMgr, i, &stub);
+  if (ret == 1) {
+    printStub(&stub);
+  } else if (ret == 0) {
+    printf("%ld notFound \n", i);
+  }
+}
+
 void test1() {
+  printf("------- test1 ---------\n");
   pMgr = syncRespMgrCreate(NULL, 0);
   assert(pMgr != NULL);
 
@@ -86,12 +98,49 @@ void test1() {
   syncRespMgrDestroy(pMgr);
 }
 
+void test2() {
+  printf("------- test2 ---------\n");
+  pMgr = syncRespMgrCreate(NULL, 0);
+  assert(pMgr != NULL);
+
+  syncRespMgrInsert(10);
+  syncRespMgrPrint();
+
+  printf("====== get and delete 3 - 7 \n");
+  for (uint64_t i = 3; i <= 7; ++i) {
+    syncRespMgrGetAndDelTest(i);
+  }
+
+  syncRespMgrPrint();
+  syncRespMgrDestroy(pMgr);
+}
+
+void test3() {
+  printf("------- test3 ---------\n");
+  pMgr = syncRespMgrCreate(NULL, 0);
+  assert(pMgr != NULL);
+
+  syncRespMgrInsert(10);
+  syncRespMgrPrint();
+
+  printf("====== get and delete 0 - 20 \n");
+  for (uint64_t i = 0; i <= 20; ++i) {
+    syncRespMgrGetAndDelTest(i);
+  }
+
+  syncRespMgrPrint();
+  syncRespMgrDestroy(pMgr);
+}
+
+
 int main() {
   // taosInitLog((char *)"syncTest.log", 100000, 10);
   tsAsyncLog = 0;
   sDebugFlag = 143 + 64;
   logTest();
   test1();
+  test2();
+  test3();
 
   return 0;
 }
