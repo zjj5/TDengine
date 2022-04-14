@@ -73,7 +73,7 @@ typedef struct SSyncFSM {
   // when value in pMsg finish a raft flow, FpCommitCb is called, code indicates the result
   // user can do something according to the code and isWeak. for example, write data into tsdb
   void (*FpCommitCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SyncIndex index, bool isWeak, int32_t code,
-                     ESyncState state);
+                     ESyncState state, uint64_t seqNum);
 
   // when value in pMsg has been written into local log store, FpPreCommitCb is called, code indicates the result
   // user can do something according to the code and isWeak. for example, write data into tsdb
@@ -171,6 +171,8 @@ ESyncState  syncGetMyRole(int64_t rid);
 const char* syncGetMyRoleStr(int64_t rid);
 SyncTerm    syncGetMyTerm(int64_t rid);
 
+int32_t syncGetGetRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg);
+
 // control
 void syncSetQ(int64_t rid, void* queueHandle);
 void syncSetRpc(int64_t rid, void* rpcHandle);
@@ -181,7 +183,7 @@ void setElectTimerMS(int64_t rid, int32_t electTimerMS);
 void setHeartbeatTimerMS(int64_t rid, int32_t hbTimerMS);
 
 // propose with sequence number, to implement linearizable semantics
-//int32_t syncPropose2(int64_t rid, const SRpcMsg* pMsg, bool isWeak, uint64_t seqNum);
+// int32_t syncPropose2(int64_t rid, const SRpcMsg* pMsg, bool isWeak, uint64_t seqNum);
 
 // for compatibility, the same as syncPropose
 int32_t syncForwardToPeer(int64_t rid, const SRpcMsg* pMsg, bool isWeak);

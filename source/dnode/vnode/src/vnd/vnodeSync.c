@@ -102,14 +102,22 @@ int32_t vnodeSendMsg(void *rpcHandle, const SEpSet *pEpSet, SRpcMsg *pMsg) {
   return ret;
 }
 
-void CommitCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SyncIndex index, bool isWeak, int32_t code,
-              ESyncState state) {
+void CommitCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SyncIndex index, bool isWeak, int32_t code, ESyncState state,
+              uint64_t seqNum) {
   char logBuf[256];
   snprintf(logBuf, sizeof(logBuf), "==callback== ==CommitCb== pFsm:%p, index:%ld, isWeak:%d, code:%d, state:%d %s \n",
            pFsm, index, isWeak, code, state, syncUtilState2String(state));
   syncRpcMsgPrint2(logBuf, (SRpcMsg *)pMsg);
 
   SVnode *pVnode = (SVnode *)(pFsm->data);
+
+  SRpcMsg msg;
+  int32_t ret = syncGetGetRespRpc(pVnode->sync, seqNum, &msg);
+  if (ret == 1) {
+    ((SRpcMsg *)pMsg)->ahandle = msg.ahandle;
+    ((SRpcMsg *)pMsg)->handle = msg.handle;
+  }
+
   tmsgPutToQueue(&(pVnode->msgCb), APPLY_QUEUE, (SRpcMsg *)pMsg);
 }
 

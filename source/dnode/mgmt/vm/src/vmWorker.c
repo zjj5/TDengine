@@ -146,7 +146,15 @@ static void vmProcessApplyQueue(SQueueInfo *pInfo, STaosQall *qall, int32_t numO
 
     // todo
     SRpcMsg *pRsp = NULL;
-    (void)vnodeApplyWMsg(pVnode->pImpl, &pMsg->rpcMsg, &pRsp);
+    int32_t  code = vnodeApplyWMsg(pVnode->pImpl, &pMsg->rpcMsg, &pRsp);
+    if (pRsp != NULL) {
+      pRsp->ahandle = pMsg->rpcMsg.ahandle;
+      dndSendRsp(pVnode->pWrapper, pRsp);
+      taosMemoryFree(pRsp);
+    } else {
+      if (code != 0 && terrno != 0) code = terrno;
+      vmSendRsp(pVnode->pWrapper, pMsg, code);
+    }
   }
 }
 

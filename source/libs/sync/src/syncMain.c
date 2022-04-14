@@ -160,6 +160,23 @@ SyncTerm syncGetMyTerm(int64_t rid) {
   return term;
 }
 
+int32_t syncGetGetRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg) {
+  SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
+  if (pSyncNode == NULL) {
+    return TAOS_SYNC_STATE_ERROR;
+  }
+  assert(rid == pSyncNode->rid);
+
+  SRespStub stub;
+  int32_t   ret = syncRespMgrGet(pSyncNode->pSyncRespMgr, index, &stub);
+  if (ret == 1) {
+    memcpy(msg, &(stub.rpcMsg), sizeof(SRpcMsg));
+  }
+
+  taosReleaseRef(tsNodeRefId, pSyncNode->rid);
+  return ret;
+}
+
 void syncSetQ(int64_t rid, void* queue) {
   SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
   if (pSyncNode == NULL) {
