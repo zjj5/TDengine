@@ -860,7 +860,7 @@ void syncNodeCandidate2Leader(SSyncNode* pSyncNode) {
   // Raft 3.6.2 Committing entries from previous terms
 
   // use this now
-  // syncNodeAppendNoop(pSyncNode);
+  syncNodeAppendNoop(pSyncNode);
 
   // do not use this
   // syncNodeEqNoop(pSyncNode);
