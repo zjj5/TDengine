@@ -14,21 +14,21 @@ void logTest() {
 }
 SSyncRespMgr *pMgr = NULL;
 
-void syncRespMgrInsert(SyncIndex begin, SyncIndex end) {
-  for (SyncIndex i = begin; i <= end; ++i) {
+void syncRespMgrInsert(uint64_t count) {
+  for (uint64_t i = 0; i < count; ++i) {
     SRespStub stub;
     memset(&stub, 0, sizeof(SRespStub));
     stub.createTime = taosGetTimestampMs();
-    stub.rpcMsg.code = 100 + i;
+    stub.rpcMsg.code = pMgr->seqNum;
     stub.rpcMsg.ahandle = (void *)(200 + i);
     stub.rpcMsg.handle = (void *)(300 + i);
-    int32_t ret = syncRespMgrAdd(pMgr, i, &stub);
-    assert(ret == 0);
+    uint64_t ret = syncRespMgrAdd(pMgr, &stub);
+    printf("insert %lu \n", ret);
   }
 }
 
-void syncRespMgrDel(SyncIndex begin, SyncIndex end) {
-  for (SyncIndex i = begin; i <= end; ++i) {
+void syncRespMgrDelTest(uint64_t begin, uint64_t end) {
+  for (uint64_t i = begin; i <= end; ++i) {
     int32_t ret = syncRespMgrDel(pMgr, i);
     assert(ret == 0);
   }
@@ -51,7 +51,7 @@ void syncRespMgrPrint() {
   taosThreadMutexUnlock(&(pMgr->mutex));
 }
 
-void syncRespMgrGetTest(SyncIndex i) {
+void syncRespMgrGetTest(uint64_t i) {
   printf("------syncRespMgrGetTest------- \n");
   SRespStub stub;
   int32_t   ret = syncRespMgrGet(pMgr, i, &stub);
@@ -66,13 +66,20 @@ void test1() {
   pMgr = syncRespMgrCreate(NULL, 0);
   assert(pMgr != NULL);
 
-  syncRespMgrInsert(1, 10);
+  syncRespMgrInsert(10);
   syncRespMgrPrint();
 
-  syncRespMgrDel(5, 7);
+  printf("====== get print \n");
+  for (uint64_t i = 1; i <= 10; ++i) {
+    syncRespMgrGetTest(i);
+  }
+
+  printf("===== delete 5 - 7 \n");
+  syncRespMgrDelTest(5, 7);
   syncRespMgrPrint();
 
-  for (SyncIndex i = 1; i <= 10; ++i) {
+  printf("====== get print \n");
+  for (uint64_t i = 1; i <= 10; ++i) {
     syncRespMgrGetTest(i);
   }
 

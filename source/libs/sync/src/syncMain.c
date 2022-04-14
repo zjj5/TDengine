@@ -23,11 +23,13 @@
 #include "syncIndexMgr.h"
 #include "syncInt.h"
 #include "syncMessage.h"
+#include "syncRaftCfg.h"
 #include "syncRaftLog.h"
 #include "syncRaftStore.h"
 #include "syncReplication.h"
 #include "syncRequestVote.h"
 #include "syncRequestVoteReply.h"
+#include "syncRespMgr.h"
 #include "syncTimeout.h"
 #include "syncUtil.h"
 #include "syncVoteMgr.h"
@@ -117,10 +119,12 @@ int32_t syncReconfig(int64_t rid, const SSyncCfg* pSyncCfg) {
   return ret;
 }
 
+/*
 int32_t syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak) {
   int32_t ret = syncPropose2(rid, pMsg, isWeak, 0);
   return ret;
 }
+*/
 
 int32_t syncForwardToPeer(int64_t rid, const SRpcMsg* pMsg, bool isWeak) {
   int32_t ret = syncPropose(rid, pMsg, isWeak);
@@ -215,6 +219,7 @@ void setHeartbeatTimerMS(int64_t rid, int32_t hbTimerMS) {
   taosReleaseRef(tsNodeRefId, pSyncNode->rid);
 }
 
+/*
 int32_t syncPropose2(int64_t rid, const SRpcMsg* pMsg, bool isWeak, uint64_t seqNum) {
   int32_t    ret = 0;
   SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
@@ -231,6 +236,41 @@ int32_t syncPropose2(int64_t rid, const SRpcMsg* pMsg, bool isWeak, uint64_t seq
       pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
     } else {
       sTrace("syncPropose2 pSyncNode->FpEqMsg is NULL");
+    }
+    syncClientRequestDestroy(pSyncMsg);
+    ret = 0;
+
+  } else {
+    sTrace("syncPropose not leader, %s", syncUtilState2String(pSyncNode->state));
+    ret = -1;  // todo : need define err code !!
+  }
+
+  taosReleaseRef(tsNodeRefId, pSyncNode->rid);
+  return ret;
+}
+*/
+
+int32_t syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak) {
+  int32_t    ret = 0;
+  SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
+  if (pSyncNode == NULL) {
+    return -1;
+  }
+  assert(rid == pSyncNode->rid);
+
+  if (pSyncNode->state == TAOS_SYNC_STATE_LEADER) {
+    SRespStub stub;
+    stub.createTime = taosGetTimestampMs();
+    stub.rpcMsg = *pMsg;
+    uint64_t seqNum = syncRespMgrAdd(pSyncNode->pSyncRespMgr, &stub);
+
+    SyncClientRequest* pSyncMsg = syncClientRequestBuild2(pMsg, seqNum, isWeak, pSyncNode->vgId);
+    SRpcMsg            rpcMsg;
+    syncClientRequest2RpcMsg(pSyncMsg, &rpcMsg);
+    if (pSyncNode->FpEqMsg != NULL) {
+      pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
+    } else {
+      sTrace("syncPropose pSyncNode->FpEqMsg is NULL");
     }
     syncClientRequestDestroy(pSyncMsg);
     ret = 0;
@@ -394,6 +434,10 @@ SSyncNode* syncNodeOpen(const SSyncInfo* pSyncInfo) {
   pSyncNode->FpOnAppendEntries = syncNodeOnAppendEntriesCb;
   pSyncNode->FpOnAppendEntriesReply = syncNodeOnAppendEntriesReplyCb;
   pSyncNode->FpOnTimeout = syncNodeOnTimeoutCb;
+
+  // tools
+  pSyncNode->pSyncRespMgr = syncRespMgrCreate(NULL, 0);
+  assert(pSyncNode->pSyncRespMgr != NULL);
 
   // start in syncNodeStart
   // start raft

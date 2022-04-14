@@ -181,7 +181,7 @@ void setElectTimerMS(int64_t rid, int32_t electTimerMS);
 void setHeartbeatTimerMS(int64_t rid, int32_t hbTimerMS);
 
 // propose with sequence number, to implement linearizable semantics
-int32_t syncPropose2(int64_t rid, const SRpcMsg* pMsg, bool isWeak, uint64_t seqNum);
+//int32_t syncPropose2(int64_t rid, const SRpcMsg* pMsg, bool isWeak, uint64_t seqNum);
 
 // for compatibility, the same as syncPropose
 int32_t syncForwardToPeer(int64_t rid, const SRpcMsg* pMsg, bool isWeak);

@@ -25,7 +25,6 @@ extern "C" {
 #include <stdlib.h>
 #include "cJSON.h"
 #include "sync.h"
-#include "syncRaftCfg.h"
 #include "taosdef.h"
 #include "tglobal.h"
 #include "tlog.h"
@@ -109,6 +108,9 @@ typedef struct SSyncIndexMgr SSyncIndexMgr;
 
 struct SRaftCfg;
 typedef struct SRaftCfg SRaftCfg;
+
+struct SSyncRespMgr;
+typedef struct SSyncRespMgr SSyncRespMgr;
 
 /*
 typedef struct SRaftId {
@@ -205,6 +207,9 @@ typedef struct SSyncNode {
   int32_t (*FpOnAppendEntries)(SSyncNode* ths, SyncAppendEntries* pMsg);
   int32_t (*FpOnAppendEntriesReply)(SSyncNode* ths, SyncAppendEntriesReply* pMsg);
   int32_t (*FpOnTimeout)(SSyncNode* pSyncNode, SyncTimeout* pMsg);
+
+  // tools
+  SSyncRespMgr* pSyncRespMgr;
 
 } SSyncNode;
 

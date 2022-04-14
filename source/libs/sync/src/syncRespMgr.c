@@ -20,10 +20,11 @@ SSyncRespMgr *syncRespMgrCreate(void *data, int64_t ttl) {
   memset(pObj, 0, sizeof(SSyncRespMgr));
 
   pObj->pRespHash =
-      taosHashInit(sizeof(SyncIndex), taosGetDefaultHashFunction(TSDB_DATA_TYPE_BINARY), true, HASH_NO_LOCK);
+      taosHashInit(sizeof(uint64_t), taosGetDefaultHashFunction(TSDB_DATA_TYPE_BINARY), true, HASH_NO_LOCK);
   assert(pObj->pRespHash != NULL);
   pObj->ttl = ttl;
   pObj->data = data;
+  pObj->seqNum = 0;
   taosThreadMutexInit(&(pObj->mutex), NULL);
 
   return pObj;
@@ -37,17 +38,17 @@ void syncRespMgrDestroy(SSyncRespMgr *pObj) {
   taosMemoryFree(pObj);
 }
 
-int32_t syncRespMgrAdd(SSyncRespMgr *pObj, SyncIndex index, SRespStub *pStub) {
+int64_t syncRespMgrAdd(SSyncRespMgr *pObj, SRespStub *pStub) {
   taosThreadMutexLock(&(pObj->mutex));
 
-  // maybe overwrite old data, it's ok
-  taosHashPut(pObj->pRespHash, &index, sizeof(index), pStub, sizeof(SRespStub));
+  uint64_t keyCode = ++(pObj->seqNum);
+  taosHashPut(pObj->pRespHash, &keyCode, sizeof(keyCode), pStub, sizeof(SRespStub));
 
   taosThreadMutexUnlock(&(pObj->mutex));
-  return 0;
+  return keyCode;
 }
 
-int32_t syncRespMgrDel(SSyncRespMgr *pObj, SyncIndex index) {
+int32_t syncRespMgrDel(SSyncRespMgr *pObj, uint64_t index) {
   taosThreadMutexLock(&(pObj->mutex));
 
   taosHashRemove(pObj->pRespHash, &index, sizeof(index));
@@ -56,7 +57,7 @@ int32_t syncRespMgrDel(SSyncRespMgr *pObj, SyncIndex index) {
   return 0;
 }
 
-int32_t syncRespMgrGet(SSyncRespMgr *pObj, SyncIndex index, SRespStub *pStub) {
+int32_t syncRespMgrGet(SSyncRespMgr *pObj, uint64_t index, SRespStub *pStub) {
   taosThreadMutexLock(&(pObj->mutex));
 
   void *pTmp = taosHashGet(pObj->pRespHash, &index, sizeof(index));
