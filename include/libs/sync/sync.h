@@ -172,6 +172,7 @@ const char* syncGetMyRoleStr(int64_t rid);
 SyncTerm    syncGetMyTerm(int64_t rid);
 
 int32_t syncGetGetRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg);
+int32_t syncGetGetAndDelRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg);
 
 // control
 void syncSetQ(int64_t rid, void* queueHandle);

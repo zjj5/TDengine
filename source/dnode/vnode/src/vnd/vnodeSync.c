@@ -112,7 +112,7 @@ void CommitCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SyncIndex index, bool 
   SVnode *pVnode = (SVnode *)(pFsm->data);
 
   SRpcMsg msg;
-  int32_t ret = syncGetGetRespRpc(pVnode->sync, seqNum, &msg);
+  int32_t ret = syncGetGetAndDelRespRpc(pVnode->sync, seqNum, &msg);
   if (ret == 1) {
     ((SRpcMsg *)pMsg)->ahandle = msg.ahandle;
     ((SRpcMsg *)pMsg)->handle = msg.handle;
