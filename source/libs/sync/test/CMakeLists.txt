@@ -39,6 +39,7 @@ add_executable(syncReplicateLoadTest "")
 add_executable(syncRefTest "")
 add_executable(syncLogStoreCheck "")
 add_executable(syncRaftCfgTest "")
+add_executable(syncRespMgrTest "")
 
 
 target_sources(syncTest
@@ -204,6 +205,10 @@ target_sources(syncLogStoreCheck
 target_sources(syncRaftCfgTest
     PRIVATE
     "syncRaftCfgTest.cpp"
+)
+target_sources(syncRespMgrTest
+    PRIVATE
+    "syncRespMgrTest.cpp"
 )
 
 
@@ -412,6 +417,11 @@ target_include_directories(syncRaftCfgTest
     "${CMAKE_SOURCE_DIR}/include/libs/sync"
     "${CMAKE_CURRENT_SOURCE_DIR}/../inc"
 )
+target_include_directories(syncRespMgrTest
+    PUBLIC
+    "${CMAKE_SOURCE_DIR}/include/libs/sync"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../inc"
+)
 
 
 target_link_libraries(syncTest
@@ -575,6 +585,10 @@ target_link_libraries(syncLogStoreCheck
     gtest_main
 )
 target_link_libraries(syncRaftCfgTest
+    sync
+    gtest_main
+)
+target_link_libraries(syncRespMgrTest
     sync
     gtest_main
 )

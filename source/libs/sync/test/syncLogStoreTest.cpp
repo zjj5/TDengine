@@ -56,7 +56,7 @@ void logStoreTest() {
   logStorePrint2((char*)"logStoreTest", pLogStore);
 
   for (int i = 0; i < 5; ++i) {
-    int32_t     dataLen = 10;
+    int32_t         dataLen = 10;
     SSyncRaftEntry* pEntry = syncEntryBuild(dataLen);
     assert(pEntry != NULL);
     pEntry->msgType = 1;

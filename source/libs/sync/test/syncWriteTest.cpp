@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
 
   for (int i = 0; i < 10; ++i) {
     SyncClientRequest *pSyncClientRequest = pMsg1;
-    SRpcMsg                rpcMsg;
+    SRpcMsg            rpcMsg;
     syncClientRequest2RpcMsg(pSyncClientRequest, &rpcMsg);
     gSyncNode->FpEqMsg(gSyncNode->queue, &rpcMsg);
 
