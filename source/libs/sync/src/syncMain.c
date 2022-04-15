@@ -311,7 +311,7 @@ int32_t syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak) {
 
   } else {
     sTrace("syncPropose not leader, %s", syncUtilState2String(pSyncNode->state));
-    ret = -1;  // todo : need define err code !!
+    ret = -2;  // todo : need define err code !!
   }
 
   taosReleaseRef(tsNodeRefId, pSyncNode->rid);

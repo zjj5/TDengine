@@ -105,7 +105,12 @@ static void vmProcessWriteQueue(SQueueInfo *pInfo, STaosQall *qall, int32_t numO
     }
   }
 
-  vnodeProcessWMsgs(pVnode->pImpl, pArray);
+  int32_t ret = vnodeProcessWMsgs(pVnode->pImpl, pArray);
+  if (ret == -2) {
+    SNodeMsg *pMsg = *(SNodeMsg **)taosArrayGet(pArray, 0);
+
+    vmSendRsp(pVnode->pWrapper, pMsg, ret);
+  }
 
   numOfMsgs = taosArrayGetSize(pArray);
 

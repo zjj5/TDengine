@@ -22,7 +22,7 @@ void smaHandleRes(void *pVnode, int64_t smaId, const SArray *data) {
   tsdbInsertTSmaData(((SVnode *)pVnode)->pTsdb, smaId, (const char *)data);
 }
 
-void vnodeProcessWMsgs(SVnode *pVnode, SArray *pMsgs) {
+int32_t vnodeProcessWMsgs(SVnode *pVnode, SArray *pMsgs) {
   SNodeMsg *pMsg;
   SRpcMsg  *pRpc;
 
@@ -30,7 +30,11 @@ void vnodeProcessWMsgs(SVnode *pVnode, SArray *pMsgs) {
     pMsg = *(SNodeMsg **)taosArrayGet(pMsgs, i);
     pRpc = &pMsg->rpcMsg;
 
-    syncPropose(pVnode->sync, pRpc, false);
+    int32_t ret = syncPropose(pVnode->sync, pRpc, false);
+    if (ret == -2) {
+      // not leader
+      return ret;
+    }
 
 #if 0
     // set request version
