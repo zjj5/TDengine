@@ -93,7 +93,7 @@ print ===> $data20 $data21 $data22 $data23 $data24 $data25 $data26 $data27 $data
 
 
 
-#system sh/exec.sh -n dnode1 -s stop -x SIGINT
-#system sh/exec.sh -n dnode2 -s stop -x SIGINT
-#system sh/exec.sh -n dnode3 -s stop -x SIGINT
-#system sh/exec.sh -n dnode4 -s stop -x SIGINT
+system sh/exec.sh -n dnode1 -s stop -x SIGINT
+system sh/exec.sh -n dnode2 -s stop -x SIGINT
+system sh/exec.sh -n dnode3 -s stop -x SIGINT
+system sh/exec.sh -n dnode4 -s stop -x SIGINT
