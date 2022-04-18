@@ -215,20 +215,20 @@ void logStorePrint(SSyncLogStore* pLogStore) {
 
 void logStorePrint2(char* s, SSyncLogStore* pLogStore) {
   char* serialized = logStore2Str(pLogStore);
-  printf("logStorePrint | len:%lu | %s | %s \n", strlen(serialized), s, serialized);
+  printf("logStorePrint2 | len:%lu | %s | %s \n", strlen(serialized), s, serialized);
   fflush(NULL);
   taosMemoryFree(serialized);
 }
 
 void logStoreLog(SSyncLogStore* pLogStore) {
   char* serialized = logStore2Str(pLogStore);
-  sTrace("logStorePrint | len:%lu | %s", strlen(serialized), serialized);
+  sTraceLong("logStoreLog | len:%lu | %s", strlen(serialized), serialized);
   taosMemoryFree(serialized);
 }
 
 void logStoreLog2(char* s, SSyncLogStore* pLogStore) {
   char* serialized = logStore2Str(pLogStore);
-  sTrace("logStorePrint | len:%lu | %s | %s", strlen(serialized), s, serialized);
+  sTraceLong("logStoreLog2 | len:%lu | %s | %s", strlen(serialized), s, serialized);
   taosMemoryFree(serialized);
 }
 

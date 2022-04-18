@@ -85,9 +85,8 @@ void test5() {
 }
 
 int main() {
-  // taosInitLog((char *)"syncTest.log", 100000, 10);
   tsAsyncLog = 0;
-  sDebugFlag = 143 + 64;
+  sDebugFlag = DEBUG_TRACE + DEBUG_SCREEN + DEBUG_FILE;
   logTest();
 
   test1();

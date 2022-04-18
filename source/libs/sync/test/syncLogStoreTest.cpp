@@ -79,15 +79,18 @@ void logStoreTest() {
 
   pLogStore->truncate(pLogStore, 3);
   logStoreLog2((char*)"after truncate 3", pLogStore);
+
+  logStoreDestory(pLogStore);
 }
 
 int main(int argc, char** argv) {
-  // taosInitLog((char *)"syncTest.log", 100000, 10);
   tsAsyncLog = 0;
-  sDebugFlag = 143 + 64;
+  sDebugFlag = DEBUG_TRACE + DEBUG_SCREEN + DEBUG_FILE;
 
   init();
   logStoreTest();
+
+  taosMsleep(2000);
   cleanup();
 
   return 0;
