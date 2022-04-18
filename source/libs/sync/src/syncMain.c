@@ -82,7 +82,7 @@ int64_t syncOpen(const SSyncInfo* pSyncInfo) {
   SSyncNode* pSyncNode = syncNodeOpen(pSyncInfo);
   assert(pSyncNode != NULL);
 
-  syncNodePrint2("syncNodeOpen open success", pSyncNode);
+  syncNodeLog2("syncNodeOpen open success", pSyncNode);
 
   pSyncNode->rid = taosAddRef(tsNodeRefId, pSyncNode);
   if (pSyncNode->rid < 0) {
@@ -959,7 +959,7 @@ void syncNodeCandidate2Leader(SSyncNode* pSyncNode) {
   assert(voteGrantedMajority(pSyncNode->pVotesGranted));
   syncNodeBecomeLeader(pSyncNode);
 
-  syncNodePrint2("==state change syncNodeCandidate2Leader==", pSyncNode);
+  syncNodeLog2("==state change syncNodeCandidate2Leader==", pSyncNode);
 
   // Raft 3.6.2 Committing entries from previous terms
 
@@ -974,21 +974,21 @@ void syncNodeFollower2Candidate(SSyncNode* pSyncNode) {
   assert(pSyncNode->state == TAOS_SYNC_STATE_FOLLOWER);
   pSyncNode->state = TAOS_SYNC_STATE_CANDIDATE;
 
-  syncNodePrint2("==state change syncNodeFollower2Candidate==", pSyncNode);
+  syncNodeLog2("==state change syncNodeFollower2Candidate==", pSyncNode);
 }
 
 void syncNodeLeader2Follower(SSyncNode* pSyncNode) {
   assert(pSyncNode->state == TAOS_SYNC_STATE_LEADER);
   syncNodeBecomeFollower(pSyncNode);
 
-  syncNodePrint2("==state change syncNodeLeader2Follower==", pSyncNode);
+  syncNodeLog2("==state change syncNodeLeader2Follower==", pSyncNode);
 }
 
 void syncNodeCandidate2Follower(SSyncNode* pSyncNode) {
   assert(pSyncNode->state == TAOS_SYNC_STATE_CANDIDATE);
   syncNodeBecomeFollower(pSyncNode);
 
-  syncNodePrint2("==state change syncNodeCandidate2Follower==", pSyncNode);
+  syncNodeLog2("==state change syncNodeCandidate2Follower==", pSyncNode);
 }
 
 // raft vote --------------

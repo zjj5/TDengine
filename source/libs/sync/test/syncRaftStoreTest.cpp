@@ -40,31 +40,31 @@ int main() {
 
   SRaftStore* pRaftStore = raftStoreOpen("./test_raft_store.json");
   assert(pRaftStore != NULL);
-  raftStorePrint2((char*)"==raftStoreOpen==", pRaftStore);
+  raftStoreLog2((char*)"==raftStoreOpen==", pRaftStore);
 
   raftStoreSetTerm(pRaftStore, 100);
-  raftStorePrint2((char*)"==raftStoreSetTerm==", pRaftStore);
+  raftStoreLog2((char*)"==raftStoreSetTerm==", pRaftStore);
 
   raftStoreVote(pRaftStore, &ids[0]);
-  raftStorePrint2((char*)"==raftStoreVote==", pRaftStore);
+  raftStoreLog2((char*)"==raftStoreVote==", pRaftStore);
 
   raftStoreClearVote(pRaftStore);
-  raftStorePrint2((char*)"==raftStoreClearVote==", pRaftStore);
+  raftStoreLog2((char*)"==raftStoreClearVote==", pRaftStore);
 
   raftStoreVote(pRaftStore, &ids[1]);
-  raftStorePrint2((char*)"==raftStoreVote==", pRaftStore);
+  raftStoreLog2((char*)"==raftStoreVote==", pRaftStore);
 
   raftStoreNextTerm(pRaftStore);
-  raftStorePrint2((char*)"==raftStoreNextTerm==", pRaftStore);
+  raftStoreLog2((char*)"==raftStoreNextTerm==", pRaftStore);
 
   raftStoreNextTerm(pRaftStore);
-  raftStorePrint2((char*)"==raftStoreNextTerm==", pRaftStore);
+  raftStoreLog2((char*)"==raftStoreNextTerm==", pRaftStore);
 
   raftStoreNextTerm(pRaftStore);
-  raftStorePrint2((char*)"==raftStoreNextTerm==", pRaftStore);
+  raftStoreLog2((char*)"==raftStoreNextTerm==", pRaftStore);
 
   raftStoreNextTerm(pRaftStore);
-  raftStorePrint2((char*)"==raftStoreNextTerm==", pRaftStore);
+  raftStoreLog2((char*)"==raftStoreNextTerm==", pRaftStore);
 
   return 0;
 }

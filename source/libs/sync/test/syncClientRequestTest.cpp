@@ -28,7 +28,7 @@ SyncClientRequest *createMsg() {
 
 void test1() {
   SyncClientRequest *pMsg = createMsg();
-  syncClientRequestPrint2((char *)"test1:", pMsg);
+  syncClientRequestLog2((char *)"test1:", pMsg);
   syncClientRequestDestroy(pMsg);
 }
 
@@ -39,7 +39,7 @@ void test2() {
   syncClientRequestSerialize(pMsg, serialized, len);
   SyncClientRequest *pMsg2 = syncClientRequestBuild(pMsg->dataLen);
   syncClientRequestDeserialize(serialized, len, pMsg2);
-  syncClientRequestPrint2((char *)"test2: syncClientRequestSerialize -> syncClientRequestDeserialize ", pMsg2);
+  syncClientRequestLog2((char *)"test2: syncClientRequestSerialize -> syncClientRequestDeserialize ", pMsg2);
 
   taosMemoryFree(serialized);
   syncClientRequestDestroy(pMsg);
@@ -51,7 +51,7 @@ void test3() {
   uint32_t           len;
   char *             serialized = syncClientRequestSerialize2(pMsg, &len);
   SyncClientRequest *pMsg2 = syncClientRequestDeserialize2(serialized, len);
-  syncClientRequestPrint2((char *)"test3: syncClientRequestSerialize3 -> syncClientRequestDeserialize2 ", pMsg2);
+  syncClientRequestLog2((char *)"test3: syncClientRequestSerialize3 -> syncClientRequestDeserialize2 ", pMsg2);
 
   taosMemoryFree(serialized);
   syncClientRequestDestroy(pMsg);
@@ -64,7 +64,7 @@ void test4() {
   syncClientRequest2RpcMsg(pMsg, &rpcMsg);
   SyncClientRequest *pMsg2 = (SyncClientRequest *)taosMemoryMalloc(rpcMsg.contLen);
   syncClientRequestFromRpcMsg(&rpcMsg, pMsg2);
-  syncClientRequestPrint2((char *)"test4: syncClientRequest2RpcMsg -> syncClientRequestFromRpcMsg ", pMsg2);
+  syncClientRequestLog2((char *)"test4: syncClientRequest2RpcMsg -> syncClientRequestFromRpcMsg ", pMsg2);
 
   rpcFreeCont(rpcMsg.pCont);
   syncClientRequestDestroy(pMsg);
@@ -76,7 +76,7 @@ void test5() {
   SRpcMsg            rpcMsg;
   syncClientRequest2RpcMsg(pMsg, &rpcMsg);
   SyncClientRequest *pMsg2 = syncClientRequestFromRpcMsg2(&rpcMsg);
-  syncClientRequestPrint2((char *)"test5: syncClientRequest2RpcMsg -> syncClientRequestFromRpcMsg2 ", pMsg2);
+  syncClientRequestLog2((char *)"test5: syncClientRequest2RpcMsg -> syncClientRequestFromRpcMsg2 ", pMsg2);
 
   rpcFreeCont(rpcMsg.pCont);
   syncClientRequestDestroy(pMsg);

@@ -72,7 +72,10 @@ void initRaftId(SSyncNode* pSyncNode) {
 int main(int argc, char** argv) {
   // taosInitLog((char *)"syncTest.log", 100000, 10);
   tsAsyncLog = 0;
-  sDebugFlag = 143 + 64;
+  //sDebugFlag = 143 + 64;
+
+  sDebugFlag = DEBUG_TRACE + DEBUG_SCREEN + DEBUG_FILE;
+  logTest();
 
   myIndex = 0;
   if (argc >= 2) {
@@ -88,7 +91,7 @@ int main(int argc, char** argv) {
   SSyncNode* pSyncNode = syncInitTest();
   assert(pSyncNode != NULL);
 
-  syncNodePrint2((char*)"syncInitTest", pSyncNode);
+  syncNodeLog2((char*)"syncInitTest", pSyncNode);
 
   printf("\n---------------\n\n");
   initRaftId(pSyncNode);

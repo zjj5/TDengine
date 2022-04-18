@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
 
   gSyncNode = syncInitTest();
   assert(gSyncNode != NULL);
-  syncNodePrint2((char*)"", gSyncNode);
+  syncNodeLog2((char*)"", gSyncNode);
 
   initRaftId(gSyncNode);
 

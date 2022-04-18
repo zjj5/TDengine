@@ -27,7 +27,7 @@ SyncAppendEntriesReply *createMsg() {
 
 void test1() {
   SyncAppendEntriesReply *pMsg = createMsg();
-  syncAppendEntriesReplyPrint2((char *)"test1:", pMsg);
+  syncAppendEntriesReplyLog2((char *)"test1:", pMsg);
   syncAppendEntriesReplyDestroy(pMsg);
 }
 
@@ -38,7 +38,7 @@ void test2() {
   syncAppendEntriesReplySerialize(pMsg, serialized, len);
   SyncAppendEntriesReply *pMsg2 = syncAppendEntriesReplyBuild(1000);
   syncAppendEntriesReplyDeserialize(serialized, len, pMsg2);
-  syncAppendEntriesReplyPrint2((char *)"test2: syncAppendEntriesReplySerialize -> syncAppendEntriesReplyDeserialize ",
+  syncAppendEntriesReplyLog2((char *)"test2: syncAppendEntriesReplySerialize -> syncAppendEntriesReplyDeserialize ",
                                pMsg2);
 
   taosMemoryFree(serialized);
@@ -51,7 +51,7 @@ void test3() {
   uint32_t                len;
   char *                  serialized = syncAppendEntriesReplySerialize2(pMsg, &len);
   SyncAppendEntriesReply *pMsg2 = syncAppendEntriesReplyDeserialize2(serialized, len);
-  syncAppendEntriesReplyPrint2((char *)"test3: syncAppendEntriesReplySerialize3 -> syncAppendEntriesReplyDeserialize2 ",
+  syncAppendEntriesReplyLog2((char *)"test3: syncAppendEntriesReplySerialize3 -> syncAppendEntriesReplyDeserialize2 ",
                                pMsg2);
 
   taosMemoryFree(serialized);
@@ -65,7 +65,7 @@ void test4() {
   syncAppendEntriesReply2RpcMsg(pMsg, &rpcMsg);
   SyncAppendEntriesReply *pMsg2 = syncAppendEntriesReplyBuild(1000);
   syncAppendEntriesReplyFromRpcMsg(&rpcMsg, pMsg2);
-  syncAppendEntriesReplyPrint2((char *)"test4: syncAppendEntriesReply2RpcMsg -> syncAppendEntriesReplyFromRpcMsg ",
+  syncAppendEntriesReplyLog2((char *)"test4: syncAppendEntriesReply2RpcMsg -> syncAppendEntriesReplyFromRpcMsg ",
                                pMsg2);
 
   rpcFreeCont(rpcMsg.pCont);
@@ -78,7 +78,7 @@ void test5() {
   SRpcMsg                 rpcMsg;
   syncAppendEntriesReply2RpcMsg(pMsg, &rpcMsg);
   SyncAppendEntriesReply *pMsg2 = syncAppendEntriesReplyFromRpcMsg2(&rpcMsg);
-  syncAppendEntriesReplyPrint2((char *)"test5: syncAppendEntriesReply2RpcMsg -> syncAppendEntriesReplyFromRpcMsg2 ",
+  syncAppendEntriesReplyLog2((char *)"test5: syncAppendEntriesReply2RpcMsg -> syncAppendEntriesReplyFromRpcMsg2 ",
                                pMsg2);
 
   rpcFreeCont(rpcMsg.pCont);

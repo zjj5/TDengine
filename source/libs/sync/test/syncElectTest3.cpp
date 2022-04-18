@@ -124,7 +124,7 @@ int main(int argc, char** argv) {
   SSyncNode* pSyncNode = (SSyncNode*)syncNodeAcquire(rid);
   assert(pSyncNode != NULL);
 
-  syncNodePrint2((char*)"", pSyncNode);
+  syncNodeLog2((char*)"", pSyncNode);
   initRaftId(pSyncNode);
 
   //---------------------------

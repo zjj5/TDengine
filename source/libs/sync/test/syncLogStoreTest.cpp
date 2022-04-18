@@ -53,7 +53,7 @@ void logStoreTest() {
   assert(pLogStore);
   assert(pLogStore->getLastIndex(pLogStore) == SYNC_INDEX_INVALID);
 
-  logStorePrint2((char*)"logStoreTest", pLogStore);
+  logStoreLog2((char*)"logStoreTest", pLogStore);
 
   for (int i = 0; i < 5; ++i) {
     int32_t         dataLen = 10;
@@ -67,7 +67,7 @@ void logStoreTest() {
     pEntry->index = pLogStore->getLastIndex(pLogStore) + 1;
     snprintf(pEntry->data, dataLen, "value%d", i);
 
-    syncEntryPrint2((char*)"==write entry== :", pEntry);
+    syncEntryLog2((char*)"==write entry== :", pEntry);
     pLogStore->appendEntry(pLogStore, pEntry);
     syncEntryDestory(pEntry);
 
@@ -75,10 +75,10 @@ void logStoreTest() {
       assert(pLogStore->getLastIndex(pLogStore) == SYNC_INDEX_BEGIN);
     }
   }
-  logStorePrint2((char*)"after appendEntry", pLogStore);
+  logStoreLog2((char*)"after appendEntry", pLogStore);
 
   pLogStore->truncate(pLogStore, 3);
-  logStorePrint2((char*)"after truncate 3", pLogStore);
+  logStoreLog2((char*)"after truncate 3", pLogStore);
 }
 
 int main(int argc, char** argv) {

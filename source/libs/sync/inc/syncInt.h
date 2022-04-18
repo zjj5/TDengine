@@ -63,9 +63,23 @@ extern "C" {
 #define sTrace(...)                                                     \
   {                                                                     \
     if (sDebugFlag & DEBUG_TRACE) {                                     \
+      taosPrintLongString("SYN TRACE ", DEBUG_TRACE, sDebugFlag, __VA_ARGS__); \
+    }                                                                   \
+  }
+
+#if 0
+  #define sTrace(...)                                                     \
+  {                                                                     \
+    if (sDebugFlag & DEBUG_TRACE) {                                     \
       taosPrintLog("SYN TRACE ", DEBUG_TRACE, sDebugFlag, __VA_ARGS__); \
     }                                                                   \
   }
+#endif 
+
+
+
+
+
 
 struct SyncTimeout;
 typedef struct SyncTimeout SyncTimeout;

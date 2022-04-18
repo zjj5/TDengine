@@ -60,7 +60,7 @@ int32_t syncNodeOnAppendEntriesReplyCb(SSyncNode* ths, SyncAppendEntriesReply* p
     char logBuf[128];
     snprintf(logBuf, sizeof(logBuf), "syncNodeOnAppendEntriesReplyCb error term, receive:%lu current:%lu", pMsg->term,
              ths->pRaftStore->currentTerm);
-    syncNodePrint2(logBuf, ths);
+    syncNodeLog2(logBuf, ths);
     sError("%s", logBuf);
     return ret;
   }
