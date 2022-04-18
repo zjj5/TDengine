@@ -27,7 +27,7 @@ SyncRequestVoteReply *createMsg() {
 
 void test1() {
   SyncRequestVoteReply *pMsg = createMsg();
-  syncRequestVoteReplyPrint2((char *)"test1:", pMsg);
+  syncRequestVoteReplyLog2((char *)"test1:", pMsg);
   syncRequestVoteReplyDestroy(pMsg);
 }
 
@@ -38,7 +38,7 @@ void test2() {
   syncRequestVoteReplySerialize(pMsg, serialized, len);
   SyncRequestVoteReply *pMsg2 = syncRequestVoteReplyBuild(1000);
   syncRequestVoteReplyDeserialize(serialized, len, pMsg2);
-  syncRequestVoteReplyPrint2((char *)"test2: syncRequestVoteReplySerialize -> syncRequestVoteReplyDeserialize ", pMsg2);
+  syncRequestVoteReplyLog2((char *)"test2: syncRequestVoteReplySerialize -> syncRequestVoteReplyDeserialize ", pMsg2);
 
   taosMemoryFree(serialized);
   syncRequestVoteReplyDestroy(pMsg);
@@ -50,7 +50,7 @@ void test3() {
   uint32_t              len;
   char *                serialized = syncRequestVoteReplySerialize2(pMsg, &len);
   SyncRequestVoteReply *pMsg2 = syncRequestVoteReplyDeserialize2(serialized, len);
-  syncRequestVoteReplyPrint2((char *)"test3: syncRequestVoteReplySerialize3 -> syncRequestVoteReplyDeserialize2 ",
+  syncRequestVoteReplyLog2((char *)"test3: syncRequestVoteReplySerialize3 -> syncRequestVoteReplyDeserialize2 ",
                              pMsg2);
 
   taosMemoryFree(serialized);
@@ -64,7 +64,7 @@ void test4() {
   syncRequestVoteReply2RpcMsg(pMsg, &rpcMsg);
   SyncRequestVoteReply *pMsg2 = syncRequestVoteReplyBuild(1000);
   syncRequestVoteReplyFromRpcMsg(&rpcMsg, pMsg2);
-  syncRequestVoteReplyPrint2((char *)"test4: syncRequestVoteReply2RpcMsg -> syncRequestVoteReplyFromRpcMsg ", pMsg2);
+  syncRequestVoteReplyLog2((char *)"test4: syncRequestVoteReply2RpcMsg -> syncRequestVoteReplyFromRpcMsg ", pMsg2);
 
   rpcFreeCont(rpcMsg.pCont);
   syncRequestVoteReplyDestroy(pMsg);
@@ -76,7 +76,7 @@ void test5() {
   SRpcMsg               rpcMsg;
   syncRequestVoteReply2RpcMsg(pMsg, &rpcMsg);
   SyncRequestVoteReply *pMsg2 = syncRequestVoteReplyFromRpcMsg2(&rpcMsg);
-  syncRequestVoteReplyPrint2((char *)"test5: syncRequestVoteReply2RpcMsg -> syncRequestVoteReplyFromRpcMsg2 ", pMsg2);
+  syncRequestVoteReplyLog2((char *)"test5: syncRequestVoteReply2RpcMsg -> syncRequestVoteReplyFromRpcMsg2 ", pMsg2);
 
   rpcFreeCont(rpcMsg.pCont);
   syncRequestVoteReplyDestroy(pMsg);

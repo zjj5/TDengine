@@ -28,7 +28,7 @@ SyncRequestVote *createMsg() {
 
 void test1() {
   SyncRequestVote *pMsg = createMsg();
-  syncRequestVotePrint2((char *)"test1:", pMsg);
+  syncRequestVoteLog2((char *)"test1:", pMsg);
   syncRequestVoteDestroy(pMsg);
 }
 
@@ -39,7 +39,7 @@ void test2() {
   syncRequestVoteSerialize(pMsg, serialized, len);
   SyncRequestVote *pMsg2 = syncRequestVoteBuild(1000);
   syncRequestVoteDeserialize(serialized, len, pMsg2);
-  syncRequestVotePrint2((char *)"test2: syncRequestVoteSerialize -> syncRequestVoteDeserialize ", pMsg2);
+  syncRequestVoteLog2((char *)"test2: syncRequestVoteSerialize -> syncRequestVoteDeserialize ", pMsg2);
 
   taosMemoryFree(serialized);
   syncRequestVoteDestroy(pMsg);
@@ -51,7 +51,7 @@ void test3() {
   uint32_t         len;
   char *           serialized = syncRequestVoteSerialize2(pMsg, &len);
   SyncRequestVote *pMsg2 = syncRequestVoteDeserialize2(serialized, len);
-  syncRequestVotePrint2((char *)"test3: syncRequestVoteSerialize3 -> syncRequestVoteDeserialize2 ", pMsg2);
+  syncRequestVoteLog2((char *)"test3: syncRequestVoteSerialize3 -> syncRequestVoteDeserialize2 ", pMsg2);
 
   taosMemoryFree(serialized);
   syncRequestVoteDestroy(pMsg);
@@ -64,7 +64,7 @@ void test4() {
   syncRequestVote2RpcMsg(pMsg, &rpcMsg);
   SyncRequestVote *pMsg2 = syncRequestVoteBuild(1000);
   syncRequestVoteFromRpcMsg(&rpcMsg, pMsg2);
-  syncRequestVotePrint2((char *)"test4: syncRequestVote2RpcMsg -> syncRequestVoteFromRpcMsg ", pMsg2);
+  syncRequestVoteLog2((char *)"test4: syncRequestVote2RpcMsg -> syncRequestVoteFromRpcMsg ", pMsg2);
 
   rpcFreeCont(rpcMsg.pCont);
   syncRequestVoteDestroy(pMsg);
@@ -76,7 +76,7 @@ void test5() {
   SRpcMsg          rpcMsg;
   syncRequestVote2RpcMsg(pMsg, &rpcMsg);
   SyncRequestVote *pMsg2 = syncRequestVoteFromRpcMsg2(&rpcMsg);
-  syncRequestVotePrint2((char *)"test5: syncRequestVote2RpcMsg -> syncRequestVoteFromRpcMsg2 ", pMsg2);
+  syncRequestVoteLog2((char *)"test5: syncRequestVote2RpcMsg -> syncRequestVoteFromRpcMsg2 ", pMsg2);
 
   rpcFreeCont(rpcMsg.pCont);
   syncRequestVoteDestroy(pMsg);
