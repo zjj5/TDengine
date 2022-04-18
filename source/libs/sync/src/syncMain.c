@@ -1034,13 +1034,13 @@ void syncNodePrint2(char* s, SSyncNode* pObj) {
 
 void syncNodeLog(SSyncNode* pObj) {
   char* serialized = syncNode2Str(pObj);
-  sTrace("syncNodeLog | len:%lu | %s", strlen(serialized), serialized);
+  sTraceLong("syncNodeLog | len:%lu | %s", strlen(serialized), serialized);
   taosMemoryFree(serialized);
 }
 
 void syncNodeLog2(char* s, SSyncNode* pObj) {
   char* serialized = syncNode2Str(pObj);
-  sTrace("syncNodeLog2 | len:%lu | %s | %s", strlen(serialized), s, serialized);
+  sTraceLong("syncNodeLog2 | len:%lu | %s | %s", strlen(serialized), s, serialized);
   taosMemoryFree(serialized);
 }
 

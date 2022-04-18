@@ -63,23 +63,46 @@ extern "C" {
 #define sTrace(...)                                                     \
   {                                                                     \
     if (sDebugFlag & DEBUG_TRACE) {                                     \
-      taosPrintLongString("SYN TRACE ", DEBUG_TRACE, sDebugFlag, __VA_ARGS__); \
-    }                                                                   \
-  }
-
-#if 0
-  #define sTrace(...)                                                     \
-  {                                                                     \
-    if (sDebugFlag & DEBUG_TRACE) {                                     \
       taosPrintLog("SYN TRACE ", DEBUG_TRACE, sDebugFlag, __VA_ARGS__); \
     }                                                                   \
   }
-#endif 
 
-
-
-
-
+#define sFatalLong(...)                                                 \
+  {                                                                     \
+    if (sDebugFlag & DEBUG_FATAL) {                                     \
+      taosPrintLongString("SYN FATAL ", DEBUG_FATAL, 255, __VA_ARGS__); \
+    }                                                                   \
+  }
+#define sErrorLong(...)                                                 \
+  {                                                                     \
+    if (sDebugFlag & DEBUG_ERROR) {                                     \
+      taosPrintLongString("SYN ERROR ", DEBUG_ERROR, 255, __VA_ARGS__); \
+    }                                                                   \
+  }
+#define sWarnLong(...)                                                \
+  {                                                                   \
+    if (sDebugFlag & DEBUG_WARN) {                                    \
+      taosPrintLongString("SYN WARN ", DEBUG_WARN, 255, __VA_ARGS__); \
+    }                                                                 \
+  }
+#define sInfoLong(...)                                                \
+  {                                                                   \
+    if (sDebugFlag & DEBUG_INFO) {                                    \
+      taosPrintLongString("SYN INFO ", DEBUG_INFO, 255, __VA_ARGS__); \
+    }                                                                 \
+  }
+#define sDebugLong(...)                                                        \
+  {                                                                            \
+    if (sDebugFlag & DEBUG_DEBUG) {                                            \
+      taosPrintLongString("SYN DEBUG ", DEBUG_DEBUG, sDebugFlag, __VA_ARGS__); \
+    }                                                                          \
+  }
+#define sTraceLong(...)                                                        \
+  {                                                                            \
+    if (sDebugFlag & DEBUG_TRACE) {                                            \
+      taosPrintLongString("SYN TRACE ", DEBUG_TRACE, sDebugFlag, __VA_ARGS__); \
+    }                                                                          \
+  }
 
 struct SyncTimeout;
 typedef struct SyncTimeout SyncTimeout;
