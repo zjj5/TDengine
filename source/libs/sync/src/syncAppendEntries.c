@@ -204,7 +204,15 @@ int32_t syncNodeOnAppendEntriesCb(SSyncNode* ths, SyncAppendEntries* pMsg) {
 
             SRpcMsg rpcMsg;
             syncEntry2OriginalRpc(pRollBackEntry, &rpcMsg);
-            ths->pFsm->FpRollBackCb(ths->pFsm, &rpcMsg, pRollBackEntry->index, pRollBackEntry->isWeak, 0, ths->state);
+
+            SFsmCbMeta cbMeta;
+            cbMeta.index = pRollBackEntry->index;
+            cbMeta.isWeak = pRollBackEntry->isWeak;
+            cbMeta.code = 0;
+            cbMeta.state = ths->state;
+            cbMeta.seqNum = pRollBackEntry->seqNum;
+            ths->pFsm->FpRollBackCb(ths->pFsm, &rpcMsg, cbMeta);
+
             rpcFreeCont(rpcMsg.pCont);
             syncEntryDestory(pRollBackEntry);
           }

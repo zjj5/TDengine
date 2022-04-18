@@ -29,7 +29,7 @@ int32_t vnodeSyncOpen(SVnode *pVnode) {
   snprintf(syncInfo.path, sizeof(syncInfo.path), "%s/sync", pVnode->path);
   syncInfo.pWal = pVnode->pWal;
 
-  syncInfo.pFsm = syncMakeFsm(pVnode);
+  syncInfo.pFsm = syncVnodeMakeFsm(pVnode);
   syncInfo.rpcClient = NULL;
   syncInfo.FpSendMsg = vnodeSendMsg;
   syncInfo.queue = NULL;
@@ -132,15 +132,14 @@ void PreCommitCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SFsmCbMeta cbMeta) 
   syncRpcMsgPrint2(logBuf, (SRpcMsg *)pMsg);
 }
 
-void RollBackCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SyncIndex index, bool isWeak, int32_t code,
-                ESyncState state) {
+void RollBackCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SFsmCbMeta cbMeta) {
   char logBuf[256];
   snprintf(logBuf, sizeof(logBuf), "==callback== ==RollBackCb== pFsm:%p, index:%ld, isWeak:%d, code:%d, state:%d %s \n",
-           pFsm, index, isWeak, code, state, syncUtilState2String(state));
+           pFsm, cbMeta.index, cbMeta.isWeak, cbMeta.code, cbMeta.state, syncUtilState2String(cbMeta.state));
   syncRpcMsgPrint2(logBuf, (SRpcMsg *)pMsg);
 }
 
-SSyncFSM *syncMakeFsm(SVnode *pVnode) {
+SSyncFSM *syncVnodeMakeFsm(SVnode *pVnode) {
   SSyncFSM *pFsm = (SSyncFSM *)taosMemoryMalloc(sizeof(SSyncFSM));
   pFsm->data = pVnode;
   pFsm->FpCommitCb = CommitCb;

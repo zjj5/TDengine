@@ -30,17 +30,11 @@ void    vnodeSyncClose(SVnode *pVnode);
 int32_t vnodeSyncEqMsg(void *qHandle, SRpcMsg *pMsg);
 int32_t vnodeSendMsg(void *rpcHandle, const SEpSet *pEpSet, SRpcMsg *pMsg);
 
-/*
-void CommitCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SyncIndex index, bool isWeak, int32_t code, ESyncState state,
-              uint64_t seqNum);
-*/
-
 void CommitCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SFsmCbMeta cbMeta);
 void PreCommitCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SFsmCbMeta cbMeta);
+void RollBackCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SFsmCbMeta cbMeta);
 
-void      RollBackCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SyncIndex index, bool isWeak, int32_t code,
-                     ESyncState state);
-SSyncFSM *syncMakeFsm();
+SSyncFSM *syncVnodeMakeFsm();
 
 #ifdef __cplusplus
 }

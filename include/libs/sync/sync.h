@@ -94,8 +94,10 @@ typedef struct SSyncFSM {
 
   // when log entry is updated by a new one, FpRollBackCb is called
   // user can do something to roll back. for example, delete data from tsdb, or just ignore it
-  void (*FpRollBackCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SyncIndex index, bool isWeak, int32_t code,
-                       ESyncState state);
+  //void (*FpRollBackCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SyncIndex index, bool isWeak, int32_t code,
+  //                     ESyncState state);
+
+  void (*FpRollBackCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SFsmCbMeta cbMeta);
 
   // user should implement this function, use "data" to take snapshot into "snapshot"
   int32_t (*FpTakeSnapshot)(SSnapshot* snapshot);
