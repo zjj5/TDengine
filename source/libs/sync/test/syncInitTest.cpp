@@ -70,7 +70,7 @@ void initRaftId(SSyncNode* pSyncNode) {
 }
 
 int main(int argc, char** argv) {
-  //taosInitLog((char *)"tmp/syncInitTest.log", 100);
+  // taosInitLog((char *)"tmp/syncInitTest.log", 100);
   tsAsyncLog = 0;
   sDebugFlag = DEBUG_TRACE + DEBUG_SCREEN + DEBUG_FILE;
 
@@ -93,8 +93,8 @@ int main(int argc, char** argv) {
 
   syncNodeClose(pSyncNode);
   syncEnvStop();
-  //syncIOStop();
+  // syncIOStop();
 
-  //taosCloseLog();
+  // taosCloseLog();
   return 0;
 }

@@ -260,10 +260,10 @@ void setHeartbeatTimerMS(int64_t rid, int32_t hbTimerMS) {
 }
 
 int32_t syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak) {
-  int32_t    ret = 0;
+  int32_t    ret = TAOS_SYNC_PROPOSE_SUCCESS;
   SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
   if (pSyncNode == NULL) {
-    return -1;
+    return TAOS_SYNC_PROPOSE_OTHER_ERROR;
   }
   assert(rid == pSyncNode->rid);
 
@@ -282,11 +282,11 @@ int32_t syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak) {
       sTrace("syncPropose pSyncNode->FpEqMsg is NULL");
     }
     syncClientRequestDestroy(pSyncMsg);
-    ret = 0;
+    ret = TAOS_SYNC_PROPOSE_SUCCESS;
 
   } else {
     sTrace("syncPropose not leader, %s", syncUtilState2String(pSyncNode->state));
-    ret = -2;  // todo : need define err code !!
+    ret = TAOS_SYNC_PROPOSE_NOT_LEADER;
   }
 
   taosReleaseRef(tsNodeRefId, pSyncNode->rid);

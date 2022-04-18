@@ -50,14 +50,14 @@ void test4() {
 }
 
 int main() {
-  //taosInitLog("tmp/syncTest.log", 100);
+  // taosInitLog("tmp/syncTest.log", 100);
   tsAsyncLog = 0;
-  
+
   test1();
   test2();
   test3();
   test4();
 
-  //taosCloseLog();
+  // taosCloseLog();
   return 0;
 }

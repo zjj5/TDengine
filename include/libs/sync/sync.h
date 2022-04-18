@@ -60,6 +60,11 @@ typedef struct SSnapshot {
   SyncIndex lastApplyIndex;
 } SSnapshot;
 
+typedef enum {
+  TAOS_SYNC_FSM_CB_SUCCESS = 0,
+  TAOS_SYNC_FSM_CB_OTHER_ERROR,
+} ESyncFsmCbCode;
+
 typedef struct SFsmCbMeta {
   SyncIndex  index;
   bool       isWeak;
@@ -125,17 +130,23 @@ typedef struct SSyncInfo {
 
 } SSyncInfo;
 
-int32_t syncInit();
-void    syncCleanUp();
-int64_t syncOpen(const SSyncInfo* pSyncInfo);
-void    syncStart(int64_t rid);
-void    syncStop(int64_t rid);
-int32_t syncReconfig(int64_t rid, const SSyncCfg* pSyncCfg);
-int32_t syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak);
-
+int32_t     syncInit();
+void        syncCleanUp();
+int64_t     syncOpen(const SSyncInfo* pSyncInfo);
+void        syncStart(int64_t rid);
+void        syncStop(int64_t rid);
+int32_t     syncReconfig(int64_t rid, const SSyncCfg* pSyncCfg);
 ESyncState  syncGetMyRole(int64_t rid);
 const char* syncGetMyRoleStr(int64_t rid);
 SyncTerm    syncGetMyTerm(int64_t rid);
+
+typedef enum {
+  TAOS_SYNC_PROPOSE_SUCCESS = 0,
+  TAOS_SYNC_PROPOSE_NOT_LEADER,
+  TAOS_SYNC_PROPOSE_OTHER_ERROR,
+} ESyncProposeCode;
+
+int32_t syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak);
 
 extern int32_t sDebugFlag;
 
