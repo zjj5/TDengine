@@ -50,7 +50,7 @@ void test4() {
 }
 
 int main() {
-  taosInitLog((char *)"/tmp/syncTest.log", 100);
+  //taosInitLog("tmp/syncTest.log", 100);
   tsAsyncLog = 0;
   
   test1();
@@ -58,5 +58,6 @@ int main() {
   test3();
   test4();
 
+  //taosCloseLog();
   return 0;
 }
