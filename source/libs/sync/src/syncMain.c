@@ -119,13 +119,6 @@ int32_t syncReconfig(int64_t rid, const SSyncCfg* pSyncCfg) {
   return ret;
 }
 
-/*
-int32_t syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak) {
-  int32_t ret = syncPropose2(rid, pMsg, isWeak, 0);
-  return ret;
-}
-*/
-
 int32_t syncForwardToPeer(int64_t rid, const SRpcMsg* pMsg, bool isWeak) {
   int32_t ret = syncPropose(rid, pMsg, isWeak);
   return ret;
@@ -265,37 +258,6 @@ void setHeartbeatTimerMS(int64_t rid, int32_t hbTimerMS) {
 
   taosReleaseRef(tsNodeRefId, pSyncNode->rid);
 }
-
-/*
-int32_t syncPropose2(int64_t rid, const SRpcMsg* pMsg, bool isWeak, uint64_t seqNum) {
-  int32_t    ret = 0;
-  SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
-  if (pSyncNode == NULL) {
-    return -1;
-  }
-  assert(rid == pSyncNode->rid);
-
-  if (pSyncNode->state == TAOS_SYNC_STATE_LEADER) {
-    SyncClientRequest* pSyncMsg = syncClientRequestBuild2(pMsg, seqNum, isWeak, pSyncNode->vgId);
-    SRpcMsg            rpcMsg;
-    syncClientRequest2RpcMsg(pSyncMsg, &rpcMsg);
-    if (pSyncNode->FpEqMsg != NULL) {
-      pSyncNode->FpEqMsg(pSyncNode->queue, &rpcMsg);
-    } else {
-      sTrace("syncPropose2 pSyncNode->FpEqMsg is NULL");
-    }
-    syncClientRequestDestroy(pSyncMsg);
-    ret = 0;
-
-  } else {
-    sTrace("syncPropose not leader, %s", syncUtilState2String(pSyncNode->state));
-    ret = -1;  // todo : need define err code !!
-  }
-
-  taosReleaseRef(tsNodeRefId, pSyncNode->rid);
-  return ret;
-}
-*/
 
 int32_t syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak) {
   int32_t    ret = 0;
@@ -538,13 +500,6 @@ int32_t syncNodePing(SSyncNode* pSyncNode, const SRaftId* destRaftId, SyncPing* 
   syncPing2RpcMsg(pMsg, &rpcMsg);
   syncRpcMsgLog2((char*)"==syncNodePing==", &rpcMsg);
 
-  // htonl
-  /*
-  SMsgHead* pHead = rpcMsg.pCont;
-  pHead->contLen = htonl(pHead->contLen);
-  pHead->vgId = htonl(pHead->vgId);
-  */
-
   ret = syncNodeSendMsgById(destRaftId, pSyncNode, &rpcMsg);
   return ret;
 }
@@ -559,21 +514,6 @@ int32_t syncNodePingSelf(SSyncNode* pSyncNode) {
   return ret;
 }
 
-/*
-int32_t syncNodePingPeers(SSyncNode* pSyncNode) {
-  int32_t ret = 0;
-  for (int i = 0; i < pSyncNode->peersNum; ++i) {
-    SRaftId destId;
-    syncUtilnodeInfo2raftId(&pSyncNode->peersNodeInfo[i], pSyncNode->vgId, &destId);
-    SyncPing* pMsg = syncPingBuild3(&pSyncNode->myRaftId, &destId, pSyncNode->vgId);
-    ret = syncNodePing(pSyncNode, &destId, pMsg);
-    assert(ret == 0);
-    syncPingDestroy(pMsg);
-  }
-  return ret;
-}
-*/
-
 int32_t syncNodePingPeers(SSyncNode* pSyncNode) {
   int32_t ret = 0;
   for (int i = 0; i < pSyncNode->peersNum; ++i) {
@@ -585,21 +525,6 @@ int32_t syncNodePingPeers(SSyncNode* pSyncNode) {
   }
   return ret;
 }
-
-/*
-int32_t syncNodePingAll(SSyncNode* pSyncNode) {
-  int32_t ret = 0;
-  for (int i = 0; i < pSyncNode->pRaftCfg->cfg.replicaNum; ++i) {
-    SRaftId destId;
-    syncUtilnodeInfo2raftId(&pSyncNode->pRaftCfg->cfg.nodeInfo[i], pSyncNode->vgId, &destId);
-    SyncPing* pMsg = syncPingBuild3(&pSyncNode->myRaftId, &destId, pSyncNode->vgId);
-    ret = syncNodePing(pSyncNode, &destId, pMsg);
-    assert(ret == 0);
-    syncPingDestroy(pMsg);
-  }
-  return ret;
-}
-*/
 
 int32_t syncNodePingAll(SSyncNode* pSyncNode) {
   int32_t ret = 0;

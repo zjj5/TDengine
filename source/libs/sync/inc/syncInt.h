@@ -150,13 +150,6 @@ typedef struct SRaftCfg SRaftCfg;
 struct SSyncRespMgr;
 typedef struct SSyncRespMgr SSyncRespMgr;
 
-/*
-typedef struct SRaftId {
-  SyncNodeId  addr;  // typedef uint64_t SyncNodeId;
-  SyncGroupId vgId;  // typedef int32_t  SyncGroupId;
-} SRaftId;
-*/
-
 typedef struct SSyncNode {
   // init by SSyncInfo
   SyncGroupId vgId;

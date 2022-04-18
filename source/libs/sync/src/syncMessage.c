@@ -65,7 +65,7 @@ cJSON* syncRpcMsg2Json(SRpcMsg* pRpcMsg) {
     pRoot = syncAppendEntriesReply2Json(pSyncMsg);
     syncAppendEntriesReplyDestroy(pSyncMsg);
 
-  } else if (pRpcMsg->msgType == SYNC_RESPONSE) {
+  } else if (pRpcMsg->msgType == TDMT_VND_SYNC_COMMON_RESPONSE) {
     pRoot = cJSON_CreateObject();
     char* s;
     s = syncUtilprintBin((char*)(pRpcMsg->pCont), pRpcMsg->contLen);
@@ -98,7 +98,7 @@ cJSON* syncRpcMsg2Json(SRpcMsg* pRpcMsg) {
 
 cJSON* syncRpcUnknownMsg2Json() {
   cJSON* pRoot = cJSON_CreateObject();
-  cJSON_AddNumberToObject(pRoot, "msgType", SYNC_UNKNOWN);
+  cJSON_AddNumberToObject(pRoot, "msgType", TDMT_VND_SYNC_UNKNOWN);
   cJSON_AddStringToObject(pRoot, "data", "unknown message");
 
   cJSON* pJson = cJSON_CreateObject();

@@ -357,11 +357,10 @@ void syncAppendEntriesReplyPrint2(char* s, const SyncAppendEntriesReply* pMsg);
 void syncAppendEntriesReplyLog(const SyncAppendEntriesReply* pMsg);
 void syncAppendEntriesReplyLog2(char* s, const SyncAppendEntriesReply* pMsg);
 
-//---------------------
+// on message ----------------------
 int32_t syncNodeOnPingCb(SSyncNode* ths, SyncPing* pMsg);
 int32_t syncNodeOnPingReplyCb(SSyncNode* ths, SyncPingReply* pMsg);
 int32_t syncNodeOnTimeoutCb(SSyncNode* ths, SyncTimeout* pMsg);
-
 int32_t syncNodeOnClientRequestCb(SSyncNode* ths, SyncClientRequest* pMsg);
 int32_t syncNodeOnRequestVoteCb(SSyncNode* ths, SyncRequestVote* pMsg);
 int32_t syncNodeOnRequestVoteReplyCb(SSyncNode* ths, SyncRequestVoteReply* pMsg);

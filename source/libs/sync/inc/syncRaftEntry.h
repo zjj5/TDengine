@@ -27,14 +27,6 @@ extern "C" {
 #include "syncMessage.h"
 #include "taosdef.h"
 
-/*
-typedef enum EntryType {
-  SYNC_RAFT_ENTRY_NOOP = 0,
-  SYNC_RAFT_ENTRY_DATA = 1,
-  SYNC_RAFT_ENTRY_CONFIG = 2,
-} EntryType;
-*/
-
 typedef struct SSyncRaftEntry {
   uint32_t  bytes;
   uint32_t  msgType;          // SyncClientRequest msgType
