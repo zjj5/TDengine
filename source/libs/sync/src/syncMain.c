@@ -160,7 +160,7 @@ SyncTerm syncGetMyTerm(int64_t rid) {
   return term;
 }
 
-int32_t syncGetGetRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg) {
+int32_t syncGetRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg) {
   SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
   if (pSyncNode == NULL) {
     return TAOS_SYNC_STATE_ERROR;
@@ -177,7 +177,7 @@ int32_t syncGetGetRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg) {
   return ret;
 }
 
-int32_t syncGetGetAndDelRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg) {
+int32_t syncGetAndDelRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg) {
   SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
   if (pSyncNode == NULL) {
     return TAOS_SYNC_STATE_ERROR;
@@ -216,6 +216,19 @@ void syncSetRpc(int64_t rid, void* rpcHandle) {
   pSyncNode->rpcClient = rpcHandle;
 
   taosReleaseRef(tsNodeRefId, pSyncNode->rid);
+}
+
+char* sync2SimpleStr(int64_t rid) {
+  SSyncNode* pSyncNode = (SSyncNode*)taosAcquireRef(tsNodeRefId, rid);
+  if (pSyncNode == NULL) {
+    sTrace("syncSetRpc get pSyncNode is NULL, rid:%ld", rid);
+    return NULL;
+  }
+  assert(rid == pSyncNode->rid);
+  char* s = syncNode2SimpleStr(pSyncNode);
+  taosReleaseRef(tsNodeRefId, pSyncNode->rid);
+
+  return s;
 }
 
 void setPingTimerMS(int64_t rid, int32_t pingTimerMS) {
@@ -845,6 +858,19 @@ char* syncNode2Str(const SSyncNode* pSyncNode) {
   char*  serialized = cJSON_Print(pJson);
   cJSON_Delete(pJson);
   return serialized;
+}
+
+char* syncNode2SimpleStr(const SSyncNode* pSyncNode) {
+  int   len = 256;
+  char* s = (char*)taosMemoryMalloc(len);
+  snprintf(s, len,
+           "syncNode2SimpleStr vgId:%d currentTerm:%lu, commitIndex:%ld, state:%d %s, electTimerLogicClock:%lu, "
+           "electTimerLogicClockUser:%lu, "
+           "electTimerMS:%d",
+           pSyncNode->vgId, pSyncNode->pRaftStore->currentTerm, pSyncNode->commitIndex, pSyncNode->state,
+           syncUtilState2String(pSyncNode->state), pSyncNode->electTimerLogicClock, pSyncNode->electTimerLogicClockUser,
+           pSyncNode->electTimerMS);
+  return s;
 }
 
 SSyncNode* syncNodeAcquire(int64_t rid) {

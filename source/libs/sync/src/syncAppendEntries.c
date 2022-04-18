@@ -302,7 +302,13 @@ int32_t syncNodeOnAppendEntriesCb(SSyncNode* ths, SyncAppendEntries* pMsg) {
               syncEntry2OriginalRpc(pEntry, &rpcMsg);
 
               if (ths->pFsm->FpCommitCb != NULL && pEntry->originalRpcType != TDMT_VND_SYNC_NOOP) {
-                ths->pFsm->FpCommitCb(ths->pFsm, &rpcMsg, pEntry->index, pEntry->isWeak, 0, ths->state, pEntry->seqNum);
+                SFsmCbMeta cbMeta;
+                cbMeta.index = pEntry->index;
+                cbMeta.isWeak = pEntry->isWeak;
+                cbMeta.code = 0;
+                cbMeta.state = ths->state;
+                cbMeta.seqNum = pEntry->seqNum;
+                ths->pFsm->FpCommitCb(ths->pFsm, &rpcMsg, cbMeta);
               }
 
               rpcFreeCont(rpcMsg.pCont);

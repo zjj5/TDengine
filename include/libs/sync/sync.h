@@ -67,13 +67,23 @@ typedef struct SSnapshot {
   SyncIndex lastApplyIndex;
 } SSnapshot;
 
+typedef struct SFsmCbMeta {
+  SyncIndex  index;
+  bool       isWeak;
+  int32_t    code;
+  ESyncState state;
+  uint64_t   seqNum;
+} SFsmCbMeta;
+
 typedef struct SSyncFSM {
   void* data;
 
   // when value in pMsg finish a raft flow, FpCommitCb is called, code indicates the result
   // user can do something according to the code and isWeak. for example, write data into tsdb
-  void (*FpCommitCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SyncIndex index, bool isWeak, int32_t code,
-                     ESyncState state, uint64_t seqNum);
+  // void (*FpCommitCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SyncIndex index, bool isWeak, int32_t code,
+  //                   ESyncState state, uint64_t seqNum);
+
+  void (*FpCommitCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SFsmCbMeta cbMeta);
 
   // when value in pMsg has been written into local log store, FpPreCommitCb is called, code indicates the result
   // user can do something according to the code and isWeak. for example, write data into tsdb
@@ -171,12 +181,13 @@ ESyncState  syncGetMyRole(int64_t rid);
 const char* syncGetMyRoleStr(int64_t rid);
 SyncTerm    syncGetMyTerm(int64_t rid);
 
-int32_t syncGetGetRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg);
-int32_t syncGetGetAndDelRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg);
+int32_t syncGetRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg);
+int32_t syncGetAndDelRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg);
 
 // control
-void syncSetQ(int64_t rid, void* queueHandle);
-void syncSetRpc(int64_t rid, void* rpcHandle);
+void  syncSetQ(int64_t rid, void* queueHandle);
+void  syncSetRpc(int64_t rid, void* rpcHandle);
+char* sync2SimpleStr(int64_t rid);
 
 // set timer ms
 void setPingTimerMS(int64_t rid, int32_t pingTimerMS);

@@ -19,7 +19,7 @@ void syncRespMgrInsert(uint64_t count) {
     SRespStub stub;
     memset(&stub, 0, sizeof(SRespStub));
     stub.createTime = taosGetTimestampMs();
-    stub.rpcMsg.code = (pMgr->seqNum+1);
+    stub.rpcMsg.code = (pMgr->seqNum + 1);
     stub.rpcMsg.ahandle = (void *)(200 + i);
     stub.rpcMsg.handle = (void *)(300 + i);
     uint64_t ret = syncRespMgrAdd(pMgr, &stub);
@@ -131,7 +131,6 @@ void test3() {
   syncRespMgrPrint();
   syncRespMgrDestroy(pMgr);
 }
-
 
 int main() {
   // taosInitLog((char *)"syncTest.log", 100000, 10);

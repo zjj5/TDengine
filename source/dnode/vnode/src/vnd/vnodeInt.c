@@ -51,10 +51,11 @@ int vnodeProcessSyncReq(SVnode *pVnode, SRpcMsg *pMsg, SRpcMsg **pRsp) {
 
   SMsgHead *pHead = pMsg->pCont;
 
-  char logBuf[128];
-  snprintf(logBuf, sizeof(logBuf), "==vnodeProcessSyncReq== msgType:%d, vgId:%d, state:%d, %s, term:%lu", pMsg->msgType,
-           pHead->vgId, state, syncUtilState2String(state), currentTerm);
+  char  logBuf[512];
+  char *syncNodeStr = sync2SimpleStr(pVnode->sync);
+  snprintf(logBuf, sizeof(logBuf), "==vnodeProcessSyncReq== msgType:%d, syncNode: %s", pMsg->msgType, syncNodeStr);
   syncRpcMsgLog2(logBuf, pMsg);
+  taosMemoryFree(syncNodeStr);
 
   SRpcMsg *pRpcMsg = pMsg;
 

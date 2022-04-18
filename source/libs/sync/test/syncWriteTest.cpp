@@ -30,11 +30,20 @@ SSyncNode *gSyncNode;
 
 const char *pDir = "./syncWriteTest";
 
-void CommitCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SyncIndex index, bool isWeak, int32_t code,
-              ESyncState state, uint64_t seqNum) {
+/*
+void CommitCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SyncIndex index, bool isWeak, int32_t code, ESyncState state,
+              uint64_t seqNum) {
   char logBuf[256];
   snprintf(logBuf, sizeof(logBuf), "==callback== ==CommitCb== pFsm:%p, index:%ld, isWeak:%d, code:%d, state:%d %s \n",
            pFsm, index, isWeak, code, state, syncUtilState2String(state));
+  syncRpcMsgPrint2(logBuf, (SRpcMsg *)pMsg);
+}
+*/
+
+void CommitCb(struct SSyncFSM *pFsm, const SRpcMsg *pMsg, SFsmCbMeta cbMeta) {
+  char logBuf[256];
+  snprintf(logBuf, sizeof(logBuf), "==callback== ==CommitCb== pFsm:%p, index:%ld, isWeak:%d, code:%d, state:%d %s \n",
+           pFsm, cbMeta.index, cbMeta.isWeak, cbMeta.code, cbMeta.state, syncUtilState2String(cbMeta.state));
   syncRpcMsgPrint2(logBuf, (SRpcMsg *)pMsg);
 }
 
