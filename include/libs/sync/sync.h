@@ -87,8 +87,10 @@ typedef struct SSyncFSM {
 
   // when value in pMsg has been written into local log store, FpPreCommitCb is called, code indicates the result
   // user can do something according to the code and isWeak. for example, write data into tsdb
-  void (*FpPreCommitCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SyncIndex index, bool isWeak, int32_t code,
-                        ESyncState state);
+  // void (*FpPreCommitCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SyncIndex index, bool isWeak, int32_t code,
+  //                      ESyncState state);
+
+  void (*FpPreCommitCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SFsmCbMeta cbMeta);
 
   // when log entry is updated by a new one, FpRollBackCb is called
   // user can do something to roll back. for example, delete data from tsdb, or just ignore it

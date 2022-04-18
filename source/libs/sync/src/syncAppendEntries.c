@@ -221,7 +221,13 @@ int32_t syncNodeOnAppendEntriesCb(SSyncNode* ths, SyncAppendEntries* pMsg) {
         syncEntry2OriginalRpc(pAppendEntry, &rpcMsg);
         if (ths->pFsm != NULL) {
           if (ths->pFsm->FpPreCommitCb != NULL && pAppendEntry->originalRpcType != TDMT_VND_SYNC_NOOP) {
-            ths->pFsm->FpPreCommitCb(ths->pFsm, &rpcMsg, pAppendEntry->index, pAppendEntry->isWeak, 2, ths->state);
+            SFsmCbMeta cbMeta;
+            cbMeta.index = pAppendEntry->index;
+            cbMeta.isWeak = pAppendEntry->isWeak;
+            cbMeta.code = 2;
+            cbMeta.state = ths->state;
+            cbMeta.seqNum = pAppendEntry->seqNum;
+            ths->pFsm->FpPreCommitCb(ths->pFsm, &rpcMsg, cbMeta);
           }
         }
         rpcFreeCont(rpcMsg.pCont);
@@ -246,7 +252,13 @@ int32_t syncNodeOnAppendEntriesCb(SSyncNode* ths, SyncAppendEntries* pMsg) {
       syncEntry2OriginalRpc(pAppendEntry, &rpcMsg);
       if (ths->pFsm != NULL) {
         if (ths->pFsm->FpPreCommitCb != NULL && pAppendEntry->originalRpcType != TDMT_VND_SYNC_NOOP) {
-          ths->pFsm->FpPreCommitCb(ths->pFsm, &rpcMsg, pAppendEntry->index, pAppendEntry->isWeak, 3, ths->state);
+          SFsmCbMeta cbMeta;
+          cbMeta.index = pAppendEntry->index;
+          cbMeta.isWeak = pAppendEntry->isWeak;
+          cbMeta.code = 3;
+          cbMeta.state = ths->state;
+          cbMeta.seqNum = pAppendEntry->seqNum;
+          ths->pFsm->FpPreCommitCb(ths->pFsm, &rpcMsg, cbMeta);
         }
       }
       rpcFreeCont(rpcMsg.pCont);
