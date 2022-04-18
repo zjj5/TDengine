@@ -199,21 +199,20 @@ int32_t syncNodeOnAppendEntriesCb(SSyncNode* ths, SyncAppendEntries* pMsg) {
             SSyncRaftEntry* pRollBackEntry = logStoreGetEntry(ths->pLogStore, index);
             assert(pRollBackEntry != NULL);
 
-            // maybe is a NOOP ENTRY
-            // assert(pRollBackEntry->entryType == SYNC_RAFT_ENTRY_DATA);
+            if (pRollBackEntry->msgType != TDMT_VND_SYNC_NOOP) {
+              SRpcMsg rpcMsg;
+              syncEntry2OriginalRpc(pRollBackEntry, &rpcMsg);
 
-            SRpcMsg rpcMsg;
-            syncEntry2OriginalRpc(pRollBackEntry, &rpcMsg);
+              SFsmCbMeta cbMeta;
+              cbMeta.index = pRollBackEntry->index;
+              cbMeta.isWeak = pRollBackEntry->isWeak;
+              cbMeta.code = 0;
+              cbMeta.state = ths->state;
+              cbMeta.seqNum = pRollBackEntry->seqNum;
+              ths->pFsm->FpRollBackCb(ths->pFsm, &rpcMsg, cbMeta);
+              rpcFreeCont(rpcMsg.pCont);
+            }
 
-            SFsmCbMeta cbMeta;
-            cbMeta.index = pRollBackEntry->index;
-            cbMeta.isWeak = pRollBackEntry->isWeak;
-            cbMeta.code = 0;
-            cbMeta.state = ths->state;
-            cbMeta.seqNum = pRollBackEntry->seqNum;
-            ths->pFsm->FpRollBackCb(ths->pFsm, &rpcMsg, cbMeta);
-
-            rpcFreeCont(rpcMsg.pCont);
             syncEntryDestory(pRollBackEntry);
           }
         }
