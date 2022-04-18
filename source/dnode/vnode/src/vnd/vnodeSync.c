@@ -14,6 +14,7 @@
  */
 
 #include "vnodeSync.h"
+#include "syncTools.h"
 #include "tmsgcb.h"
 #include "vnd.h"
 

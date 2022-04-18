@@ -25,6 +25,7 @@ extern "C" {
 #include <stdlib.h>
 #include "cJSON.h"
 #include "sync.h"
+#include "syncTools.h"
 #include "taosdef.h"
 #include "tglobal.h"
 #include "tlog.h"
