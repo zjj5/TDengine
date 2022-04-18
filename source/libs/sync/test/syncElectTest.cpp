@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
 
   //---------------------------
   while (1) {
-    char *s = syncNode2SimpleStr(gSyncNode);
+    char* s = syncNode2SimpleStr(gSyncNode);
     sTrace("%s", s);
     taosMemoryFree(s);
     taosMsleep(1000);

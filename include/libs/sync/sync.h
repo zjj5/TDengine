@@ -39,14 +39,9 @@ typedef enum {
   TAOS_SYNC_STATE_ERROR = 103,
 } ESyncState;
 
-typedef struct SSyncBuffer {
-  void*  data;
-  size_t len;
-} SSyncBuffer;
-
 typedef struct SNodeInfo {
-  uint16_t nodePort;                 // node sync Port
-  char     nodeFqdn[TSDB_FQDN_LEN];  // node FQDN
+  uint16_t nodePort;
+  char     nodeFqdn[TSDB_FQDN_LEN];
 } SNodeInfo;
 
 typedef struct SSyncCfg {
@@ -55,13 +50,11 @@ typedef struct SSyncCfg {
   SNodeInfo nodeInfo[TSDB_MAX_REPLICA];
 } SSyncCfg;
 
-typedef struct SNodesRole {
-  int32_t    replicaNum;
-  SNodeInfo  nodeInfo[TSDB_MAX_REPLICA];
-  ESyncState role[TSDB_MAX_REPLICA];
-} SNodesRole;
+typedef struct SRaftId {
+  SyncNodeId  addr;
+  SyncGroupId vgId;
+} SRaftId;
 
-// abstract definition of snapshot
 typedef struct SSnapshot {
   void*     data;
   SyncIndex lastApplyIndex;
@@ -78,31 +71,11 @@ typedef struct SFsmCbMeta {
 typedef struct SSyncFSM {
   void* data;
 
-  // when value in pMsg finish a raft flow, FpCommitCb is called, code indicates the result
-  // user can do something according to the code and isWeak. for example, write data into tsdb
-  // void (*FpCommitCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SyncIndex index, bool isWeak, int32_t code,
-  //                   ESyncState state, uint64_t seqNum);
-
   void (*FpCommitCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SFsmCbMeta cbMeta);
-
-  // when value in pMsg has been written into local log store, FpPreCommitCb is called, code indicates the result
-  // user can do something according to the code and isWeak. for example, write data into tsdb
-  // void (*FpPreCommitCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SyncIndex index, bool isWeak, int32_t code,
-  //                      ESyncState state);
-
   void (*FpPreCommitCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SFsmCbMeta cbMeta);
-
-  // when log entry is updated by a new one, FpRollBackCb is called
-  // user can do something to roll back. for example, delete data from tsdb, or just ignore it
-  //void (*FpRollBackCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SyncIndex index, bool isWeak, int32_t code,
-  //                     ESyncState state);
-
   void (*FpRollBackCb)(struct SSyncFSM* pFsm, const SRpcMsg* pMsg, SFsmCbMeta cbMeta);
 
-  // user should implement this function, use "data" to take snapshot into "snapshot"
   int32_t (*FpTakeSnapshot)(SSnapshot* snapshot);
-
-  // user should implement this function, restore "data" from "snapshot"
   int32_t (*FpRestoreSnapshot)(const SSnapshot* snapshot);
 
 } SSyncFSM;
@@ -138,21 +111,6 @@ typedef struct SSyncLogStore {
 
 } SSyncLogStore;
 
-// raft need to persist two variables in storage: currentTerm, voteFor
-typedef struct SStateMgr {
-  void* data;
-
-  int32_t (*getCurrentTerm)(struct SStateMgr* pMgr, SyncTerm* pCurrentTerm);
-  int32_t (*persistCurrentTerm)(struct SStateMgr* pMgr, SyncTerm pCurrentTerm);
-
-  int32_t (*getVoteFor)(struct SStateMgr* pMgr, SyncNodeId* pVoteFor);
-  int32_t (*persistVoteFor)(struct SStateMgr* pMgr, SyncNodeId voteFor);
-
-  int32_t (*getSyncCfg)(struct SStateMgr* pMgr, SSyncCfg* pSyncCfg);
-  int32_t (*persistSyncCfg)(struct SStateMgr* pMgr, SSyncCfg* pSyncCfg);
-
-} SStateMgr;
-
 typedef struct SSyncInfo {
   SyncGroupId vgId;
   SSyncCfg    syncCfg;
@@ -167,57 +125,81 @@ typedef struct SSyncInfo {
 
 } SSyncInfo;
 
-struct SSyncNode;
-typedef struct SSyncNode SSyncNode;
-
 int32_t syncInit();
 void    syncCleanUp();
+int64_t syncOpen(const SSyncInfo* pSyncInfo);
+void    syncStart(int64_t rid);
+void    syncStop(int64_t rid);
+int32_t syncReconfig(int64_t rid, const SSyncCfg* pSyncCfg);
+int32_t syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak);
 
-SSyncNode* syncNodeAcquire(int64_t rid);
-void       syncNodeRelease(SSyncNode* pNode);
-
-int64_t     syncOpen(const SSyncInfo* pSyncInfo);
-void        syncStart(int64_t rid);
-void        syncStop(int64_t rid);
-int32_t     syncReconfig(int64_t rid, const SSyncCfg* pSyncCfg);
-int32_t     syncPropose(int64_t rid, const SRpcMsg* pMsg, bool isWeak);
 ESyncState  syncGetMyRole(int64_t rid);
 const char* syncGetMyRoleStr(int64_t rid);
 SyncTerm    syncGetMyTerm(int64_t rid);
 
+extern int32_t sDebugFlag;
+
+//===============================================================================================
+
+// ------------------ control -------------------
+struct SSyncNode;
+typedef struct SSyncNode SSyncNode;
+
+SSyncNode* syncNodeAcquire(int64_t rid);
+void       syncNodeRelease(SSyncNode* pNode);
+
 int32_t syncGetRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg);
 int32_t syncGetAndDelRespRpc(int64_t rid, uint64_t index, SRpcMsg* msg);
-
-// control
-void  syncSetQ(int64_t rid, void* queueHandle);
-void  syncSetRpc(int64_t rid, void* rpcHandle);
-char* sync2SimpleStr(int64_t rid);
+void    syncSetQ(int64_t rid, void* queueHandle);
+void    syncSetRpc(int64_t rid, void* rpcHandle);
+char*   sync2SimpleStr(int64_t rid);
 
 // set timer ms
 void setPingTimerMS(int64_t rid, int32_t pingTimerMS);
 void setElectTimerMS(int64_t rid, int32_t electTimerMS);
 void setHeartbeatTimerMS(int64_t rid, int32_t hbTimerMS);
 
-// propose with sequence number, to implement linearizable semantics
-// int32_t syncPropose2(int64_t rid, const SRpcMsg* pMsg, bool isWeak, uint64_t seqNum);
-
 // for compatibility, the same as syncPropose
 int32_t syncForwardToPeer(int64_t rid, const SRpcMsg* pMsg, bool isWeak);
 
-// for debug ----------------------
+// utils
+const char* syncUtilState2String(ESyncState state);
+
+// ------------------ for debug -------------------
 void syncRpcMsgPrint(SRpcMsg* pMsg);
 void syncRpcMsgPrint2(char* s, SRpcMsg* pMsg);
 void syncRpcMsgLog(SRpcMsg* pMsg);
 void syncRpcMsgLog2(char* s, SRpcMsg* pMsg);
 
-extern int32_t sDebugFlag;
+// ------------------ for compile -------------------
+typedef struct SSyncBuffer {
+  void*  data;
+  size_t len;
+} SSyncBuffer;
 
-//====================================
-typedef struct SRaftId {
-  SyncNodeId  addr;  // typedef uint64_t SyncNodeId;
-  SyncGroupId vgId;  // typedef int32_t  SyncGroupId;
-} SRaftId;
+typedef struct SNodesRole {
+  int32_t    replicaNum;
+  SNodeInfo  nodeInfo[TSDB_MAX_REPLICA];
+  ESyncState role[TSDB_MAX_REPLICA];
+} SNodesRole;
 
+typedef struct SStateMgr {
+  void* data;
+
+  int32_t (*getCurrentTerm)(struct SStateMgr* pMgr, SyncTerm* pCurrentTerm);
+  int32_t (*persistCurrentTerm)(struct SStateMgr* pMgr, SyncTerm pCurrentTerm);
+
+  int32_t (*getVoteFor)(struct SStateMgr* pMgr, SyncNodeId* pVoteFor);
+  int32_t (*persistVoteFor)(struct SStateMgr* pMgr, SyncNodeId voteFor);
+
+  int32_t (*getSyncCfg)(struct SStateMgr* pMgr, SSyncCfg* pSyncCfg);
+  int32_t (*persistSyncCfg)(struct SStateMgr* pMgr, SSyncCfg* pSyncCfg);
+
+} SStateMgr;
+
+// ------------------ for message process -------------------
+
+// ---------------------------------------------
 typedef struct SyncPing {
   uint32_t bytes;
   int32_t  vgId;
@@ -252,7 +234,6 @@ void syncPingLog(const SyncPing* pMsg);
 void syncPingLog2(char* s, const SyncPing* pMsg);
 
 // ---------------------------------------------
-
 typedef struct SyncPingReply {
   uint32_t bytes;
   int32_t  vgId;
@@ -322,10 +303,6 @@ void syncTimeoutPrint(const SyncTimeout* pMsg);
 void syncTimeoutPrint2(char* s, const SyncTimeout* pMsg);
 void syncTimeoutLog(const SyncTimeout* pMsg);
 void syncTimeoutLog2(char* s, const SyncTimeout* pMsg);
-
-//---------------------
-
-//----------
 
 // ---------------------------------------------
 typedef struct SyncClientRequest {
@@ -495,7 +472,6 @@ void syncAppendEntriesReplyLog(const SyncAppendEntriesReply* pMsg);
 void syncAppendEntriesReplyLog2(char* s, const SyncAppendEntriesReply* pMsg);
 
 //---------------------
-
 int32_t syncNodeOnPingCb(SSyncNode* ths, SyncPing* pMsg);
 int32_t syncNodeOnPingReplyCb(SSyncNode* ths, SyncPingReply* pMsg);
 int32_t syncNodeOnTimeoutCb(SSyncNode* ths, SyncTimeout* pMsg);
@@ -506,7 +482,6 @@ int32_t syncNodeOnRequestVoteReplyCb(SSyncNode* ths, SyncRequestVoteReply* pMsg)
 int32_t syncNodeOnAppendEntriesCb(SSyncNode* ths, SyncAppendEntries* pMsg);
 int32_t syncNodeOnAppendEntriesReplyCb(SSyncNode* ths, SyncAppendEntriesReply* pMsg);
 
-const char* syncUtilState2String(ESyncState state);
 //---------------------
 
 #ifdef __cplusplus

@@ -39,7 +39,7 @@ void test2() {
   SyncAppendEntriesReply *pMsg2 = syncAppendEntriesReplyBuild(1000);
   syncAppendEntriesReplyDeserialize(serialized, len, pMsg2);
   syncAppendEntriesReplyLog2((char *)"test2: syncAppendEntriesReplySerialize -> syncAppendEntriesReplyDeserialize ",
-                               pMsg2);
+                             pMsg2);
 
   taosMemoryFree(serialized);
   syncAppendEntriesReplyDestroy(pMsg);
@@ -52,7 +52,7 @@ void test3() {
   char *                  serialized = syncAppendEntriesReplySerialize2(pMsg, &len);
   SyncAppendEntriesReply *pMsg2 = syncAppendEntriesReplyDeserialize2(serialized, len);
   syncAppendEntriesReplyLog2((char *)"test3: syncAppendEntriesReplySerialize3 -> syncAppendEntriesReplyDeserialize2 ",
-                               pMsg2);
+                             pMsg2);
 
   taosMemoryFree(serialized);
   syncAppendEntriesReplyDestroy(pMsg);
@@ -66,7 +66,7 @@ void test4() {
   SyncAppendEntriesReply *pMsg2 = syncAppendEntriesReplyBuild(1000);
   syncAppendEntriesReplyFromRpcMsg(&rpcMsg, pMsg2);
   syncAppendEntriesReplyLog2((char *)"test4: syncAppendEntriesReply2RpcMsg -> syncAppendEntriesReplyFromRpcMsg ",
-                               pMsg2);
+                             pMsg2);
 
   rpcFreeCont(rpcMsg.pCont);
   syncAppendEntriesReplyDestroy(pMsg);
@@ -79,7 +79,7 @@ void test5() {
   syncAppendEntriesReply2RpcMsg(pMsg, &rpcMsg);
   SyncAppendEntriesReply *pMsg2 = syncAppendEntriesReplyFromRpcMsg2(&rpcMsg);
   syncAppendEntriesReplyLog2((char *)"test5: syncAppendEntriesReply2RpcMsg -> syncAppendEntriesReplyFromRpcMsg2 ",
-                               pMsg2);
+                             pMsg2);
 
   rpcFreeCont(rpcMsg.pCont);
   syncAppendEntriesReplyDestroy(pMsg);

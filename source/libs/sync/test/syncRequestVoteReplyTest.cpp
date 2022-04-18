@@ -50,8 +50,7 @@ void test3() {
   uint32_t              len;
   char *                serialized = syncRequestVoteReplySerialize2(pMsg, &len);
   SyncRequestVoteReply *pMsg2 = syncRequestVoteReplyDeserialize2(serialized, len);
-  syncRequestVoteReplyLog2((char *)"test3: syncRequestVoteReplySerialize3 -> syncRequestVoteReplyDeserialize2 ",
-                             pMsg2);
+  syncRequestVoteReplyLog2((char *)"test3: syncRequestVoteReplySerialize3 -> syncRequestVoteReplyDeserialize2 ", pMsg2);
 
   taosMemoryFree(serialized);
   syncRequestVoteReplyDestroy(pMsg);
