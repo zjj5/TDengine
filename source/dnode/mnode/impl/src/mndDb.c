@@ -700,7 +700,7 @@ static int32_t mndProcessAlterDbReq(SNodeMsg *pReq) {
 
   if (tDeserializeSAlterDbReq(pReq->rpcMsg.pCont, pReq->rpcMsg.contLen, &alterReq) != 0) {
     terrno = TSDB_CODE_INVALID_MSG;
-    goto ALTER_DB_OVER;
+    goto _OVER;
   }
 
   mDebug("db:%s, start to alter", alterReq.db);
@@ -708,24 +708,28 @@ static int32_t mndProcessAlterDbReq(SNodeMsg *pReq) {
   pDb = mndAcquireDb(pMnode, alterReq.db);
   if (pDb == NULL) {
     terrno = TSDB_CODE_MND_DB_NOT_EXIST;
-    goto ALTER_DB_OVER;
+    goto _OVER;
   }
 
   pUser = mndAcquireUser(pMnode, pReq->user);
   if (pUser == NULL) {
-    goto ALTER_DB_OVER;
+    goto _OVER;
   }
 
-  if (mndCheckAlterDropCompactSyncDbAuth(pUser, pDb) != 0) {
-    goto ALTER_DB_OVER;
+  if (mndCheckAlterDropCompactDbAuth(pUser, pDb) != 0) {
+    goto _OVER;
   }
 
   SDbObj dbObj = {0};
   memcpy(&dbObj, pDb, sizeof(SDbObj));
+  if (pDb->cfg.pRetensions != NULL) {
+    dbObj.cfg.pRetensions = taosArrayDup(pDb->cfg.pRetensions);
+    if (dbObj.cfg.pRetensions == NULL) goto _OVER;
+  }
 
   code = mndSetDbCfgFromAlterDbReq(&dbObj, &alterReq);
   if (code != 0) {
-    goto ALTER_DB_OVER;
+    goto _OVER;
   }
 
   dbObj.cfgVersion++;
@@ -733,7 +737,7 @@ static int32_t mndProcessAlterDbReq(SNodeMsg *pReq) {
   code = mndUpdateDb(pMnode, pReq, pDb, &dbObj);
   if (code == 0) code = TSDB_CODE_MND_ACTION_IN_PROGRESS;
 
-ALTER_DB_OVER:
+_OVER:
   if (code != 0 && code != TSDB_CODE_MND_ACTION_IN_PROGRESS) {
     mError("db:%s, failed to alter since %s", alterReq.db, terrstr());
   }
@@ -1114,7 +1118,7 @@ static int32_t mndProcessUseDbReq(SNodeMsg *pReq) {
 
   if (tDeserializeSUseDbReq(pReq->rpcMsg.pCont, pReq->rpcMsg.contLen, &usedbReq) != 0) {
     terrno = TSDB_CODE_INVALID_MSG;
-    goto USE_DB_OVER;
+    goto _OVER;
   }
 
   char *p = strchr(usedbReq.db, '.');
@@ -1125,7 +1129,7 @@ static int32_t mndProcessUseDbReq(SNodeMsg *pReq) {
       usedbRsp.pVgroupInfos = taosArrayInit(10, sizeof(SVgroupInfo));
       if (usedbRsp.pVgroupInfos == NULL) {
         terrno = TSDB_CODE_OUT_OF_MEMORY;
-        goto USE_DB_OVER;
+        goto _OVER;
       }
 
       mndBuildDBVgroupInfo(NULL, pMnode, usedbRsp.pVgroupInfos);
@@ -1156,15 +1160,15 @@ static int32_t mndProcessUseDbReq(SNodeMsg *pReq) {
     } else {
       pUser = mndAcquireUser(pMnode, pReq->user);
       if (pUser == NULL) {
-        goto USE_DB_OVER;
+        goto _OVER;
       }
 
       if (mndCheckUseDbAuth(pUser, pDb) != 0) {
-        goto USE_DB_OVER;
+        goto _OVER;
       }
 
       if (mndExtractDbInfo(pMnode, pDb, &usedbRsp, &usedbReq) < 0) {
-        goto USE_DB_OVER;
+        goto _OVER;
       }
 
       code = 0;
@@ -1176,7 +1180,7 @@ static int32_t mndProcessUseDbReq(SNodeMsg *pReq) {
   if (pRsp == NULL) {
     terrno = TSDB_CODE_OUT_OF_MEMORY;
     code = -1;
-    goto USE_DB_OVER;
+    goto _OVER;
   }
 
   tSerializeSUseDbRsp(pRsp, contLen, &usedbRsp);
@@ -1184,7 +1188,7 @@ static int32_t mndProcessUseDbReq(SNodeMsg *pReq) {
   pReq->pRsp = pRsp;
   pReq->rspLen = contLen;
 
-USE_DB_OVER:
+_OVER:
   if (code != 0) {
     mError("db:%s, failed to process use db req since %s", usedbReq.db, terrstr());
   }
@@ -1404,6 +1408,12 @@ static void dumpDbInfoData(SSDataBlock* pBlock, SDbObj *pDb, SShowObj *pShow, in
     pColInfo = taosArrayGet(pBlock->pDataBlock, cols++);
     colDataAppend(pColInfo, rows, (const char *)&pDb->cfg.replications, false);
 
+<<<<<<< Updated upstream
+=======
+    const char *src = pDb->cfg.strict ? "strict" : "nostrict";
+    char        b[9 + VARSTR_HEADER_SIZE] = {0};
+    STR_WITH_SIZE_TO_VARSTR(b, src, strlen(src));
+>>>>>>> Stashed changes
     pColInfo = taosArrayGet(pBlock->pDataBlock, cols++);
     colDataAppend(pColInfo, rows, (const char *)&pDb->cfg.quorum, false);
 
@@ -1481,10 +1491,13 @@ static void dumpDbInfoData(SSDataBlock* pBlock, SDbObj *pDb, SShowObj *pShow, in
     pColInfo = taosArrayGet(pBlock->pDataBlock, cols);
     colDataAppend(pColInfo, rows, (const char *)b, false);
   }
+<<<<<<< Updated upstream
 
   //  pWrite = getDataPosition(data, pShow, cols, rows, rowCapacity);
   //  *(int8_t *)pWrite = pDb->cfg.update;
 
+=======
+>>>>>>> Stashed changes
 }
 
 static void setInformationSchemaDbCfg(SDbObj *pDbObj) {

@@ -26,8 +26,8 @@
 #include "mndVgroup.h"
 #include "tname.h"
 
-#define TSDB_STB_VER_NUMBER   1
-#define TSDB_STB_RESERVE_SIZE 64
+#define STB_VER_NUMBER   1
+#define STB_RESERVE_SIZE 64
 
 static SSdbRow *mndStbActionDecode(SSdbRaw *pRaw);
 static int32_t  mndStbActionInsert(SSdb *pSdb, SStbObj *pStb);
@@ -71,9 +71,9 @@ void mndCleanupStb(SMnode *pMnode) {}
 SSdbRaw *mndStbActionEncode(SStbObj *pStb) {
   terrno = TSDB_CODE_OUT_OF_MEMORY;
 
-  int32_t size = sizeof(SStbObj) + (pStb->numOfColumns + pStb->numOfTags + pStb->numOfSmas) * sizeof(SSchema) +
-                 TSDB_STB_RESERVE_SIZE;
-  SSdbRaw *pRaw = sdbAllocRaw(SDB_STB, TSDB_STB_VER_NUMBER, size);
+  int32_t size =
+      sizeof(SStbObj) + (pStb->numOfColumns + pStb->numOfTags + pStb->numOfSmas) * sizeof(SSchema) + STB_RESERVE_SIZE;
+  SSdbRaw *pRaw = sdbAllocRaw(SDB_STB, STB_VER_NUMBER, size);
   if (pRaw == NULL) goto _OVER;
 
   int32_t dataPos = 0;
@@ -121,7 +121,7 @@ SSdbRaw *mndStbActionEncode(SStbObj *pStb) {
   if (pStb->commentLen > 0) {
     SDB_SET_BINARY(pRaw, dataPos, pStb->comment, pStb->commentLen, _OVER)
   }
-  SDB_SET_RESERVE(pRaw, dataPos, TSDB_STB_RESERVE_SIZE, _OVER)
+  SDB_SET_RESERVE(pRaw, dataPos, STB_RESERVE_SIZE, _OVER)
   SDB_SET_DATALEN(pRaw, dataPos, _OVER)
 
   terrno = 0;
@@ -143,7 +143,7 @@ static SSdbRow *mndStbActionDecode(SSdbRaw *pRaw) {
   int8_t sver = 0;
   if (sdbGetRawSoftVer(pRaw, &sver) != 0) goto _OVER;
 
-  if (sver != TSDB_STB_VER_NUMBER) {
+  if (sver != STB_VER_NUMBER) {
     terrno = TSDB_CODE_SDB_INVALID_DATA_VER;
     goto _OVER;
   }
@@ -210,7 +210,7 @@ static SSdbRow *mndStbActionDecode(SSdbRaw *pRaw) {
     if (pStb->comment == NULL) goto _OVER;
     SDB_GET_BINARY(pRaw, dataPos, pStb->comment, pStb->commentLen, _OVER)
   }
-  SDB_GET_RESERVE(pRaw, dataPos, TSDB_STB_RESERVE_SIZE, _OVER)
+  SDB_GET_RESERVE(pRaw, dataPos, STB_RESERVE_SIZE, _OVER)
 
   terrno = 0;
 
