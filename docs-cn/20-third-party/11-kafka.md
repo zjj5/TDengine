@@ -1,6 +1,6 @@
 ---
 sidebar_label: Kafka
-title: TDengine Kafka Connector 入门教程
+title: TDengine Kafka Connector 使用教程
 ---
 
 TDengine Kafka Connector 本质上是 Kafka Connect 的两个插件: TDengine Source Connector 和 TDengine Sink Connector。借助 Confluent 平台，用户只需提供简单的配置文件，就可以消费 Kafka 的数据到 TDengine， 或将 TDengine 的数据推送到 Kafka。
@@ -132,8 +132,6 @@ Control Center is [UP]
 
 ## TDengine Sink Connector
 
-### 数据格式
-
 TDengine Sink Connector 使用 TDengine 无模式写入接口写入数据，目前支持三种无模式写入协议：[InfluxDB 行协议](/develop/insert-data/influxdb-line)、 [OpenTSDB 行协议](/develop/insert-data/opentsdb-telnet) 和 [OpenTSDB JSON 格式协议](/develop/insert-data/opentsdb-json)。
 
 ### 使用示例
@@ -234,15 +232,12 @@ Query OK, 4 row(s) in set (0.004208s)
 13. `retry.backoff.ms` : The time in milliseconds to wait following an error before a retry attempt is made.
 14. `db.schemaless` : the format to write data to tdengine, one of line,telnet,json
 
-### 使用限制
-
 
 ## TDengine Source Connector
 
 ### 使用示例
 
 ### 配置说明
-
 
 ## 参考
 
