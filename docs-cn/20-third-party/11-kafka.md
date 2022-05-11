@@ -94,7 +94,8 @@ rm taosdata-kafka-connect-tdengine-0.1.0.zip
 
 ### 用 confluent-hub 安装
 
-[Confluent Hub](https://www.confluent.io/hub) 提供下载 Kafka Connect 插件的服务。可以用命令工具 `confluent-hub` 安装已发布到 Confluent Hub 的插件。TDengine Kafka Connector 目前没有正式发布，还不能用这种方式安装。
+[Confluent Hub](https://www.confluent.io/hub) 提供下载 Kafka Connect 插件的服务。可以用命令工具 `confluent-hub` 安装已发布到 Confluent Hub 的插件。
+**TDengine Kafka Connector 目前没有正式发布，不能用这种方式安装**。
 
 ## 启动 Confluent
 
@@ -107,9 +108,9 @@ confluent local services start
 :::
 
 :::tip
-如果某个组件启动失败，可尝试清空数据，重新启动。数据目录在启动时会打印到控制台，比如 `/tmp/confluent.106668`：
+如果某个组件启动失败，可尝试清空数据，重新启动。数据目录在启动时会打印到控制台，比如 ：
 
-```title="启动日志" {1}
+```title="控制台输出日志" {1}
 Using CONFLUENT_CURRENT: /tmp/confluent.106668
 Starting ZooKeeper
 ZooKeeper is [UP]
@@ -126,26 +127,121 @@ ksqlDB Server is [UP]
 Starting Control Center
 Control Center is [UP]
 ```
+可执行 `rm -rf /tmp/confluent.106668` 清空数据。
 :::
 
-## TDengine Sink Connector 使用示例
+## TDengine Sink Connector
 
-编写任务配置文件
+### 数据格式
 
-```ini title="sink_demo.properties"
+TDengine Sink Connector 使用 TDengine 无模式写入接口写入数据，目前支持三种无模式写入协议：[InfluxDB 行协议](/develop/insert-data/influxdb-line)、 [OpenTSDB 行协议](/develop/insert-data/opentsdb-telnet) 和 [OpenTSDB JSON 格式协议](/develop/insert-data/opentsdb-json)。
+
+### 使用示例
+
+#### 添加配置文件
+
+```
+mkdir ~/test
+cd ~/test
+vim sink-demo.properties
+```
+sink-demo.properties 内容如下：
+
+```ini title="sink-demo.properties"
 name=tdengine-sink-demo
 connector.class=com.taosdata.kafka.connect.sink.TDengineSinkConnector
 tasks.max=1
-topics=schemaless
+topics=meters
 connection.url=jdbc:TAOS://127.0.0.1:6030
 connection.user=root
 connection.password=taosdata
-connection.database=sink
+connection.database=power
 db.schemaless=line
 key.converter=org.apache.kafka.connect.storage.StringConverter
 value.converter=org.apache.kafka.connect.storage.StringConverter
 ```
 
+#### 部署 Connector
+```
+confluent local services connect connector load TDengineSinkConnector --config ./sink-demo.properties
+```
+如果以上命令执行成功，则会有如下输出：
+```json
+{
+  "name": "TDengineSinkConnector",
+  "config": {
+    "connection.database": "power",
+    "connection.password": "taosdata",
+    "connection.url": "jdbc:TAOS://127.0.0.1:6030",
+    "connection.user": "root",
+    "connector.class": "com.taosdata.kafka.connect.sink.TDengineSinkConnector",
+    "db.schemaless": "line",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "tasks.max": "1",
+    "topics": "meters",
+    "value.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "name": "TDengineSinkConnector"
+  },
+  "tasks": [],
+  "type": "sink"
+}
+```
+
+#### 写入测试数据
+
+使用 kafka-console-producer 写入测试数据。
+```
+[root@host user]# kafka-console-producer --broker-list localhost:9092 --topic meters
+>meters,location=Beijing.Haidian,groupid=2 current=11.8,voltage=221,phase=0.28 1648432611249000000
+>meters,location=Beijing.Haidian,groupid=2 current=13.4,voltage=223,phase=0.29 1648432611250000000
+>meters,location=Beijing.Haidian,groupid=3 current=10.8,voltage=223,phase=0.29 1648432611249000000
+>meters,location=Beijing.Haidian,groupid=3 current=11.3,voltage=221,phase=0.35 1648432611250000000
+```
+:::note
+如果目标数据库 power 不存在，TDengine Sink Connector 会自动创建数据库。自动创建数据库使用的时间精度位纳秒，如果写入的数据的时间精度不是纳秒，将会抛异常。
+:::
+
+#### 查看写入的数据
+
+```
+taos> use power;
+Database changed.
+
+taos> select * from meters;
+              ts               |          current          |          voltage          |           phase           | groupid |            location            |
+===============================================================================================================================================================
+ 2022-03-28 09:56:51.249000000 |              11.800000000 |             221.000000000 |               0.280000000 | 2       | Beijing.Haidian                |
+ 2022-03-28 09:56:51.250000000 |              13.400000000 |             223.000000000 |               0.290000000 | 2       | Beijing.Haidian                |
+ 2022-03-28 09:56:51.249000000 |              10.800000000 |             223.000000000 |               0.290000000 | 3       | Beijing.Haidian                |
+ 2022-03-28 09:56:51.250000000 |              11.300000000 |             221.000000000 |               0.350000000 | 3       | Beijing.Haidian                |
+Query OK, 4 row(s) in set (0.004208s)
+```
+
+### 配置说明
+
+1. `connector.class` : connector 的完整类名， 如: com.taosdata.kafka.connect.sink.TDengineSinkConnector
+2. `tasks.max` : 最大任务数, 默认为 1
+3. `topics` : 需要订阅的 topic 列表， 多个用逗号分隔, 如 `topic1,topic2`。
+4. `connection.url` : TDengine JDBC 连接字符串， 如 `jdbc:TAOS://127.0.0.1:6030`
+5. `connection.user` ： TDengine 用户名， 默认 root
+6. `connection.password` ：TDengine 用户密码， 默认 taosdata
+7. `connection.database` ： 目标数据库名。如果指定的数据库不存在会则自动创建。自动建库使用的时间精度为纳秒。默认值为 null。为 null 时目标数据库命名规则参考 `connection.database.prefix` 参数的说明
+8. `connection.attempts` ：最大尝试连接次数。默认为 3。
+9. `connection.backoff.ms` ： Backoff time in milliseconds between connection attempts.
+10. `connection.database.prefix` ： when connection.database is not specify, a string for the destination database name. which may contain '${topic}' as a placeholder for the originating topic name for example, kafka_${topic} for the topic 'orders' will map to the database name 'kafka_orders'. the default value is null, this means the topic will be mapped to the new database which will have same name as the topic
+11. `batch.size` : Specifies how many records to attempt to batch together for insertion into the destination table
+12. `max.retries`: The maximum number of times retry on errors before falling the task.
+13. `retry.backoff.ms` : The time in milliseconds to wait following an error before a retry attempt is made.
+14. `db.schemaless` : the format to write data to tdengine, one of line,telnet,json
+
+### 使用限制
+
+
+## TDengine Source Connector
+
+### 使用示例
+
+### 配置说明
 
 
 ## 参考
